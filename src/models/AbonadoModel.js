@@ -1,17 +1,29 @@
-// src/models/AbonadoModel.js (Actualización Completa)
+// src/models/AbonadoModel.js (CORREGIDO: Mapeo de campos de entrada)
 
 const { executeQuery } = require('../config/db.config');
 
 class AbonadoModel {
     
-    /** Crea un nuevo abonado. (EXISTENTE) */
-    static async create({ razonSocial, rut, contactoPrincipal, telefonoContacto, emailContacto }) {
+    /** * Crea un nuevo abonado. 
+     * Nota: Los nombres de los parámetros deben coincidir con las propiedades del objeto 'data'
+     * que viene del Service, el cual a su vez viene del req.body.
+     */
+    static async create({ nombreCompleto, dni, telefono, email }) { // <<-- CAMBIO AQUÍ: Usamos nombres del JSON
         const query = `
             INSERT INTO ABONADOS (RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto, Activo)
             OUTPUT INSERTED.ID_Abonado, INSERTED.RazonSocial, INSERTED.RUT
             VALUES (?, ?, ?, ?, ?, 1)
         `;
-        const params = [razonSocial, rut, contactoPrincipal, telefonoContacto, emailContacto];
+        
+        // Mapeamos los campos del JSON a los nombres de columna de la DB en el array de parámetros
+        const params = [
+            nombreCompleto,   // <-- Mapeado a RazonSocial (Parámetro 1)
+            dni,              // <-- Mapeado a RUT (Parámetro 2)
+            nombreCompleto,   // <-- Mapeado a ContactoPrincipal (Usamos el mismo valor)
+            telefono,         // <-- Mapeado a TelefonoContacto
+            email             // <-- Mapeado a EmailContacto
+        ];
+        
         const result = await executeQuery(query, params);
         return result[0];
     }
@@ -22,7 +34,7 @@ class AbonadoModel {
         return executeQuery(query);
     }
 
-    /** Busca un abonado por su ID. (NUEVO) */
+    /** Busca un abonado por su ID. (EXISTENTE) */
     static async findById(id) {
         const query = `
             SELECT ID_Abonado, RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto, FechaAlta, Activo 
@@ -33,23 +45,20 @@ class AbonadoModel {
         return result[0];
     }
     
-    /** Actualiza campos de un abonado. (NUEVO) */
+    /** Actualiza campos de un abonado. (EXISTENTE) */
     static async update(id, updates, params) {
-        // updates: ['RazonSocial = ?', 'TelefonoContacto = ?'], params: [valorRazon, valorTef, id]
         const query = `
             UPDATE ABONADOS 
             SET ${updates.join(', ')}
             OUTPUT INSERTED.ID_Abonado, INSERTED.RazonSocial, INSERTED.RUT, INSERTED.Activo
             WHERE ID_Abonado = ?
         `;
-        
-        // El ID debe ser el último parámetro
         params.push(id); 
         const result = await executeQuery(query, params);
         return result[0];
     }
 
-    /** Realiza una eliminación lógica (Soft Delete: Activo = 0). (NUEVO) */
+    /** Realiza una eliminación lógica (Soft Delete: Activo = 0). (EXISTENTE) */
     static async softDelete(id) {
         const query = `
             UPDATE ABONADOS 

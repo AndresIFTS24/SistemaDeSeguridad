@@ -1,17 +1,41 @@
-// src/models/DispositivoModel.js
+// src/models/DispositivoModel.js (VERSIÓN FINAL Y COMPLETA CORREGIDA)
 
 const { executeQuery } = require('../config/db.config');
 
 class DispositivoModel {
     
-    /** Crea un nuevo dispositivo. */
-    static async create({ ID_Modelo, Serie, NombreDispositivo, Ubicacion, Activo = 1 }) {
+    /** 🔄 Crea un nuevo dispositivo. */
+    static async create({ 
+        ID_Modelo, 
+        Serie, 
+        NombreDispositivo, // ❌ ÚNICA VEZ en la destructuración
+        Ubicacion, 
+        ID_Direccion, 
+        FechaInstalacion, 
+        Estado = 'Operativo' 
+    }) {
+        // --- Mapeo y saneamiento de variables ---
+        const NumeroSerie = Serie; 
+        const ZonaUbicacionParam = Ubicacion === undefined ? null : Ubicacion; // Evita 'undefined' para VARCHAR
+        
         const query = `
-            INSERT INTO DISPOSITIVOS (ID_Modelo, Serie, NombreDispositivo, Ubicacion, Activo)
-            OUTPUT INSERTED.ID_Dispositivo, INSERTED.Serie, INSERTED.NombreDispositivo
-            VALUES (?, ?, ?, ?, ?)
+            -- 🚨 ORDEN ALINEADO Y CORRECCIÓN FINAL
+            INSERT INTO DISPOSITIVOS (ID_Modelo, NumeroSerie, NombreDispositivo, Zona_Ubicacion, ID_Direccion, FechaInstalacion, Estado)
+            OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.NombreDispositivo
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        const params = [ID_Modelo, Serie, NombreDispositivo, Ubicacion, Activo];
+        
+        // 🚨 ORDEN DE PARÁMETROS: Debe coincidir exactamente con el INSERT de arriba.
+        const params = [
+            ID_Modelo, 
+            NumeroSerie, 
+            NombreDispositivo, // 3er Parámetro
+            ZonaUbicacionParam, // 4to Parámetro
+            ID_Direccion, 
+            FechaInstalacion, 
+            Estado // 7mo Parámetro
+        ];
+        
         const result = await executeQuery(query, params);
         return result[0];
     }
@@ -20,7 +44,7 @@ class DispositivoModel {
     static async findAll() {
         const query = `
             SELECT 
-                D.ID_Dispositivo, D.Serie, D.NombreDispositivo, D.Ubicacion, D.FechaInstalacion, D.Activo,
+                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado,
                 MD.ID_Modelo, MD.NombreModelo, MD.Fabricante
             FROM DISPOSITIVOS D
             JOIN MODELOS_DISPOSITIVOS MD ON D.ID_Modelo = MD.ID_Modelo
@@ -33,7 +57,7 @@ class DispositivoModel {
     static async findById(id) {
         const query = `
             SELECT 
-                D.ID_Dispositivo, D.Serie, D.NombreDispositivo, D.Ubicacion, D.FechaInstalacion, D.Activo,
+                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado,
                 MD.ID_Modelo, MD.NombreModelo, MD.Fabricante
             FROM DISPOSITIVOS D
             JOIN MODELOS_DISPOSITIVOS MD ON D.ID_Modelo = MD.ID_Modelo
@@ -48,7 +72,7 @@ class DispositivoModel {
         const query = `
             UPDATE DISPOSITIVOS 
             SET ${updates.join(', ')}
-            OUTPUT INSERTED.ID_Dispositivo, INSERTED.Serie, INSERTED.NombreDispositivo, INSERTED.Activo
+            OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.NombreDispositivo, INSERTED.Estado
             WHERE ID_Dispositivo = ?
         `;
         params.push(id); 
@@ -56,13 +80,13 @@ class DispositivoModel {
         return result[0];
     }
 
-    /** Realiza una eliminación lógica (Soft Delete: Activo = 0). */
+    /** Realiza una eliminación lógica (cambio de Estado). */
     static async softDelete(id) {
         const query = `
             UPDATE DISPOSITIVOS 
-            SET Activo = 0 
-            OUTPUT DELETED.ID_Dispositivo, DELETED.NombreDispositivo, INSERTED.Activo
-            WHERE ID_Dispositivo = ? AND Activo = 1
+            SET Estado = 'Inactivo' 
+            OUTPUT DELETED.ID_Dispositivo, DELETED.NombreDispositivo, INSERTED.Estado
+            WHERE ID_Dispositivo = ? AND Estado = 'Operativo'
         `;
         const result = await executeQuery(query, [id]);
         return result[0];

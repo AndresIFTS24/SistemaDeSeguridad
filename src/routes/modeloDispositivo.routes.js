@@ -13,6 +13,8 @@ router.post('/modelos', adminOnly, ModeloDispositivoController.create);
 router.get('/modelos', adminOnly, ModeloDispositivoController.getAll);
 router.get('/modelos/:id', adminOnly, ModeloDispositivoController.getById);
 router.put('/modelos/:id', adminOnly, ModeloDispositivoController.update);
-router.delete('/modelos/:id', adminOnly, ModeloDispositivoController.delete); 
+
+// El Controlador ahora debe tener un método 'softDelete' que llama al servicio.
+router.delete('/modelos/:id', adminOnly, ModeloDispositivoController.softDelete); 
 
 module.exports = router;

@@ -43,14 +43,27 @@ class DispositivoController {
         try {
             const { id } = req.params;
             const dispositivo = await DispositivoService.getDispositivoById(id);
+            
+            // 🚨 CORRECCIÓN CLAVE: Devolver 404 si el servicio no encuentra el dispositivo.
+            if (!dispositivo) {
+                return res.status(404).json({
+                    message: 'Dispositivo no encontrado.'
+                });
+            }
+
             res.status(200).json({
                 message: '✅ Dispositivo encontrado exitosamente.',
                 dispositivo: dispositivo
             });
         } catch (error) {
             const status = error.cause || 500;
+            let message = error.message;
+
+            // Si el error viene del servicio (ej. ID inválido)
+            if (status === 400) message = 'ID de dispositivo inválido.';
+            
             res.status(status).json({
-                message: status === 404 ? 'Dispositivo no encontrado.' : error.message,
+                message: message,
                 error: error.message
             });
         }
@@ -61,6 +74,12 @@ class DispositivoController {
         try {
             const { id } = req.params;
             const updatedDispositivo = await DispositivoService.updateDispositivo(id, req.body);
+            
+            // 🚨 Añadir verificación 404 si el servicio devuelve null/undefined.
+            if (!updatedDispositivo) {
+                return res.status(404).json({ message: 'Dispositivo no encontrado para actualizar.' });
+            }
+
             res.status(200).json({
                 message: `✅ Dispositivo (ID: ${id}) ha sido actualizado exitosamente.`,
                 dispositivo: updatedDispositivo
@@ -75,10 +94,15 @@ class DispositivoController {
     }
 
     /** DELETE /api/dispositivos/:id (Soft Delete) */
-    static async softDelete(req, res) {
+    static async deactivate(req, res) { // 🔄 Renombrado a 'deactivate' para claridad
         try {
             const { id } = req.params;
             const deactivatedDispositivo = await DispositivoService.deactivateDispositivo(id);
+            
+            if (!deactivatedDispositivo) {
+                 return res.status(404).json({ message: 'Dispositivo no encontrado o ya estaba inactivo.' });
+            }
+
             res.status(200).json({
                 message: `✅ Dispositivo (ID: ${id}) ha sido desactivado (borrado lógico) exitosamente.`,
                 dispositivo: deactivatedDispositivo
@@ -95,6 +119,9 @@ class DispositivoController {
             });
         }
     }
+    
+    // Alias para softDelete, en caso de que las rutas usen 'softDelete'
+    static softDelete = DispositivoController.deactivate; 
 }
 
 module.exports = DispositivoController;

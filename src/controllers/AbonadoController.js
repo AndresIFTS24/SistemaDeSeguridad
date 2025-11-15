@@ -4,10 +4,10 @@ const AbonadoService = require('../services/AbonadoService');
 
 class AbonadoController {
     
-    /** POST /api/abonados (Método faltante que causaba el error) */
+    /** POST /api/abonados */
     static async create(req, res) {
         try {
-            const newAbonado = await AbonadoService.createAbonado(req.body);
+            const newAbonado = await AbonadoService.createAbonado(req.body); // Llama a createAbonado
             
             res.status(201).json({
                 message: '✅ Abonado creado exitosamente.',
@@ -23,10 +23,10 @@ class AbonadoController {
         }
     }
 
-    /** GET /api/abonados (Método faltante que también podría causar errores si se importa) */
+    /** GET /api/abonados */
     static async getAll(req, res) {
         try {
-            const abonados = await AbonadoService.getAllAbonados();
+            const abonados = await AbonadoService.getAllAbonados(); // Llama a getAllAbonados
             
             res.status(200).json({
                 message: `✅ Se encontraron ${abonados.length} abonados.`,
