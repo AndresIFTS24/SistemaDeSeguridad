@@ -1,4 +1,4 @@
-// src/services/EventoService.js
+// src/services/EventoService.js (VERSIÓN CORREGIDA Y FINAL)
 
 const EventoModel = require('../models/EventoModel');
 
@@ -6,19 +6,22 @@ class EventoService {
     
     /** Registra un nuevo evento. */
     static async createEvento(data) {
-        const { ID_Dispositivo, TipoEvento, Descripcion, NivelCriticidad } = data;
+        // 🚨 1. CORRECCIÓN: Destructuramos ID_Dispositivo e ID_CodigoEvento (ya no TipoEvento ni Descripcion).
+        const { ID_Dispositivo, ID_CodigoEvento, Estado } = data;
         
-        if (!ID_Dispositivo || !TipoEvento || !Descripcion) {
-            throw new Error('Faltan campos obligatorios: ID_Dispositivo, TipoEvento y Descripcion.', { cause: 400 });
+        // 🚨 2. CORRECCIÓN: Validamos solo los campos necesarios.
+        if (!ID_Dispositivo || !ID_CodigoEvento) {
+            throw new Error('Faltan campos obligatorios: ID_Dispositivo e ID_CodigoEvento.', { cause: 400 });
         }
         
         try {
+            // Pasamos el objeto 'data' completo al modelo (incluyendo el opcional Estado)
             const newEvento = await EventoModel.create(data);
             return newEvento;
         } catch (error) {
-            // Manejo de error de Foreign Key (si el ID_Dispositivo no existe)
+            // Manejo de error de Foreign Key (si ID_Dispositivo o ID_CodigoEvento no existe)
             if (error.message && error.message.includes('FOREIGN KEY constraint')) {
-                throw new Error('El ID de Dispositivo proporcionado no existe.', { cause: 400 });
+                throw new Error('El ID de Dispositivo o el ID de Código de Evento proporcionado no existe.', { cause: 400 });
             }
             throw error;
         }
@@ -38,8 +41,6 @@ class EventoService {
         const eventos = await EventoModel.findByDispositivoId(id);
 
         if (eventos.length === 0) {
-            // No lanza 404 si el dispositivo existe pero no tiene eventos, sino si el ID es inválido.
-            // Aquí asumiremos que, si no hay eventos, devolvemos una lista vacía con 200.
             return eventos; 
         }
         return eventos;

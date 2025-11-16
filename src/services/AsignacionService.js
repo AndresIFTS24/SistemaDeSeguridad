@@ -1,44 +1,33 @@
 // src/services/AsignacionService.js
 
 const AsignacionModel = require('../models/AsignacionModel');
-const AbonadoModel = require('../models/AbonadoModel'); // Para verificar existencia
-const DispositivoModel = require('../models/DispositivoModel'); // Para verificar existencia
 
 class AsignacionService {
     
-    /** Crea una nueva asignación. */
-    static async createAsignacion({ ID_Abonado, ID_Dispositivo }) {
+    /** Crea una nueva Orden de Trabajo (OT). */
+    static async createAsignacion(data) {
+        const { ID_Direccion, ID_Tecnico, TipoOT, FechaProgramada } = data;
         
-        if (!ID_Abonado || !ID_Dispositivo) {
-            throw new Error('Faltan campos obligatorios: ID_Abonado y ID_Dispositivo.', { cause: 400 });
+        if (!ID_Direccion || !ID_Tecnico || !TipoOT || !FechaProgramada) {
+            throw new Error('Faltan campos obligatorios: ID_Direccion, ID_Tecnico, TipoOT y FechaProgramada.', { cause: 400 });
         }
         
-        // 1. Verificar si el dispositivo ya está asignado activamente
-        const activeAssignment = await AsignacionModel.findActiveByDispositivoId(ID_Dispositivo);
-        if (activeAssignment) {
-            throw new Error(`El Dispositivo ID ${ID_Dispositivo} ya está asignado al Abonado ID ${activeAssignment.ID_Abonado} de forma activa. Desasigne primero.`, { cause: 409 });
-        }
-
         try {
-            // 2. Intentar crear la asignación
-            const newAsignacion = await AsignacionModel.create({ ID_Abonado, ID_Dispositivo });
-            return newAsignacion;
+            return await AsignacionModel.create(data);
         } catch (error) {
-            // Manejo de error de Foreign Key no válida
             if (error.message && error.message.includes('FOREIGN KEY constraint')) {
-                // Podríamos ser más específicos verificando cada FK, pero esto captura el error de DB
-                throw new Error('El ID de Abonado o el ID de Dispositivo no existen.', { cause: 400 });
+                throw new Error('El ID de Dirección o el ID de Técnico no existen.', { cause: 400 });
             }
             throw error;
         }
     }
 
-    /** Obtiene todas las asignaciones. */
+    /** Obtiene todas las asignaciones/OTs. */
     static async getAllAsignaciones() {
         return AsignacionModel.findAll();
     }
     
-    /** Busca una asignación por ID. */
+    /** Busca una asignación/OT por ID. */
     static async getAsignacionById(id) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de asignación debe ser un número válido.', { cause: 400 });
@@ -47,12 +36,48 @@ class AsignacionService {
         const asignacion = await AsignacionModel.findById(id);
 
         if (!asignacion) {
-            throw new Error('Asignación no encontrada.', { cause: 404 });
+            throw new Error('Asignación/Orden de Trabajo no encontrada.', { cause: 404 });
         }
         return asignacion; 
     }
+
+    /** Actualiza campos de la OT. */
+    static async updateAsignacion(id, data) {
+        if (isNaN(parseInt(id))) {
+            throw new Error('El ID de asignación debe ser un número válido.', { cause: 400 });
+        }
+        
+        const updates = [];
+        const params = [];
+        
+        // Construcción dinámica de la consulta
+        if (data.ID_Direccion) { updates.push('ID_Direccion = ?'); params.push(data.ID_Direccion); }
+        if (data.ID_Tecnico) { updates.push('ID_Tecnico = ?'); params.push(data.ID_Tecnico); }
+        if (data.TipoOT) { updates.push('TipoOT = ?'); params.push(data.TipoOT); }
+        if (data.Descripcion) { updates.push('Descripcion = ?'); params.push(data.Descripcion); }
+        if (data.FechaProgramada) { updates.push('FechaProgramada = ?'); params.push(data.FechaProgramada); }
+        if (data.Estado) { updates.push('Estado = ?'); params.push(data.Estado); }
+        
+        if (updates.length === 0) {
+            throw new Error('Se requiere al menos un campo para actualizar.', { cause: 400 });
+        }
+
+        try {
+            const updatedAsignacion = await AsignacionModel.update(id, updates, params);
+            
+            if (!updatedAsignacion) {
+                throw new Error('Orden de Trabajo no encontrada para actualizar.', { cause: 404 });
+            }
+            return updatedAsignacion;
+        } catch (error) {
+            if (error.message && error.message.includes('FOREIGN KEY constraint')) {
+                throw new Error('El ID de Dirección o el ID de Técnico no existen.', { cause: 400 });
+            }
+            throw error;
+        }
+    }
     
-    /** Desactiva (finaliza) una asignación. */
+    /** Finaliza una Orden de Trabajo. */
     static async deactivateAsignacion(id) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de asignación debe ser un número válido.', { cause: 400 });
@@ -61,7 +86,7 @@ class AsignacionService {
         const deactivatedAsignacion = await AsignacionModel.deactivate(id);
         
         if (!deactivatedAsignacion) {
-            throw new Error('Asignación no encontrada o ya estaba inactiva.', { cause: 404 });
+            throw new Error('Orden de Trabajo no encontrada o ya estaba finalizada.', { cause: 404 });
         }
 
         return deactivatedAsignacion;

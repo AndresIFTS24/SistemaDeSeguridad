@@ -23,4 +23,6 @@ router.get('/users/:id', adminOnly, UserController.getById);
 router.put('/users/:id', adminOnly, UserController.update);
 router.delete('/users/:id', adminOnly, UserController.softDelete);
 
+
+
 module.exports = router;

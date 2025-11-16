@@ -1,80 +1,65 @@
 // src/controllers/AsignacionController.js
 
 const AsignacionService = require('../services/AsignacionService');
+const handleError = require('../utils/errorHandler'); 
 
 class AsignacionController {
-    
-    /** POST /api/asignaciones */
+
     static async create(req, res) {
         try {
             const newAsignacion = await AsignacionService.createAsignacion(req.body);
             res.status(201).json({
-                message: '✅ Dispositivo asignado exitosamente.',
+                message: 'Orden de Trabajo creada con éxito.',
                 asignacion: newAsignacion
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al crear la Orden de Trabajo.');
         }
     }
 
-    /** GET /api/asignaciones */
     static async getAll(req, res) {
         try {
             const asignaciones = await AsignacionService.getAllAsignaciones();
-            res.status(200).json({
-                message: `✅ Se encontraron ${asignaciones.length} asignaciones.`,
-                total: asignaciones.length,
-                asignaciones: asignaciones
-            });
+            res.status(200).json(asignaciones);
         } catch (error) {
-            res.status(500).json({
-                message: 'Error interno del servidor al obtener asignaciones.',
-                error: error.message
-            });
+            handleError(res, error, 'Error al obtener asignaciones.');
         }
     }
 
-    /** GET /api/asignaciones/:id */
     static async getById(req, res) {
         try {
-            const { id } = req.params;
-            const asignacion = await AsignacionService.getAsignacionById(id);
-            res.status(200).json({
-                message: '✅ Asignación encontrada exitosamente.',
-                asignacion: asignacion
-            });
+            const asignacion = await AsignacionService.getAsignacionById(req.params.id);
+            res.status(200).json(asignacion);
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: status === 404 ? 'Asignación no encontrada.' : error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al obtener la Orden de Trabajo por ID.');
         }
     }
 
-    /** PUT/DELETE /api/asignaciones/:id/deactivate (Desasignar/Finalizar) */
+    static async update(req, res) {
+        try {
+            const id = req.params.id;
+            const data = req.body;
+            
+            const updatedAsignacion = await AsignacionService.updateAsignacion(id, data);
+            
+            res.status(200).json({
+                message: 'Orden de Trabajo actualizada con éxito.',
+                asignacion: updatedAsignacion
+            });
+        } catch (error) {
+            handleError(res, error, 'Error al actualizar la Orden de Trabajo.');
+        }
+    }
+
     static async deactivate(req, res) {
         try {
-            const { id } = req.params;
-            const deactivatedAsignacion = await AsignacionService.deactivateAsignacion(id);
+            const deactivatedAsignacion = await AsignacionService.deactivateAsignacion(req.params.id);
             res.status(200).json({
-                message: `✅ Asignación (ID: ${id}) ha sido desactivada/finalizada exitosamente.`,
+                message: 'Orden de Trabajo finalizada con éxito.',
                 asignacion: deactivatedAsignacion
             });
         } catch (error) {
-            const status = error.cause || 500;
-            let message = error.message;
-
-            if (status === 404) message = 'Asignación no encontrada o ya estaba inactiva.';
-            
-            res.status(status).json({
-                message: message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al finalizar la Orden de Trabajo.');
         }
     }
 }

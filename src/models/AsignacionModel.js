@@ -4,67 +4,77 @@ const { executeQuery } = require('../config/db.config');
 
 class AsignacionModel {
     
-    /** Crea una nueva asignación activa. */
-    static async create({ ID_Abonado, ID_Dispositivo }) {
+    /** Crea una nueva Orden de Trabajo (OT). */
+    static async create({ ID_Direccion, ID_Tecnico, TipoOT, Descripcion, FechaProgramada, Estado = 'Programada' }) {
         const query = `
-            INSERT INTO ASIGNACIONES (ID_Abonado, ID_Dispositivo, FechaAsignacion, Activa)
-            OUTPUT INSERTED.ID_Asignacion, INSERTED.ID_Abonado, INSERTED.ID_Dispositivo, INSERTED.FechaAsignacion
-            VALUES (?, ?, GETDATE(), 1)
+            INSERT INTO ASIGNACIONES (ID_Direccion, ID_Tecnico, TipoOT, Descripcion, FechaProgramada, Estado)
+            OUTPUT 
+                INSERTED.ID_Asignacion, INSERTED.ID_Direccion, INSERTED.ID_Tecnico, 
+                INSERTED.TipoOT, INSERTED.FechaProgramada
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
-        const params = [ID_Abonado, ID_Dispositivo];
+        const params = [ID_Direccion, ID_Tecnico, TipoOT, Descripcion, FechaProgramada, Estado];
         const result = await executeQuery(query, params);
         return result[0];
     }
     
-    /** Obtiene todas las asignaciones, incluyendo detalles de Abonado y Dispositivo. */
+    /** Obtiene todas las Asignaciones/OTs. */
     static async findAll() {
         const query = `
             SELECT 
-                A.ID_Asignacion, A.FechaAsignacion, A.FechaDesasignacion, A.Activa,
-                AB.ID_Abonado, AB.RazonSocial AS NombreAbonado, 
-                D.ID_Dispositivo, D.Serie AS SerieDispositivo, D.NombreDispositivo
+                A.ID_Asignacion, A.TipoOT, A.Descripcion, A.FechaProgramada, A.Estado,
+                A.FechaInicioReal, A.FechaFinReal,
+                D.ID_Direccion, D.Calle, D.Numero, 
+                U.ID_Usuario AS ID_Tecnico, U.Nombre -- 🚨 SOLO SELECCIONA NOMBRE
             FROM ASIGNACIONES A
-            JOIN ABONADOS AB ON A.ID_Abonado = AB.ID_Abonado
-            JOIN DISPOSITIVOS D ON A.ID_Dispositivo = D.ID_Dispositivo
-            ORDER BY A.FechaAsignacion DESC
+            JOIN DIRECCIONES D ON A.ID_Direccion = D.ID_Direccion
+            JOIN USUARIOS U ON A.ID_Tecnico = U.ID_Usuario
+            ORDER BY A.FechaProgramada DESC
         `;
         return executeQuery(query);
     }
 
-    /** Busca una asignación por su ID. */
+    /** Busca una Asignación/OT por su ID. */
     static async findById(id) {
         const query = `
             SELECT 
-                A.ID_Asignacion, A.FechaAsignacion, A.FechaDesasignacion, A.Activa,
-                AB.ID_Abonado, AB.RazonSocial AS NombreAbonado, 
-                D.ID_Dispositivo, D.Serie AS SerieDispositivo
+                A.ID_Asignacion, A.TipoOT, A.Descripcion, A.FechaProgramada, A.Estado,
+                D.ID_Direccion, D.Calle, D.Numero, 
+                U.ID_Usuario AS ID_Tecnico, U.Nombre -- 🚨 SOLO SELECCIONA NOMBRE
             FROM ASIGNACIONES A
-            JOIN ABONADOS AB ON A.ID_Abonado = AB.ID_Abonado
-            JOIN DISPOSITIVOS D ON A.ID_Dispositivo = D.ID_Dispositivo
+            JOIN DIRECCIONES D ON A.ID_Direccion = D.ID_Direccion
+            JOIN USUARIOS U ON A.ID_Tecnico = U.ID_Usuario
             WHERE A.ID_Asignacion = ?
         `;
         const result = await executeQuery(query, [id]);
         return result[0];
     }
 
-    /** Busca si un dispositivo ya tiene una asignación ACTIVA. (Para validación) */
-    static async findActiveByDispositivoId(ID_Dispositivo) {
+    /** Actualiza campos de una Orden de Trabajo. */
+    static async update(id, updates, params) {
         const query = `
-            SELECT ID_Asignacion, ID_Abonado, ID_Dispositivo, Activa
-            FROM ASIGNACIONES
-            WHERE ID_Dispositivo = ? AND Activa = 1
+            UPDATE ASIGNACIONES 
+            SET ${updates.join(', ')}
+            OUTPUT INSERTED.ID_Asignacion, INSERTED.TipoOT, INSERTED.Descripcion, INSERTED.FechaProgramada, INSERTED.Estado
+            WHERE ID_Asignacion = ?
         `;
-        const result = await executeQuery(query, [ID_Dispositivo]);
+        params.push(id); 
+        const result = await executeQuery(query, params);
         return result[0];
     }
     
-    /** Desactiva una asignación (establece Activa=0 y FechaDesasignacion). */
+    /** Método de compatibilidad para evitar errores. */
+    static async findActiveByDispositivoId(ID_Dispositivo) {
+        return null;
+    }
+    
+    /** Finaliza una Orden de Trabajo. */
     static async deactivate(id) {
         const query = `
             UPDATE ASIGNACIONES 
-            SET Activa = 0, FechaDesasignacion = GETDATE()
-            OUTPUT DELETED.ID_Asignacion, INSERTED.Activa, INSERTED.FechaDesasignacion
-            WHERE ID_Asignacion = ? AND Activa = 1
+            SET Estado = 'Finalizada', FechaFinReal = GETDATE()
+            OUTPUT DELETED.ID_Asignacion, INSERTED.Estado, INSERTED.FechaFinReal
+            WHERE ID_Asignacion = ? AND Estado <> 'Programada'
         `;
         const result = await executeQuery(query, [id]);
         return result[0];

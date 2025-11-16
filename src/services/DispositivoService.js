@@ -12,7 +12,29 @@ class DispositivoService {
             throw new Error('Faltan campos obligatorios: ID_Modelo, Serie y NombreDispositivo.', { cause: 400 });
         }
         
+        // 🚨 INICIO DE CORRECCIÓN: Preprocesamiento de Fecha
+        if (data.FechaInstalacion) {
+            try {
+                // Intenta crear un objeto Date a partir de la cadena ISO
+                const date = new Date(data.FechaInstalacion); 
+                
+                if (isNaN(date)) {
+                    throw new Error('Formato de fecha de instalación inválido.');
+                }
+                
+                // Formatea la fecha a 'YYYY-MM-DD' para evitar problemas con msnodesql
+                data.FechaInstalacion = date.toISOString().slice(0, 10); 
+
+            } catch (e) {
+                // Maneja errores si la cadena no se puede parsear
+                throw new Error('El formato de FechaInstalacion no es válido.', { cause: 400 });
+            }
+        }
+        // 🚨 FIN DE CORRECCIÓN
+        
         try {
+            // Se asume que el DispositivoModel.create() extrae solo los campos necesarios
+            // y no incluye NombreModelo ni Fabricante.
             const newDispositivo = await DispositivoModel.create(data);
             return newDispositivo;
         } catch (error) {
@@ -20,7 +42,6 @@ class DispositivoService {
             if (error.message && error.message.includes('UNIQUE KEY constraint')) {
                 throw new Error('La Serie proporcionada ya está registrada.', { cause: 409 });
             }
-            // Asumo que el FK constraint para ID_Modelo también aplica a ID_Direccion
             if (error.message && error.message.includes('FOREIGN KEY constraint')) {
                 throw new Error('El ID de Modelo o la Dirección no existen.', { cause: 400 });
             }
@@ -42,7 +63,6 @@ class DispositivoService {
         const dispositivo = await DispositivoModel.findById(id);
 
         if (!dispositivo) {
-            // Lanza 404 para ser capturado por el Controller
             throw new Error('Dispositivo no encontrado.', { cause: 404 }); 
         }
         return dispositivo; 
@@ -57,21 +77,31 @@ class DispositivoService {
         const updates = [];
         const params = [];
         
-        // 🚨 CORRECCIÓN: Usamos los nombres de columna correctos y verificamos la existencia de datos.
-        
+        // Preprocesar la fecha en caso de que se esté actualizando
+        if (data.FechaInstalacion) {
+            const date = new Date(data.FechaInstalacion);
+            if (!isNaN(date)) {
+                data.FechaInstalacion = date.toISOString().slice(0, 10);
+            } else {
+                throw new Error('El formato de FechaInstalacion no es válido para actualizar.', { cause: 400 });
+            }
+        }
+
         // 1. ID_Modelo
         if (data.ID_Modelo) { updates.push('ID_Modelo = ?'); params.push(data.ID_Modelo); }
-        // 2. NumeroSerie (La entrada es 'Serie', pero la DB es 'NumeroSerie')
+        // 2. NumeroSerie (La entrada es 'Serie', la DB es 'NumeroSerie')
         if (data.Serie) { updates.push('NumeroSerie = ?'); params.push(data.Serie); } 
         // 3. NombreDispositivo
         if (data.NombreDispositivo) { updates.push('NombreDispositivo = ?'); params.push(data.NombreDispositivo); }
         // 4. Ubicacion (La entrada es 'Ubicacion', la DB es 'Zona_Ubicacion')
         if (data.Ubicacion) { updates.push('Zona_Ubicacion = ?'); params.push(data.Ubicacion); } 
-        // 5. Estado (La entrada es 'Estado', no 'Activo')
+        // 5. Estado
         if (data.Estado !== undefined && data.Estado !== null) { updates.push('Estado = ?'); params.push(data.Estado); }
+        // 6. FechaInstalacion (Se agrega aquí después de ser preprocesada)
+        if (data.FechaInstalacion) { updates.push('FechaInstalacion = ?'); params.push(data.FechaInstalacion); }
+
 
         if (updates.length === 0) {
-            // 🚨 Este es el error que recibiste, porque la validación de Ubicacion estaba mal
             throw new Error('Se requiere al menos un campo para actualizar.', { cause: 400 });
         }
 
@@ -79,7 +109,6 @@ class DispositivoService {
             const updatedDispositivo = await DispositivoModel.update(id, updates, params);
             
             if (!updatedDispositivo) {
-                // Si el modelo devuelve null/undefined, es 404
                 throw new Error('Dispositivo no encontrado para actualizar.', { cause: 404 });
             }
             return updatedDispositivo;
