@@ -1,17 +1,15 @@
-// src/services/UserService.js
+// src/services/UserService.js (COMPLETO Y FINAL PARA MSSQL)
 
 const UserModel = require('../models/UserModel');
 const bcrypt = require('bcrypt');
 
-// Constante para la seguridad del hashing
 const SALT_ROUNDS = 10; 
 
 class UserService {
     
-    /** Registra un nuevo usuario, hasheando la contraseña. (CORREGIDO: Apellido removido) */
+    /** Registra un nuevo usuario, hasheando la contraseña. */
     static async registerUser({ nombre, email, password, telefono, idSector, idRol }) {
         // --- 1. Validaciones básicas ---
-        // Se ha removido 'apellido' de la validación
         if (!nombre || !email || !password || !idRol) { 
             throw new Error('Faltan campos obligatorios: Nombre, Email, Contraseña y ID_Rol.', { cause: 400 });
         }
@@ -28,7 +26,6 @@ class UserService {
         // --- 3. Preparar datos para el modelo ---
         const userData = {
             nombre,
-            // Apellido eliminado, ya que no existe en la tabla USUARIOS
             email,
             passwordHash: hashedPassword, 
             telefono,
@@ -55,13 +52,12 @@ class UserService {
         }
     }
 
-    /** Obtiene todos los usuarios. (CORREGIDO: Apellido removido del mapeo) */
+    /** Obtiene todos los usuarios. */
     static async getAllUsers() {
         const users = await UserModel.findAll();
         return users.map(user => ({
             id: user.ID_Usuario,
             nombre: user.Nombre,
-            // Apellido removido
             email: user.Email,
             activo: user.Activo,
             rol: user.NombreRol,
@@ -82,7 +78,7 @@ class UserService {
         }));
     }
 
-    /** Busca un usuario por ID, si no existe lanza error 404. (CORREGIDO: Apellido removido del retorno) */
+    /** Busca un usuario por ID, si no existe lanza error 404. */
     static async getUserById(id) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de usuario debe ser un número válido.', { cause: 400 });
@@ -114,15 +110,17 @@ class UserService {
         }
         
         const updates = [];
-        const params = [];
+        const params = {}; // 🚨 CAMBIO CLAVE: Objeto de parámetros para mssql
 
         // Hashing de la nueva contraseña (si se proporciona)
         if (data.password) {
             try {
                 const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
-                updates.push('PasswordHash = ?');
-                params.push(hashedPassword);
-                // NOTA: Se elimina data.password para no procesarlo más abajo
+                
+                // 🚨 CORRECCIÓN: Usar marcador de posición con nombre
+                updates.push('PasswordHash = @PasswordHash');
+                params.PasswordHash = hashedPassword;
+                
                 delete data.password; 
             } catch (hashError) {
                 console.error('Error al hashear la nueva contraseña:', hashError);
@@ -137,12 +135,13 @@ class UserService {
             Telefono: 'Telefono',
             ID_Sector: 'ID_Sector',
             ID_Rol: 'ID_Rol',
-            Activo: 'Activo' // Campo Activo para (des)activación
+            Activo: 'Activo'
         };
 
         for (const [key, dbColumn] of Object.entries(allowedFields)) {
             const value = data[key];
             if (value !== undefined) {
+                
                 // Validación para IDs (FKs)
                 if (['ID_Sector', 'ID_Rol'].includes(dbColumn) && isNaN(parseInt(value))) {
                     throw new Error(`${dbColumn} debe ser un número válido.`, { cause: 400 });
@@ -152,8 +151,9 @@ class UserService {
                     throw new Error('El campo Activo debe ser 0 o 1.', { cause: 400 });
                 }
                 
-                updates.push(`${dbColumn} = ?`);
-                params.push(value);
+                // 🚨 CORRECCIÓN: Usar marcador de posición con nombre
+                updates.push(`${dbColumn} = @${dbColumn}`);
+                params[dbColumn] = value; // 🚨 CORRECCIÓN: Agregar al objeto de parámetros
             }
         }
 
@@ -162,6 +162,7 @@ class UserService {
         }
 
         try {
+            // El modelo ahora recibe el array de strings con @Nombre y el objeto de parámetros
             const updatedUser = await UserModel.update(id, updates, params);
             
             if (!updatedUser) {

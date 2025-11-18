@@ -1,4 +1,4 @@
-// src/services/EventoService.js (VERSIÓN CORREGIDA Y FINAL)
+// src/services/EventoService.js (VERSIÓN COMPLETA Y FINAL)
 
 const EventoModel = require('../models/EventoModel');
 
@@ -6,16 +6,13 @@ class EventoService {
     
     /** Registra un nuevo evento. */
     static async createEvento(data) {
-        // 🚨 1. CORRECCIÓN: Destructuramos ID_Dispositivo e ID_CodigoEvento (ya no TipoEvento ni Descripcion).
-        const { ID_Dispositivo, ID_CodigoEvento, Estado } = data;
+        const { ID_Dispositivo, ID_CodigoEvento } = data;
         
-        // 🚨 2. CORRECCIÓN: Validamos solo los campos necesarios.
         if (!ID_Dispositivo || !ID_CodigoEvento) {
             throw new Error('Faltan campos obligatorios: ID_Dispositivo e ID_CodigoEvento.', { cause: 400 });
         }
         
         try {
-            // Pasamos el objeto 'data' completo al modelo (incluyendo el opcional Estado)
             const newEvento = await EventoModel.create(data);
             return newEvento;
         } catch (error) {
@@ -46,12 +43,12 @@ class EventoService {
         return evento;
     }
     
+    /** Actualiza el estado de un evento. */
     static async updateEventoEstado(id, nuevoEstado) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de evento debe ser un número válido.', { cause: 400 });
         }
         
-        // 🚨 Validación de estado permitidos (opcional, pero buena práctica)
         const estadosValidos = ['Pendiente', 'En Progreso', 'Cerrado'];
         if (!estadosValidos.includes(nuevoEstado)) {
             throw new Error('Estado no válido. Use: Pendiente, En Progreso o Cerrado.', { cause: 400 });
@@ -72,24 +69,22 @@ class EventoService {
             throw new Error('El ID de dispositivo debe ser un número válido.', { cause: 400 });
         }
         
+        // 🚨 CORRECCIÓN: Llamamos a findByDispositivoId, que usa el ID del dispositivo
         const eventos = await EventoModel.findByDispositivoId(id);
 
-        if (eventos.length === 0) {
-            return eventos; 
-        }
+        // Si devuelve un array vacío, lo retorna. No es un error 404.
         return eventos;
     }
 
+    /** Elimina un evento. */
     static async deleteEvento(id) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de evento debe ser un número válido.', { cause: 400 });
         }
         
-        // Llama al método 'delete' del modelo
         const deletedEvento = await EventoModel.delete(id);
         
         if (!deletedEvento) {
-            // Si el modelo devuelve null/undefined, significa que el ID no existía.
             throw new Error(`Evento con ID ${id} no encontrado para eliminar.`, { cause: 404 });
         }
         

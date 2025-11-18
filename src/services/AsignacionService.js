@@ -1,4 +1,4 @@
-// src/services/AsignacionService.js
+// src/services/AsignacionService.js (COMPLETO Y CORREGIDO)
 
 const AsignacionModel = require('../models/AsignacionModel');
 
@@ -50,7 +50,7 @@ class AsignacionService {
         const updates = [];
         const params = [];
         
-        // Construcción dinámica de la consulta
+        // 🚨 CORRECCIÓN: Usamos '?' para que el Modelo pueda hacer el mapeo dinámico a @pN.
         if (data.ID_Direccion) { updates.push('ID_Direccion = ?'); params.push(data.ID_Direccion); }
         if (data.ID_Tecnico) { updates.push('ID_Tecnico = ?'); params.push(data.ID_Tecnico); }
         if (data.TipoOT) { updates.push('TipoOT = ?'); params.push(data.TipoOT); }
@@ -63,6 +63,7 @@ class AsignacionService {
         }
 
         try {
+            // El modelo se encarga de agregar el ID al array de params y de convertir a @pN.
             const updatedAsignacion = await AsignacionModel.update(id, updates, params);
             
             if (!updatedAsignacion) {
@@ -86,6 +87,7 @@ class AsignacionService {
         const deactivatedAsignacion = await AsignacionModel.deactivate(id);
         
         if (!deactivatedAsignacion) {
+            // Esto también incluye el caso donde el estado ya era 'Finalizada' (según el WHERE en el Modelo).
             throw new Error('Orden de Trabajo no encontrada o ya estaba finalizada.', { cause: 404 });
         }
 

@@ -1,4 +1,4 @@
-// src/services/DispositivoService.js
+// src/services/DispositivoService.js (COMPLETO Y FINAL CORREGIDO PARA MSSQL)
 
 const DispositivoModel = require('../models/DispositivoModel');
 
@@ -12,29 +12,21 @@ class DispositivoService {
             throw new Error('Faltan campos obligatorios: ID_Modelo, Serie y NombreDispositivo.', { cause: 400 });
         }
         
-        // 🚨 INICIO DE CORRECCIÓN: Preprocesamiento de Fecha
+        // Preprocesamiento de Fecha
         if (data.FechaInstalacion) {
             try {
-                // Intenta crear un objeto Date a partir de la cadena ISO
                 const date = new Date(data.FechaInstalacion); 
-                
                 if (isNaN(date)) {
                     throw new Error('Formato de fecha de instalación inválido.');
                 }
-                
-                // Formatea la fecha a 'YYYY-MM-DD' para evitar problemas con msnodesql
+                // Formatea la fecha a 'YYYY-MM-DD'
                 data.FechaInstalacion = date.toISOString().slice(0, 10); 
-
             } catch (e) {
-                // Maneja errores si la cadena no se puede parsear
                 throw new Error('El formato de FechaInstalacion no es válido.', { cause: 400 });
             }
         }
-        // 🚨 FIN DE CORRECCIÓN
         
         try {
-            // Se asume que el DispositivoModel.create() extrae solo los campos necesarios
-            // y no incluye NombreModelo ni Fabricante.
             const newDispositivo = await DispositivoModel.create(data);
             return newDispositivo;
         } catch (error) {
@@ -69,28 +61,24 @@ class DispositivoService {
     }
     
     /** Actualiza los datos de un dispositivo. */
-static async updateDispositivo(id, data) {
+    static async updateDispositivo(id, data) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de dispositivo debe ser un número válido.', { cause: 400 });
         }
         
         const updates = [];
-        const params = [];
+        const params = {}; // 🚨 CAMBIO CLAVE: Objeto de parámetros para mssql
         let dataToProcess = { ...data };
 
         // 1. Mapeo de campos de entrada a nombres de columna de la DB (JSON_KEY: DB_COLUMN)
-        // **Solo incluimos los campos que realmente existen en tu tabla SQL.**
         const fieldMapping = {
-            // Claves Foráneas
             ID_Direccion: 'ID_Direccion', 
             ID_Modelo: 'ID_Modelo',
-            
-            // Campos de Datos
-            Serie: 'NumeroSerie',           // Mapeo correcto: Serie -> NumeroSerie
-            Ubicacion: 'Zona_Ubicacion',    // Mapeo correcto: Ubicacion -> Zona_Ubicacion
+            NombreDispositivo: 'NombreDispositivo', // Agregado: permite actualizar el nombre
+            Serie: 'NumeroSerie', 
+            Ubicacion: 'Zona_Ubicacion', 
             FechaInstalacion: 'FechaInstalacion',
             Estado: 'Estado'
-            // ❌ NombreDispositivo fue ELIMINADO permanentemente de aquí.
         };
         
         // 2. Preprocesar la FechaInstalacion (si se proporciona)
@@ -110,32 +98,30 @@ static async updateDispositivo(id, data) {
         let hasUpdate = false;
         
         for (const [key, dbColumn] of Object.entries(fieldMapping)) {
-            // **CLAVE:** El chequeo debe ser solo si la clave del JSON (key) existe en la data.
             if (key in dataToProcess) { 
                 const value = dataToProcess[key];
                 
                 // Validación para IDs (FKs)
                 if (['ID_Modelo', 'ID_Direccion'].includes(dbColumn)) {
-                    // Si se envía, debe ser un número válido
                     if (value !== null && value !== undefined && isNaN(parseInt(value))) {
                         throw new Error(`${dbColumn} debe ser un número válido.`, { cause: 400 });
                     }
                 }
                 
-                updates.push(`${dbColumn} = ?`);
-                params.push(value);
+                // 🚨 CORRECCIÓN: Generar "Columna = @NombreColumna"
+                updates.push(`${dbColumn} = @${dbColumn}`);
+                params[dbColumn] = value; // 🚨 CORRECCIÓN: Agregar al objeto de parámetros
                 hasUpdate = true;
             }
         }
 
 
         if (!hasUpdate) {
-            // Este error solo se lanzará si el objeto 'data' está vacío o solo contiene
-            // campos que no están en el fieldMapping.
             throw new Error('Se requiere al menos un campo válido para actualizar (ej. Serie, ID_Modelo, ID_Direccion).', { cause: 400 });
         }
 
         try {
+            // El modelo ahora espera el array de strings con @Nombre y el objeto de parámetros
             const updatedDispositivo = await DispositivoModel.update(id, updates, params);
             
             if (!updatedDispositivo) {

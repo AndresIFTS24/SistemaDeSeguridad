@@ -1,4 +1,4 @@
-// src/services/AbonadoService.js
+// src/services/AbonadoService.js (COMPLETO Y CORREGIDO PARA MSSQL)
 
 const AbonadoModel = require('../models/AbonadoModel');
 
@@ -6,26 +6,32 @@ class AbonadoService {
     
     /** Registra un nuevo abonado. */
     static async createAbonado(abonadoData) {
-        // --- 1. Validaciones básicas ---
-        // Se mantiene la validación con los nombres de campos del JSON que se acordaron usar para la creación
+        // ... (Validaciones y manejo de errores)
         if (!abonadoData.nombreCompleto || !abonadoData.dni || !abonadoData.idZona) {
             throw new Error('Faltan campos obligatorios: Nombre, DNI y ID_Zona.', { cause: 400 });
         }
         
-        // --- 2. Crear abonado en la DB ---
+        // --- 2. Preparar datos y Crear abonado en la DB ---
         try {
-            // El modelo se encarga de mapear nombreCompleto -> RazonSocial y dni -> RUT
-            const newAbonado = await AbonadoModel.create(abonadoData); 
+            // 🚨 Mapeo de datos para el modelo, usando nombres de columna de DB
+            const dataToCreate = {
+                RazonSocial: abonadoData.nombreCompleto,
+                RUT: abonadoData.dni,
+                ContactoPrincipal: abonadoData.nombreCompleto, // Usamos nombreCompleto como ContactoPrincipal
+                TelefonoContacto: abonadoData.telefono || null,
+                EmailContacto: abonadoData.email || null,
+                ID_Zona: abonadoData.idZona
+            };
+            
+            const newAbonado = await AbonadoModel.create(dataToCreate); 
             return newAbonado;
         } catch (error) {
-            // Manejo de error de clave única para DNI/RUT
+            // ... (Manejo de errores)
             if (error.message && error.message.includes('UNIQUE KEY constraint')) {
                  throw new Error('El DNI proporcionado ya está registrado para otro abonado.', { cause: 409 });
             }
-            // Manejo de error de clave foránea
             if (error.message && error.message.includes('FOREIGN KEY constraint')) {
-                 // Nota: Esto puede ser una FK a ZONAS o VENDEDORES que no se incluyó en tu modelo, pero lo dejamos por si acaso.
-                 throw new Error('Error de relación. El ID de Zona o Vendedor proporcionado no existe.', { cause: 400 });
+                 throw new Error('Error de relación. El ID de Zona proporcionado no existe.', { cause: 400 });
             }
             throw error;
         }
@@ -59,20 +65,18 @@ class AbonadoService {
         }
         
         const updates = [];
-        const params = [];
+        const params = {}; // 🚨 CAMBIO CLAVE: Objeto para mssql
         
-        // Mapeo de campos del JSON de entrada a los nombres de columna de la DB (DB: Columna)
         const fieldMapping = {
-            // Nombres de columna de la DB (preferidos)
+            // JSON key : DB Column Name
             razonSocial: 'RazonSocial',
             rut: 'RUT',
             contactoPrincipal: 'ContactoPrincipal',
             telefonoContacto: 'TelefonoContacto',
             emailContacto: 'EmailContacto',
-            activo: 'Activo', // Activo debe ser 0 o 1
-            idZona: 'ID_Zona', // Agregado por si existe la FK en la tabla
-            
-            // Nombres simplificados del JSON para comodidad del cliente
+            activo: 'Activo', 
+            idZona: 'ID_Zona',
+            // Nombres simplificados del JSON
             nombreCompleto: 'RazonSocial', 
             dni: 'RUT', 
             telefono: 'TelefonoContacto', 
@@ -84,20 +88,25 @@ class AbonadoService {
         for (const [key, dbColumn] of Object.entries(fieldMapping)) {
             const value = data[key];
             
-            // Usamos 'in data' para permitir valores falsy (0, '', null) si son intencionales
             if (key in data) { 
-                // Evitamos duplicados si el cliente manda 'dni' y 'rut' a la vez
+                // Usaremos el nombre de la columna DB como nombre del parámetro
+                const paramName = dbColumn; 
+
+                // Evitar duplicados (ej: si mandan 'dni' y 'rut')
                 if (updates.some(u => u.startsWith(dbColumn))) {
                     continue; 
                 }
 
-                // 🚨 Validación específica para 'Activo' (asumiendo que es BIT o TINYINT)
+                // Validación específica para 'Activo'
                 if (dbColumn === 'Activo' && (value !== 0 && value !== 1)) {
                     throw new Error('El campo Activo debe ser 0 o 1.', { cause: 400 });
                 }
                 
-                updates.push(`${dbColumn} = ?`);
-                params.push(value);
+                // 🚨 CORRECCIÓN: Generar "Columna = @NombreColumna"
+                updates.push(`${dbColumn} = @${paramName}`); 
+                
+                // 🚨 CORRECCIÓN: Agregar al objeto de parámetros con el nombre correcto
+                params[paramName] = value; 
                 hasUpdate = true;
             }
         }
@@ -107,7 +116,7 @@ class AbonadoService {
         }
 
         try {
-            const updatedAbonado = await AbonadoModel.update(id, updates, params);
+            const updatedAbonado = await AbonadoModel.update(id, updates, params); 
             
             if (!updatedAbonado) {
                 throw new Error('Abonado no encontrado para actualizar.', { cause: 404 });
@@ -115,6 +124,7 @@ class AbonadoService {
             
             return updatedAbonado;
         } catch (error) {
+            // ... (Manejo de errores)
             if (error.message && error.message.includes('UNIQUE KEY constraint') && error.message.includes('RUT')) {
                 throw new Error('El DNI/RUT proporcionado ya está siendo utilizado por otro abonado.', { cause: 409 });
             }

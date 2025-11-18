@@ -1,4 +1,4 @@
-// src/models/DispositivoModel.js (VERSIÓN FINAL Y COMPLETA CORREGIDA)
+// src/models/DispositivoModel.js (VERSIÓN FINAL Y COMPLETA CORREGIDA PARA MSSQL)
 
 const { executeQuery } = require('../config/db.config');
 
@@ -8,34 +8,32 @@ class DispositivoModel {
     static async create({ 
         ID_Modelo, 
         Serie, 
-        NombreDispositivo, // ❌ ÚNICA VEZ en la destructuración
+        NombreDispositivo, 
         Ubicacion, 
         ID_Direccion, 
         FechaInstalacion, 
         Estado = 'Operativo' 
     }) {
-        // --- Mapeo y saneamiento de variables ---
         const NumeroSerie = Serie; 
-        // ✅ CORRECCIÓN: Usar !Ubicacion para capturar undefined, null, y cadena vacía ("")
-        const ZonaUbicacionParam = !Ubicacion ? null : Ubicacion;
+        const ZonaUbicacionParam = !Ubicacion ? null : Ubicacion; // Mapea indefinido/nulo/vacío a NULL
         
         const query = `
-            -- 🚨 ORDEN ALINEADO Y CORRECCIÓN FINAL
             INSERT INTO DISPOSITIVOS (ID_Modelo, NumeroSerie, NombreDispositivo, Zona_Ubicacion, ID_Direccion, FechaInstalacion, Estado)
             OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.NombreDispositivo
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            -- 🚨 CORRECCIÓN: Usar @Nombre
+            VALUES (@ID_Modelo, @NumeroSerie, @NombreDispositivo, @Zona_Ubicacion, @ID_Direccion, @FechaInstalacion, @Estado)
         `;
         
-        // 🚨 ORDEN DE PARÁMETROS: Debe coincidir exactamente con el INSERT de arriba.
-        const params = [
+        // 🚨 CORRECCIÓN CLAVE: Objeto de parámetros
+        const params = {
             ID_Modelo, 
             NumeroSerie, 
-            NombreDispositivo, // 3er Parámetro
-            ZonaUbicacionParam, // 4to Parámetro
+            NombreDispositivo,
+            Zona_Ubicacion: ZonaUbicacionParam,
             ID_Direccion, 
             FechaInstalacion, 
-            Estado // 7mo Parámetro
-        ];
+            Estado
+        };
         
         const result = await executeQuery(query, params);
         return result[0];
@@ -45,7 +43,7 @@ class DispositivoModel {
     static async findAll() {
         const query = `
             SELECT 
-                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado,
+                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado, D.ID_Direccion,
                 MD.ID_Modelo, MD.NombreModelo, MD.Fabricante
             FROM DISPOSITIVOS D
             JOIN MODELOS_DISPOSITIVOS MD ON D.ID_Modelo = MD.ID_Modelo
@@ -58,26 +56,30 @@ class DispositivoModel {
     static async findById(id) {
         const query = `
             SELECT 
-                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado,
+                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado, D.ID_Direccion,
                 MD.ID_Modelo, MD.NombreModelo, MD.Fabricante
             FROM DISPOSITIVOS D
             JOIN MODELOS_DISPOSITIVOS MD ON D.ID_Modelo = MD.ID_Modelo
-            WHERE D.ID_Dispositivo = ?
+            WHERE D.ID_Dispositivo = @ID_Dispositivo -- 🚨 CORRECCIÓN: Usar @ID_Dispositivo
         `;
-        const result = await executeQuery(query, [id]);
+        // 🚨 CORRECCIÓN CLAVE: Objeto de parámetros
+        const result = await executeQuery(query, { ID_Dispositivo: id });
         return result[0];
     }
     
     /** Actualiza campos de un dispositivo. */
-static async update(id, updates, params) {
+    static async update(id, updates, params) {
+        // updates: ["NumeroSerie = @NumeroSerie", "Estado = @Estado"]
+        // params: { NumeroSerie: '123', Estado: 'Averiado' }
         const query = `
             UPDATE DISPOSITIVOS 
             SET ${updates.join(', ')}
             OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.Estado
-            WHERE ID_Dispositivo = ?
+            WHERE ID_Dispositivo = @ID_Dispositivo -- 🚨 CORRECCIÓN: Usar @ID_Dispositivo
         `;
-        params.push(id); 
-        const result = await executeQuery(query, params);
+        // Agregamos el ID para la cláusula WHERE al objeto de parámetros
+        const finalParams = { ...params, ID_Dispositivo: id }; 
+        const result = await executeQuery(query, finalParams);
         return result[0];
     }
 
@@ -87,9 +89,10 @@ static async update(id, updates, params) {
             UPDATE DISPOSITIVOS 
             SET Estado = 'Inactivo' 
             OUTPUT DELETED.ID_Dispositivo, DELETED.NombreDispositivo, INSERTED.Estado
-            WHERE ID_Dispositivo = ? AND Estado = 'Operativo'
+            WHERE ID_Dispositivo = @ID_Dispositivo AND Estado = 'Operativo' -- 🚨 CORRECCIÓN: Usar @ID_Dispositivo
         `;
-        const result = await executeQuery(query, [id]);
+        // 🚨 CORRECCIÓN CLAVE: Objeto de parámetros
+        const result = await executeQuery(query, { ID_Dispositivo: id });
         return result[0];
     }
 }

@@ -1,4 +1,4 @@
-// src/services/ModeloDispositivoService.js
+// src/services/ModeloDispositivoService.js (COMPLETO Y CORREGIDO)
 
 const ModeloDispositivoModel = require('../models/ModeloDispositivoModel');
 
@@ -51,7 +51,8 @@ class ModeloDispositivoService {
         const updates = [];
         const params = [];
         
-        // Construir dinámicamente la consulta de actualización
+        // La lista 'updates' usa '?' como placeholder, que será transformado
+        // a '@p1', '@p2', etc. por el Modelo antes de llamar a executeQuery.
         if (data.nombreModelo) { updates.push('NombreModelo = ?'); params.push(data.nombreModelo); }
         if (data.fabricante) { updates.push('Fabricante = ?'); params.push(data.fabricante); }
         if (data.tipoDispositivo) { updates.push('TipoDispositivo = ?'); params.push(data.tipoDispositivo); }
@@ -64,6 +65,7 @@ class ModeloDispositivoService {
             const updatedModelo = await ModeloDispositivoModel.update(id, updates, params);
             
             if (!updatedModelo) {
+                // Si la actualización no afectó a ninguna fila, el modelo devuelve undefined
                 throw new Error('Modelo no encontrado para actualizar.', { cause: 404 });
             }
             return updatedModelo;
@@ -95,6 +97,21 @@ class ModeloDispositivoService {
             }
             throw error;
         }
+    }
+    
+    /** Realiza un borrado lógico (desactivación). */
+    static async deactivateModelo(id) {
+        // En un borrado lógico, actualizas un campo 'Activo'.
+        // Usamos '?' para que el Modelo pueda hacer la conversión a @p1.
+        const updates = ['Activo = ?']; 
+        const params = [false]; // Asume que 'false' es el valor para desactivar.
+        
+        const deactivatedModelo = await ModeloDispositivoModel.update(id, updates, params);
+
+        if (!deactivatedModelo) {
+            throw new Error('Modelo no encontrado o no se pudo desactivar.', { cause: 404 });
+        }
+        return deactivatedModelo;
     }
 }
 

@@ -1,4 +1,4 @@
-// src/controllers/ModeloDispositivoController.js
+// src/controllers/ModeloDispositivoController.js (COMPLETO Y CORREGIDO)
 
 const ModeloDispositivoService = require('../services/ModeloDispositivoService');
 
@@ -44,11 +44,7 @@ class ModeloDispositivoController {
             const { id } = req.params;
             const modelo = await ModeloDispositivoService.getModeloById(id);
             
-            // 🚨 CORRECCIÓN 1: Manejar 404 cuando el servicio devuelve null/undefined
-            if (!modelo) {
-                 return res.status(404).json({ message: 'Modelo de Dispositivo no encontrado.' });
-            }
-
+            // Si el servicio lanza 404, se captura en el catch. Si devuelve un objeto, es 200.
             res.status(200).json({
                 message: '✅ Modelo encontrado exitosamente.',
                 modelo: modelo
@@ -56,8 +52,7 @@ class ModeloDispositivoController {
         } catch (error) {
             const status = error.cause || 500;
             res.status(status).json({
-                // Mejorar mensaje de error para 404
-                message: status === 404 ? 'Modelo no encontrado.' : error.message, 
+                message: error.message, 
                 error: error.message
             });
         }
@@ -69,11 +64,7 @@ class ModeloDispositivoController {
             const { id } = req.params;
             const updatedModelo = await ModeloDispositivoService.updateModelo(id, req.body);
             
-            // 🚨 CORRECCIÓN 2: Manejar 404 si la actualización no afectó ninguna fila
-            if (!updatedModelo) {
-                 return res.status(404).json({ message: 'Modelo no encontrado para actualizar.' });
-            }
-
+            // Si el servicio lanza 404, se captura en el catch.
             res.status(200).json({
                 message: `✅ Modelo (ID: ${id}) ha sido actualizado exitosamente.`,
                 modelo: updatedModelo
@@ -88,18 +79,13 @@ class ModeloDispositivoController {
     }
 
     /** DELETE /api/modelos/:id (Borrado Lógico) */
-    // 🚨 CORRECCIÓN 3: Renombrado a softDelete para coincidir con el routes.js
+    // Usamos 'deactivateModelo' en el servicio para un borrado LÓGICO como sugiere el routes.js (softDelete)
     static async softDelete(req, res) { 
         try {
             const { id } = req.params;
-            // Asumiendo que el servicio tiene un método llamado 'deactivateModelo'
             const deactivatedModelo = await ModeloDispositivoService.deactivateModelo(id); 
             
-            // 🚨 CORRECCIÓN 4: Manejar 404 si el borrado no afectó ninguna fila
-            if (!deactivatedModelo) {
-                 return res.status(404).json({ message: 'Modelo no encontrado o ya estaba inactivo.' });
-            }
-
+            // Si el servicio lanza 404, se captura en el catch.
             res.status(200).json({
                 message: `✅ Modelo (ID: ${id}) ha sido desactivado (borrado lógico) exitosamente.`,
                 modelo: deactivatedModelo
@@ -112,9 +98,6 @@ class ModeloDispositivoController {
             });
         }
     }
-    
-    // Alias para el método 'delete' original en caso de que aún lo uses en alguna ruta antigua
-    static delete = ModeloDispositivoController.softDelete; 
 }
 
 module.exports = ModeloDispositivoController;
