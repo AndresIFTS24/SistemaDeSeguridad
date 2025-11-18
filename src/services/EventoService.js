@@ -79,6 +79,22 @@ class EventoService {
         }
         return eventos;
     }
+
+    static async deleteEvento(id) {
+        if (isNaN(parseInt(id))) {
+            throw new Error('El ID de evento debe ser un número válido.', { cause: 400 });
+        }
+        
+        // Llama al método 'delete' del modelo
+        const deletedEvento = await EventoModel.delete(id);
+        
+        if (!deletedEvento) {
+            // Si el modelo devuelve null/undefined, significa que el ID no existía.
+            throw new Error(`Evento con ID ${id} no encontrado para eliminar.`, { cause: 404 });
+        }
+        
+        return deletedEvento;
+    }
 }
 
 module.exports = EventoService;

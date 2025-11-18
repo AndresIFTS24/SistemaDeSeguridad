@@ -59,8 +59,9 @@ app.use('/api', userRoutes); // Rutas de Gestión de Usuarios
 app.use('/api', abonadoRoutes); //Rutas de Gestión de Usuarios
 app.use('/api', modeloDispositivoRoutes); //Rutas de Gestión de modelos de dispositivos
 app.use('/api', dispositivoRoutes); //Rutas de Gestión de dispositivos
-app.use('/api', asignacionRoutes);
-app.use('/api', eventoRoutes);
+app.use('/api', asignacionRoutes); //Rutas de Gestión de asignaciones
+app.use('/api', eventoRoutes); //Rutas de Gestión de eventos
+
 // ====================================================================
 // INICIO Y VERIFICACIÓN DEL SERVIDOR
 // ====================================================================

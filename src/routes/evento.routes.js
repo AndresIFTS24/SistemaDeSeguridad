@@ -15,4 +15,5 @@ router.get('/eventos', adminOnly, EventoController.getAll);
 router.get('/eventos/dispositivo/:id', adminOnly, EventoController.getByDispositivo);
 router.get('/eventos/:id', adminOnly, EventoController.getById);
 router.put('/eventos/:id', [verifyToken, checkRole(['Administrador General'])], EventoController.updateEstado);
+router.delete('/eventos/:id', adminOnly, EventoController.delete);
 module.exports = router;

@@ -77,6 +77,16 @@ static async findById(id) {
         const result = await executeQuery(query, params);
         return result[0]; // Devuelve el evento actualizado
     }
+
+    static async delete(id) {
+        const query = `
+            DELETE FROM EVENTOS 
+            OUTPUT DELETED.ID_Evento, DELETED.ID_Dispositivo
+            WHERE ID_Evento = ?
+        `;
+        const result = await executeQuery(query, [id]);
+        return result[0]; // Devuelve el evento eliminado
+    }
 }
 
 module.exports = EventoModel;

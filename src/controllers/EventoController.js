@@ -100,6 +100,29 @@ class EventoController {
             });
         }
     }
+
+    static async delete(req, res) {
+        try {
+            const { id } = req.params;
+            const deletedEvento = await EventoService.deleteEvento(id);
+            
+            if (!deletedEvento) {
+                // El servicio maneja 404 si el ID no existe
+                return res.status(404).json({ message: `Evento con ID ${id} no encontrado para eliminar.` });
+            }
+
+            res.status(200).json({
+                message: `✅ Evento (ID: ${id}) eliminado exitosamente.`,
+                evento: deletedEvento
+            });
+        } catch (error) {
+            const status = error.cause || 500;
+            res.status(status).json({
+                message: error.message,
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = EventoController;
