@@ -108,29 +108,57 @@ class UserService {
     }
     
     /** Actualiza los datos de un usuario. */
-    static async updateUserDetails(id, { nombre, telefono, idSector, idRol }) {
-        if (!nombre && !telefono && !idSector && !idRol) {
-            throw new Error('Se requiere al menos un campo para actualizar.', { cause: 400 });
+    static async updateUserDetails(id, data) {
+        if (isNaN(parseInt(id))) {
+            throw new Error('El ID de usuario debe ser un número válido.', { cause: 400 });
         }
         
         const updates = [];
         const params = [];
 
-        if (nombre) { updates.push('Nombre = ?'); params.push(nombre); }
-        if (telefono) { updates.push('Telefono = ?'); params.push(telefono); }
-        if (idSector) { 
-            if (isNaN(parseInt(idSector))) {
-                 throw new Error('ID_Sector debe ser un número válido.', { cause: 400 });
+        // Hashing de la nueva contraseña (si se proporciona)
+        if (data.password) {
+            try {
+                const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
+                updates.push('PasswordHash = ?');
+                params.push(hashedPassword);
+                // NOTA: Se elimina data.password para no procesarlo más abajo
+                delete data.password; 
+            } catch (hashError) {
+                console.error('Error al hashear la nueva contraseña:', hashError);
+                throw new Error('Error de seguridad al procesar la contraseña.', { cause: 500 });
             }
-            updates.push('ID_Sector = ?'); 
-            params.push(idSector); 
         }
-        if (idRol) { 
-            if (isNaN(parseInt(idRol))) {
-                 throw new Error('ID_Rol debe ser un número válido.', { cause: 400 });
+        
+        // Mapeo dinámico de campos a actualizar
+        const allowedFields = {
+            Nombre: 'Nombre', 
+            Email: 'Email', 
+            Telefono: 'Telefono',
+            ID_Sector: 'ID_Sector',
+            ID_Rol: 'ID_Rol',
+            Activo: 'Activo' // Campo Activo para (des)activación
+        };
+
+        for (const [key, dbColumn] of Object.entries(allowedFields)) {
+            const value = data[key];
+            if (value !== undefined) {
+                // Validación para IDs (FKs)
+                if (['ID_Sector', 'ID_Rol'].includes(dbColumn) && isNaN(parseInt(value))) {
+                    throw new Error(`${dbColumn} debe ser un número válido.`, { cause: 400 });
+                }
+                // Validación para Activo (debe ser 0 o 1)
+                if (dbColumn === 'Activo' && (value !== 0 && value !== 1)) {
+                    throw new Error('El campo Activo debe ser 0 o 1.', { cause: 400 });
+                }
+                
+                updates.push(`${dbColumn} = ?`);
+                params.push(value);
             }
-            updates.push('ID_Rol = ?'); 
-            params.push(idRol); 
+        }
+
+        if (updates.length === 0) {
+            throw new Error('Se requiere al menos un campo válido para actualizar (Nombre, Email, etc., o password).', { cause: 400 });
         }
 
         try {
@@ -144,6 +172,9 @@ class UserService {
         } catch (error) {
             if (error.message.includes('FOREIGN KEY constraint')) {
                 throw new Error('El ID de Sector o Rol proporcionado no existe.', { cause: 400 });
+            }
+            if (error.message.includes('UNIQUE KEY constraint') && error.message.includes('Email')) {
+                throw new Error('El Email proporcionado ya está en uso.', { cause: 409 });
             }
             throw error;
         }

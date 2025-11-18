@@ -44,23 +44,38 @@ class EventoModel {
     }
 
     /** Busca eventos por ID de Dispositivo. */
-    static async findByDispositivoId(ID_Dispositivo) {
+static async findById(id) {
         const query = `
             SELECT 
                 E.ID_Evento, E.FechaHoraRecepcion, E.Estado,
+                E.ID_Dispositivo, 
                 D.NumeroSerie AS SerieDispositivo, 
                 D.NombreDispositivo,
-                -- 🚨 CORREGIDO: Usamos Codigo, DescripcionAlarma y Prioridad
+                MD.NombreModelo,
                 CE.Codigo AS TipoEvento, 
                 CE.DescripcionAlarma AS DescripcionEvento, 
                 CE.Prioridad AS NivelCriticidad
             FROM EVENTOS E
             JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
+            JOIN MODELOS_DISPOSITIVOS MD ON D.ID_Modelo = MD.ID_Modelo
             JOIN CODIGOS_EVENTOS CE ON E.ID_CodigoEvento = CE.ID_CodigoEvento
-            WHERE E.ID_Dispositivo = ?
-            ORDER BY E.FechaHoraRecepcion DESC
+            WHERE E.ID_Evento = ? -- <--- Filtra por ID_Evento
         `;
-        return executeQuery(query, [ID_Dispositivo]);
+        const result = await executeQuery(query, [id]);
+        return result[0];
+    }
+
+    static async updateEstado(id, estado) {
+        const query = `
+            UPDATE EVENTOS 
+            SET Estado = ?
+            OUTPUT INSERTED.ID_Evento, INSERTED.Estado, INSERTED.FechaHoraRecepcion
+            WHERE ID_Evento = ?
+        `;
+        const params = [estado, id];
+        
+        const result = await executeQuery(query, params);
+        return result[0]; // Devuelve el evento actualizado
     }
 }
 

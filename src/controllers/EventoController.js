@@ -38,6 +38,25 @@ class EventoController {
         }
     }
 
+    /** GET /api/eventos/:id (Obtener un evento por ID) */
+    static async getById(req, res) {
+        try {
+            const { id } = req.params;
+            const evento = await EventoService.getEventoById(id);
+            
+            res.status(200).json({
+                message: `✅ Evento ID ${id} encontrado.`,
+                evento: evento
+            });
+        } catch (error) {
+            const status = error.cause || 500;
+            res.status(status).json({
+                message: error.message,
+                error: error.message
+            });
+        }
+    }
+
     /** GET /api/eventos/dispositivo/:id (Obtener eventos por Dispositivo) */
     static async getByDispositivo(req, res) {
         try {
@@ -48,6 +67,30 @@ class EventoController {
                 message: `✅ Se encontraron ${eventos.length} eventos para el Dispositivo ID ${id}.`,
                 total: eventos.length,
                 eventos: eventos
+            });
+        } catch (error) {
+            const status = error.cause || 500;
+            res.status(status).json({
+                message: error.message,
+                error: error.message
+            });
+        }
+    }
+
+    static async updateEstado(req, res) {
+        try {
+            const { id } = req.params;
+            const { Estado } = req.body;
+
+            if (!Estado) {
+                throw new Error('El campo Estado es obligatorio para la actualización.', { cause: 400 });
+            }
+
+            const updatedEvento = await EventoService.updateEventoEstado(id, Estado);
+            
+            res.status(200).json({
+                message: `✅ Estado del Evento ID ${id} actualizado a '${Estado}'.`,
+                evento: updatedEvento
             });
         } catch (error) {
             const status = error.cause || 500;

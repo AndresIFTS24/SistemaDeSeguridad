@@ -16,7 +16,8 @@ class DispositivoModel {
     }) {
         // --- Mapeo y saneamiento de variables ---
         const NumeroSerie = Serie; 
-        const ZonaUbicacionParam = Ubicacion === undefined ? null : Ubicacion; // Evita 'undefined' para VARCHAR
+        // ✅ CORRECCIÓN: Usar !Ubicacion para capturar undefined, null, y cadena vacía ("")
+        const ZonaUbicacionParam = !Ubicacion ? null : Ubicacion;
         
         const query = `
             -- 🚨 ORDEN ALINEADO Y CORRECCIÓN FINAL
@@ -68,11 +69,11 @@ class DispositivoModel {
     }
     
     /** Actualiza campos de un dispositivo. */
-    static async update(id, updates, params) {
+static async update(id, updates, params) {
         const query = `
             UPDATE DISPOSITIVOS 
             SET ${updates.join(', ')}
-            OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.NombreDispositivo, INSERTED.Estado
+            OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.Estado
             WHERE ID_Dispositivo = ?
         `;
         params.push(id); 

@@ -69,40 +69,70 @@ class DispositivoService {
     }
     
     /** Actualiza los datos de un dispositivo. */
-    static async updateDispositivo(id, data) {
+static async updateDispositivo(id, data) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de dispositivo debe ser un número válido.', { cause: 400 });
         }
         
         const updates = [];
         const params = [];
+        let dataToProcess = { ...data };
+
+        // 1. Mapeo de campos de entrada a nombres de columna de la DB (JSON_KEY: DB_COLUMN)
+        // **Solo incluimos los campos que realmente existen en tu tabla SQL.**
+        const fieldMapping = {
+            // Claves Foráneas
+            ID_Direccion: 'ID_Direccion', 
+            ID_Modelo: 'ID_Modelo',
+            
+            // Campos de Datos
+            Serie: 'NumeroSerie',           // Mapeo correcto: Serie -> NumeroSerie
+            Ubicacion: 'Zona_Ubicacion',    // Mapeo correcto: Ubicacion -> Zona_Ubicacion
+            FechaInstalacion: 'FechaInstalacion',
+            Estado: 'Estado'
+            // ❌ NombreDispositivo fue ELIMINADO permanentemente de aquí.
+        };
         
-        // Preprocesar la fecha en caso de que se esté actualizando
-        if (data.FechaInstalacion) {
-            const date = new Date(data.FechaInstalacion);
-            if (!isNaN(date)) {
-                data.FechaInstalacion = date.toISOString().slice(0, 10);
-            } else {
+        // 2. Preprocesar la FechaInstalacion (si se proporciona)
+        if (dataToProcess.FechaInstalacion) {
+            try {
+                const date = new Date(dataToProcess.FechaInstalacion);
+                if (isNaN(date)) {
+                    throw new Error('El formato de FechaInstalacion no es válido para actualizar.', { cause: 400 });
+                }
+                dataToProcess.FechaInstalacion = date.toISOString().slice(0, 10);
+            } catch (e) {
                 throw new Error('El formato de FechaInstalacion no es válido para actualizar.', { cause: 400 });
             }
         }
+        
+        // 3. Construcción dinámica de la consulta
+        let hasUpdate = false;
+        
+        for (const [key, dbColumn] of Object.entries(fieldMapping)) {
+            // **CLAVE:** El chequeo debe ser solo si la clave del JSON (key) existe en la data.
+            if (key in dataToProcess) { 
+                const value = dataToProcess[key];
+                
+                // Validación para IDs (FKs)
+                if (['ID_Modelo', 'ID_Direccion'].includes(dbColumn)) {
+                    // Si se envía, debe ser un número válido
+                    if (value !== null && value !== undefined && isNaN(parseInt(value))) {
+                        throw new Error(`${dbColumn} debe ser un número válido.`, { cause: 400 });
+                    }
+                }
+                
+                updates.push(`${dbColumn} = ?`);
+                params.push(value);
+                hasUpdate = true;
+            }
+        }
 
-        // 1. ID_Modelo
-        if (data.ID_Modelo) { updates.push('ID_Modelo = ?'); params.push(data.ID_Modelo); }
-        // 2. NumeroSerie (La entrada es 'Serie', la DB es 'NumeroSerie')
-        if (data.Serie) { updates.push('NumeroSerie = ?'); params.push(data.Serie); } 
-        // 3. NombreDispositivo
-        if (data.NombreDispositivo) { updates.push('NombreDispositivo = ?'); params.push(data.NombreDispositivo); }
-        // 4. Ubicacion (La entrada es 'Ubicacion', la DB es 'Zona_Ubicacion')
-        if (data.Ubicacion) { updates.push('Zona_Ubicacion = ?'); params.push(data.Ubicacion); } 
-        // 5. Estado
-        if (data.Estado !== undefined && data.Estado !== null) { updates.push('Estado = ?'); params.push(data.Estado); }
-        // 6. FechaInstalacion (Se agrega aquí después de ser preprocesada)
-        if (data.FechaInstalacion) { updates.push('FechaInstalacion = ?'); params.push(data.FechaInstalacion); }
 
-
-        if (updates.length === 0) {
-            throw new Error('Se requiere al menos un campo para actualizar.', { cause: 400 });
+        if (!hasUpdate) {
+            // Este error solo se lanzará si el objeto 'data' está vacío o solo contiene
+            // campos que no están en el fieldMapping.
+            throw new Error('Se requiere al menos un campo válido para actualizar (ej. Serie, ID_Modelo, ID_Direccion).', { cause: 400 });
         }
 
         try {
@@ -113,11 +143,11 @@ class DispositivoService {
             }
             return updatedDispositivo;
         } catch (error) {
-            if (error.message && error.message.includes('UNIQUE KEY constraint')) {
+            if (error.message && error.message.includes('UNIQUE KEY constraint') && error.message.includes('NumeroSerie')) {
                 throw new Error('La Serie proporcionada ya está siendo utilizada por otro dispositivo.', { cause: 409 });
             }
             if (error.message && error.message.includes('FOREIGN KEY constraint')) {
-                throw new Error('El ID de Modelo o la Dirección proporcionada no existen.', { cause: 400 });
+                throw new Error('Error de relación. El ID de Modelo o Dirección proporcionada no existe.', { cause: 400 });
             }
             throw error;
         }

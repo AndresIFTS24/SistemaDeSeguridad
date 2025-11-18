@@ -61,26 +61,49 @@ class AbonadoService {
         const updates = [];
         const params = [];
         
-        // 1. Construir dinámicamente la consulta de actualización
-        
-        // ACEPTAR NOMBRES DE COLUMNAS DE LA DB (si los envía el cliente)
-        if (data.razonSocial) { updates.push('RazonSocial = ?'); params.push(data.razonSocial); }
-        if (data.rut) { updates.push('RUT = ?'); params.push(data.rut); }
-        if (data.contactoPrincipal) { updates.push('ContactoPrincipal = ?'); params.push(data.contactoPrincipal); }
-        if (data.telefonoContacto) { updates.push('TelefonoContacto = ?'); params.push(data.telefonoContacto); }
-        if (data.emailContacto) { updates.push('EmailContacto = ?'); params.push(data.emailContacto); }
-        
-        // ACEPTAR NOMBRES SIMPLIFICADOS DEL JSON (si los envía el cliente)
-        if (data.nombreCompleto) { updates.push('RazonSocial = ?'); params.push(data.nombreCompleto); }
-        if (data.dni) { updates.push('RUT = ?'); params.push(data.dni); }
-        if (data.telefono) { updates.push('TelefonoContacto = ?'); params.push(data.telefono); }
-        if (data.email) { updates.push('EmailContacto = ?'); params.push(data.email); }
+        // Mapeo de campos del JSON de entrada a los nombres de columna de la DB (DB: Columna)
+        const fieldMapping = {
+            // Nombres de columna de la DB (preferidos)
+            razonSocial: 'RazonSocial',
+            rut: 'RUT',
+            contactoPrincipal: 'ContactoPrincipal',
+            telefonoContacto: 'TelefonoContacto',
+            emailContacto: 'EmailContacto',
+            activo: 'Activo', // Activo debe ser 0 o 1
+            idZona: 'ID_Zona', // Agregado por si existe la FK en la tabla
+            
+            // Nombres simplificados del JSON para comodidad del cliente
+            nombreCompleto: 'RazonSocial', 
+            dni: 'RUT', 
+            telefono: 'TelefonoContacto', 
+            email: 'EmailContacto'
+        };
 
-        // Campo Activo
-        if (data.activo !== undefined && data.activo !== null) { updates.push('Activo = ?'); params.push(data.activo); }
+        let hasUpdate = false;
+        
+        for (const [key, dbColumn] of Object.entries(fieldMapping)) {
+            const value = data[key];
+            
+            // Usamos 'in data' para permitir valores falsy (0, '', null) si son intencionales
+            if (key in data) { 
+                // Evitamos duplicados si el cliente manda 'dni' y 'rut' a la vez
+                if (updates.some(u => u.startsWith(dbColumn))) {
+                    continue; 
+                }
 
-        if (updates.length === 0) {
-            throw new Error('Se requiere al menos un campo para actualizar.', { cause: 400 });
+                // 🚨 Validación específica para 'Activo' (asumiendo que es BIT o TINYINT)
+                if (dbColumn === 'Activo' && (value !== 0 && value !== 1)) {
+                    throw new Error('El campo Activo debe ser 0 o 1.', { cause: 400 });
+                }
+                
+                updates.push(`${dbColumn} = ?`);
+                params.push(value);
+                hasUpdate = true;
+            }
+        }
+
+        if (!hasUpdate) {
+            throw new Error('Se requiere al menos un campo válido para actualizar.', { cause: 400 });
         }
 
         try {
@@ -92,8 +115,11 @@ class AbonadoService {
             
             return updatedAbonado;
         } catch (error) {
-            if (error.message && error.message.includes('UNIQUE KEY constraint')) {
-                 throw new Error('El RUT proporcionado ya está siendo utilizado por otro abonado.', { cause: 409 });
+            if (error.message && error.message.includes('UNIQUE KEY constraint') && error.message.includes('RUT')) {
+                throw new Error('El DNI/RUT proporcionado ya está siendo utilizado por otro abonado.', { cause: 409 });
+            }
+            if (error.message && error.message.includes('FOREIGN KEY constraint')) {
+                 throw new Error('Error de relación. El ID de Zona o Vendedor proporcionado no existe.', { cause: 400 });
             }
             throw error;
         }

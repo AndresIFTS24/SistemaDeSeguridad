@@ -31,7 +31,41 @@ class EventoService {
     static async getAllEventos() {
         return EventoModel.findAll();
     }
+
+    /** Busca un evento por ID. */
+    static async getEventoById(id) {
+        if (isNaN(parseInt(id))) {
+            throw new Error('El ID de evento debe ser un número válido.', { cause: 400 });
+        }
+        
+        const evento = await EventoModel.findById(id);
+
+        if (!evento) {
+            throw new Error(`Evento con ID ${id} no encontrado.`, { cause: 404 });
+        }
+        return evento;
+    }
     
+    static async updateEventoEstado(id, nuevoEstado) {
+        if (isNaN(parseInt(id))) {
+            throw new Error('El ID de evento debe ser un número válido.', { cause: 400 });
+        }
+        
+        // 🚨 Validación de estado permitidos (opcional, pero buena práctica)
+        const estadosValidos = ['Pendiente', 'En Progreso', 'Cerrado'];
+        if (!estadosValidos.includes(nuevoEstado)) {
+            throw new Error('Estado no válido. Use: Pendiente, En Progreso o Cerrado.', { cause: 400 });
+        }
+
+        const updatedEvento = await EventoModel.updateEstado(id, nuevoEstado);
+
+        if (!updatedEvento) {
+            throw new Error(`Evento con ID ${id} no encontrado para actualizar.`, { cause: 404 });
+        }
+        return updatedEvento;
+    }
+
+
     /** Obtiene eventos filtrados por ID de Dispositivo. */
     static async getEventosByDispositivo(id) {
         if (isNaN(parseInt(id))) {
