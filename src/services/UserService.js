@@ -1,7 +1,7 @@
 // src/services/UserService.js (COMPLETO Y FINAL PARA MSSQL)
 
 const UserModel = require('../models/UserModel');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const SALT_ROUNDS = 10; 
 
