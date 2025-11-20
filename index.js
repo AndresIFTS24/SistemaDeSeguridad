@@ -7,7 +7,7 @@ const cors = require('cors');
 // Importaciones desde la carpeta 'src'
 const { checkDatabaseConnection } = require('./src/config/db.config');
 
-// Importar rutas modularizadas
+// Importaciones rutas modularizadas
 const authRoutes = require('./src/routes/auth.routes');
 const userRoutes = require('./src/routes/user.routes');
 const abonadoRoutes = require('./src/routes/abonado.routes');

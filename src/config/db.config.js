@@ -1,4 +1,4 @@
-// src/config/db.config.js (CORREGIDO Y FINAL PARA MSSQL/VERCEL)
+
 
 const sql = require('mssql'); // Módulo compatible con la nube
 const path = require('path');
@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 // 🚨 Definición de Tipos SQL Comunes para mssql
 // Usaremos estos tipos para indicar a mssql qué esperar.
 const commonSqlTypes = {
-    // Si la clave no está en el objeto, se asume VarChar(255)
+
     ID_Usuario: sql.Int,
     ID_Rol: sql.Int,
     ID_Sector: sql.Int,
@@ -20,14 +20,13 @@ const commonSqlTypes = {
     Nombre: sql.VarChar(255),
     Telefono: sql.VarChar(20),
     Activo: sql.Bit
-    // Agrega más tipos si usas, ej: TipoDispositivo: sql.VarChar(50), NumeroSerie: sql.VarChar(50)
 };
 
 // 1. Definir la configuración de conexión
 const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER, // EJ: '127.0.0.1'
+    server: process.env.DB_SERVER, 
     database: process.env.DB_DATABASE,
     port: parseInt(process.env.DB_PORT) || 1433,
     options: {
