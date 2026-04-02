@@ -1,103 +1,48 @@
-
-
-const sql = require('mssql'); // Módulo compatible con la nube
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') }); 
-
-// 🚨 Definición de Tipos SQL Comunes para mssql
-// Usaremos estos tipos para indicar a mssql qué esperar.
-const commonSqlTypes = {
-
-    ID_Usuario: sql.Int,
-    ID_Rol: sql.Int,
-    ID_Sector: sql.Int,
-    ID_Dispositivo: sql.Int,
-    ID_Modelo: sql.Int,
-    ID_Abonado: sql.Int,
-    ID_CodigoEvento: sql.Int,
-    Email: sql.VarChar(100),
-    PasswordHash: sql.VarChar(255), // Ajustar tamaño según tu hash
-    Nombre: sql.VarChar(255),
-    Telefono: sql.VarChar(20),
-    Activo: sql.Bit
-};
-
-// 1. Definir la configuración de conexión
-const dbConfig = {
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    server: process.env.DB_SERVER, 
-    database: process.env.DB_DATABASE,
-    port: parseInt(process.env.DB_PORT) || 1433,
-    options: {
-        encrypt: false, // Puedes poner true si usas Azure/AWS
-        trustServerCertificate: true // true para localhost, false para prod con certificado
-    },
-    pool: {
-        max: 10,
-        min: 0,
-        idleTimeoutMillis: 30000 
-    }
-};
-
-const pool = new sql.ConnectionPool(dbConfig);
-let isPoolConnected = false;
+// src/config/db.config.js
+const mysql = require('mysql2/promise');
+require('dotenv').config();
 
 /**
- * Helper para ejecutar consultas SQL de forma asíncrona.
- * @param {string} query - Consulta SQL con marcadores @Nombre.
- * @param {object} [params={}] - Objeto de parámetros {NombreParametro: valor}.
+ * CONFIGURACIÓN DEL POOL DE CONEXIONES
+ * Usamos el SDK de mysql2 con soporte para Promesas (async/await)
  */
-async function executeQuery(query, params = {}) {
-    if (!isPoolConnected) {
-        await pool.connect();
-        isPoolConnected = true;
-    }
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10, // Ajustable según el tráfico
+    queueLimit: 0,
+    // Ayuda a mantener la conexión activa en hostings gratuitos
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000 
+});
 
-    try {
-        const request = pool.request();
-        
-        // 🚨 Mapeo CRUCIAL para mssql: Define los parámetros usando request.input()
-        if (typeof params === 'object' && params !== null && Object.keys(params).length > 0) {
-            for (const paramName in params) {
-                if (params.hasOwnProperty(paramName)) {
-                    // Determinar el tipo SQL (usa VarChar(255) por defecto si no se especifica)
-                    const dataType = commonSqlTypes[paramName] || sql.VarChar(255);
-                    
-                    // Asignar el parámetro al request
-                    request.input(paramName, dataType, params[paramName]);
-                }
-            }
-        }
-        
-        const result = await request.query(query);
-        return result.recordset; 
-    } catch (err) {
-        console.error("❌ ERROR SQL EJECUTANDO:", query.substring(0, 50) + "...");
-        console.error("Detalle del Error:", err.message);
-        throw err; // Rebotar el error para que el controlador lo maneje
-    }
-}
-
+/**
+ * Función para verificar la salud de la conexión al iniciar el servidor.
+ */
 async function checkDatabaseConnection() {
     try {
-        // Ejecutar una consulta simple para verificar la conexión
-        await executeQuery('SELECT 1');
-        console.log('✅ CONEXIÓN DB EXITOSA: El servidor puede comunicarse con SQL Server.');
+        const connection = await pool.getConnection();
+        console.log('====================================================');
+        console.log('✅ CONEXIÓN EXITOSA A CLEVER CLOUD');
+        console.log(`📡 Host: ${process.env.DB_HOST}`);
+        console.log(`🗄️  BD: ${process.env.DB_NAME}`);
+        console.log('====================================================');
+        connection.release(); // Importante: liberar la conexión de prueba
     } catch (error) {
-        console.error('❌ ERROR FATAL: No se pudo establecer la conexión inicial con SQL Server.');
-        console.error('Detalle:', error.message);
-        console.log('----------------------------------------------------');
-        console.log('Verifica las variables de entorno (DB_SERVER, DB_USER, etc.)');
-        console.log('----------------------------------------------------');
-        // Usar console.log para mostrar las variables que fallaron (solo para debug local)
-        // console.log(`Configuración fallida: ${JSON.stringify(dbConfig)}`); 
-        process.exit(1);
+        console.error('====================================================');
+        console.error('❌ ERROR DE CONEXIÓN A LA BASE DE DATOS');
+        console.error('Mensaje:', error.message);
+        console.error('Acción: Revisa las credenciales en tu archivo .env');
+        console.error('====================================================');
     }
 }
 
-module.exports = {
-    executeQuery,
-    checkDatabaseConnection,
-    closePool: () => pool.close(),
+// Exportamos el pool para usarlo en los controladores y la función de test
+module.exports = { 
+    pool, 
+    checkDatabaseConnection 
 };

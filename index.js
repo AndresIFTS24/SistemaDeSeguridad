@@ -1,11 +1,13 @@
-// index.js
+// index.js - Versión Final para MySQL & Render
 
 // 1. Importaciones de Librerías y Configuración
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config(); // Aseguramos que cargue las variables del .env
 
 // Importaciones desde la carpeta 'src'
-const { checkDatabaseConnection } = require('./src/config/db.config');
+// Importamos 'pool' y la función de verificación
+const { checkDatabaseConnection, pool } = require('./src/config/db.config');
 
 // Importaciones rutas modularizadas
 const authRoutes = require('./src/routes/auth.routes');
@@ -15,8 +17,10 @@ const modeloDispositivoRoutes = require('./src/routes/modeloDispositivo.routes')
 const dispositivoRoutes = require('./src/routes/dispositivo.routes');
 const asignacionRoutes = require('./src/routes/asignacion.routes');
 const eventoRoutes = require('./src/routes/evento.routes');
+
 const app = express();
-// Obtener el puerto desde el archivo .env (o usar 3000 por defecto)
+
+// IMPORTANTE PARA RENDER: Usar 0.0.0.0 y puerto dinámico
 const PORT = process.env.PORT || 3000; 
 
 // ====================================================================
@@ -29,52 +33,53 @@ app.use(express.json()); // Permite a Express leer cuerpos JSON
 // RUTAS PRINCIPALES DEL API
 // ====================================================================
 
-// Ruta 1: Bienvenida (Test de Express)
+// Ruta 1: Bienvenida
 app.get('/', (req, res) => {
-    res.send('API Node.js para Sistema de Seguridad. Estructura modularizada OK.');
+    res.send('🚀 API Sistema de Seguridad funcionando en MySQL (Clever Cloud).');
 });
 
-// Ruta 2: Test de Conexión y Consulta (Verificar que la DB funciona)
-const { executeQuery } = require('./src/config/db.config'); // Importamos para esta ruta de test
+// Ruta 2: Test de Conexión (Ajustado para MySQL)
 app.get('/api/status', async (req, res) => {
     try {
-        const query = 'SELECT GETDATE() AS FechaServidor, DB_NAME() AS BaseDeDatos;';
-        const result = await executeQuery(query);
+        // En MySQL usamos NOW() y DATABASE()
+        const [rows] = await pool.execute('SELECT NOW() AS FechaServidor, DATABASE() AS BaseDeDatos;');
         
         res.status(200).json({
-            message: '✅ Conexión SQL Server exitosa con msnodesqlv8.',
-            data: result[0]
+            message: '✅ Conexión a MySQL en Clever Cloud exitosa.',
+            data: rows[0]
         });
     } catch (error) {
         res.status(500).json({ 
-            message: '❌ ERROR: La conexión falló durante la ejecución de la consulta.',
+            message: '❌ ERROR: No se pudo conectar con la base de datos MySQL.',
             error: error.message 
         });
     }
 });
 
 // Montar las rutas en el prefijo /api
-app.use('/api', authRoutes); // Rutas de Login y Autenticación
-app.use('/api', userRoutes); // Rutas de Gestión de Usuarios
-app.use('/api', abonadoRoutes); //Rutas de Gestión de Usuarios
-app.use('/api', modeloDispositivoRoutes); //Rutas de Gestión de modelos de dispositivos
-app.use('/api', dispositivoRoutes); //Rutas de Gestión de dispositivos
-app.use('/api', asignacionRoutes); //Rutas de Gestión de asignaciones
-app.use('/api', eventoRoutes); //Rutas de Gestión de eventos
+app.use('/api', authRoutes);
+app.use('/api', userRoutes);
+app.use('/api', abonadoRoutes);
+app.use('/api', modeloDispositivoRoutes);
+app.use('/api', dispositivoRoutes);
+app.use('/api', asignacionRoutes);
+app.use('/api', eventoRoutes);
 
 // ====================================================================
 // INICIO Y VERIFICACIÓN DEL SERVIDOR
 // ====================================================================
 
 async function startServer() {
-    // 1. Verificar la conexión a la base de datos
+    // 1. Verificar la conexión a la base de datos antes de arrancar
     await checkDatabaseConnection(); 
     
-    // 2. Iniciar Express
-    app.listen(PORT, () => {
+    // 2. Iniciar Express en el host 0.0.0.0 (necesario para Render)
+    app.listen(PORT, '0.0.0.0', () => {
         console.log('----------------------------------------------------');
-        console.log(`🚀 Servidor Express iniciado en: http://localhost:${PORT}`);
+        console.log(`🚀 Servidor iniciado en puerto: ${PORT}`);
+        console.log(`🔗 URL local: http://localhost:${PORT}`);
         console.log('----------------------------------------------------');
     });
 }
+
 startServer();

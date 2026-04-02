@@ -1,73 +1,69 @@
 // src/services/AuthService.js
-
-const UserModel = require('../models/UserModel');
+const { pool } = require('../config/db.config');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-require('dotenv').config({ path: '../../.env' }); // Mantenemos tu configuración de dotenv
-
-const JWT_SECRET = process.env.JWT_SECRET || 'TuClaveSecretaSuperLargaYCompleja';
 
 class AuthService {
-
     /**
-     * Intenta autenticar un usuario y devuelve un token JWT si las credenciales son válidas.
-     * @param {Object} data - Objeto que contiene { email, password }.
-     * @returns {Object} { token, user } o lanza un error.
+     * Lógica de inicio de sesión (Login)
      */
-    static async login(data) {
-        const { email, password } = data;
+    static async login(email, password) {
+        // 1. Buscar al usuario por email en MySQL
+        // MySQL devuelve un array, usamos [rows] para obtener los datos
+        const query = `
+            SELECT u.ID_Usuario, u.Nombre, u.Email, u.PasswordHash, u.Activo, r.NombreRol 
+            FROM USUARIOS u
+            INNER JOIN ROLES r ON u.ID_Rol = r.ID_Rol
+            WHERE u.Email = ?
+        `;
         
-        // --- 0. Validación de campos obligatorios ---
-        if (!email || !password) {
-            throw new Error('Email y contraseña son obligatorios.', { cause: 400 });
+        const [rows] = await pool.execute(query, [email]);
+
+        // 2. Verificar si el usuario existe
+        if (rows.length === 0) {
+            const error = new Error('Credenciales inválidas (Usuario no encontrado).');
+            error.cause = 401;
+            throw error;
         }
 
-        // --- 1. Buscar usuario por email (incluye PasswordHash) ---
-        // Asumimos que findByEmailForAuth es un método en UserModel que trae el hash y el rol
-        const user = await UserModel.findByEmailForAuth(email);
+        const user = rows[0];
 
-        if (!user) {
-            // Usuario no encontrado o error en la consulta
-            throw new new Error('Credenciales inválidas.', { cause: 401 }); 
+        // 3. Verificar si el usuario está activo (Borrado lógico)
+        if (!user.Activo) {
+            const error = new Error('El usuario está desactivado. Contacte al administrador.');
+            error.cause = 403;
+            throw error;
         }
 
-        // --- 2. Verificar si el usuario está inactivo ---
-        // Usamos triple igualdad (===) para ser estrictos con el valor booleano o numérico (0/1)
-        if (user.Activo === false || user.Activo === 0) {
-            throw new Error('Usuario inactivo. Contacte al administrador.', { cause: 401 });
-        }
-
-        // --- 3. Comparar la contraseña (hashing) ---
-        // El campo del modelo debe ser 'PasswordHash'
+        // 4. Comparar la contraseña enviada con el Hash de la DB
         const isMatch = await bcrypt.compare(password, user.PasswordHash);
-
         if (!isMatch) {
-            throw new Error('Credenciales inválidas.', { cause: 401 });
+            const error = new Error('Credenciales inválidas (Contraseña incorrecta).');
+            error.cause = 401;
+            throw error;
         }
-        
-        // --- 4. Generar JWT ---
+
+        // 5. Generar el Token JWT
+        const payload = {
+            id: user.ID_Usuario,
+            nombre: user.Nombre,
+            rol: user.NombreRol
+        };
+
         const token = jwt.sign(
-            { 
-                id: user.ID_Usuario, 
-                email: user.Email, 
-                rol: user.NombreRol // Clave 'rol' en minúscula para consistencia
-            }, 
-            JWT_SECRET, 
-            { expiresIn: '1h' } // Token expira en 1 hora
+            payload, 
+            process.env.JWT_SECRET || 'Firma_Secreta_Provisional_123', 
+            { expiresIn: '8h' }
         );
 
-        console.log(`🔑 INICIO DE SESIÓN EXITOSO: Usuario: ${user.Nombre}`);
-
-        // --- 5. Devolver token y datos públicos del usuario ---
+        // 6. Retornar datos del usuario (sin la contraseña) y el token
         return {
-            token: token,
-            user: {
+            token,
+            usuario: {
                 id: user.ID_Usuario,
                 nombre: user.Nombre,
-                apellido: user.Apellido, // Añadido para ser consistente con el modelo
-                rol: user.NombreRol,
                 email: user.Email,
-                activo: user.Activo
+                rol: user.NombreRol
             }
         };
     }
