@@ -1,1 +1,24 @@
-<p>dashboardng works!</p>
+<div class="login-wrapper">
+  <div class="login-card">
+    <h2>SISTEMA OPTIMUS</h2>
+    <p>Seguridad Electrónica</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="input-group">
+        <label>Correo Electrónico</label>
+        <input type="email" formControlName="Email" placeholder="usuario@seguridad.com">
+      </div>
+
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input type="password" formControlName="PasswordHash" placeholder="••••••••">
+      </div>
+
+      <button type="submit" [disabled]="loginForm.invalid">INGRESAR</button>
+
+      <div *ngIf="errorMessage" class="error-msg">
+        {{ errorMessage }}
+      </div>
+    </form>
+  </div>
+</div>
