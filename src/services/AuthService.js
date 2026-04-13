@@ -1,15 +1,18 @@
 // src/services/AuthService.js
 const { pool } = require('../config/db.config');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcryptjs'); // Lo dejamos importado pero no lo usaremos ahora
 const jwt = require('jsonwebtoken');
 
 class AuthService {
     /**
-     * Lógica de inicio de sesión (Login)
+     * Lógica de inicio de sesión (MODO SIMPLE - SIN ENCRIPTACIÓN)
      */
-    static async login(email, password) {
+    static async login({ email, password }) {
+        console.log("----------------------------------------------------");
+        console.log(">> 📥 INTENTO DE LOGIN (MODO SIMPLE) RECIBIDO");
+        console.log(">> Email:", email);
+
         // 1. Buscar al usuario por email en MySQL
-        // MySQL devuelve un array, usamos [rows] para obtener los datos
         const query = `
             SELECT u.ID_Usuario, u.Nombre, u.Email, u.PasswordHash, u.Activo, r.NombreRol 
             FROM USUARIOS u
@@ -21,29 +24,41 @@ class AuthService {
 
         // 2. Verificar si el usuario existe
         if (rows.length === 0) {
-            const error = new Error('Credenciales inválidas (Usuario no encontrado).');
+            console.log(">> ❌ RESULTADO: Usuario no encontrado.");
+            const error = new Error('Credenciales inválidas');
             error.cause = 401;
             throw error;
         }
 
         const user = rows[0];
+        console.log(">> ✅ USUARIO ENCONTRADO:", user.Email);
+        console.log(">> 🗄️ PASSWORD EN DB:", user.PasswordHash);
 
-        // 3. Verificar si el usuario está activo (Borrado lógico)
+        // 3. Verificar si el usuario está activo
         if (!user.Activo) {
-            const error = new Error('El usuario está desactivado. Contacte al administrador.');
+            console.log(">> ⚠️ RESULTADO: El usuario está INACTIVO.");
+            const error = new Error('Usuario desactivado');
             error.cause = 403;
             throw error;
         }
 
-        // 4. Comparar la contraseña enviada con el Hash de la DB
-        const isMatch = await bcrypt.compare(password, user.PasswordHash);
+        // 4. COMPARACIÓN SIMPLE (TEXTO PLANO) ⚡
+        console.log(">> ⚖️ COMPARANDO TEXTO DIRECTO...");
+        
+        // Comparamos lo que escribió el usuario con lo que hay en la columna PasswordHash
+        const isMatch = (password === user.PasswordHash);
+        
+        console.log(">> ¿COINCIDE?:", isMatch);
+
         if (!isMatch) {
-            const error = new Error('Credenciales inválidas (Contraseña incorrecta).');
+            console.log(">> ❌ RESULTADO: La contraseña es incorrecta.");
+            const error = new Error('Credenciales inválidas');
             error.cause = 401;
             throw error;
         }
 
         // 5. Generar el Token JWT
+        console.log(">> 🔑 GENERANDO TOKEN...");
         const payload = {
             id: user.ID_Usuario,
             nombre: user.Nombre,
@@ -56,7 +71,9 @@ class AuthService {
             { expiresIn: '8h' }
         );
 
-        // 6. Retornar datos del usuario (sin la contraseña) y el token
+        console.log(">> 🚀 LOGIN EXITOSO PARA:", user.Nombre);
+        console.log("----------------------------------------------------");
+
         return {
             token,
             usuario: {

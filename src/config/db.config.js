@@ -46,3 +46,10 @@ module.exports = {
     pool, 
     checkDatabaseConnection 
 };
+
+const bcryptTest = require('bcryptjs');
+bcryptTest.hash('qwer1234', 10).then(hash => {
+    console.log('--- COPIA ESTE HASH EN TU BASE DE DATOS ---');
+    console.log(hash);
+    console.log('-------------------------------------------');
+});

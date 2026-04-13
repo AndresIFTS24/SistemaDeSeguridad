@@ -6,12 +6,17 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3000/api'; // Ajusta según tu puerto
+  private apiUrl = 'http://localhost:3000/api'; 
 
   constructor(private http: HttpClient) { }
 
-  // ESTE ES EL MÉTODO QUE FALTA
   login(credentials: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, credentials);
+  }
+
+  // AGREGAMOS ESTO PARA TRAER LOS USUARIOS AL DASHBOARD
+  getUsers(): Observable<any> {
+    // Apuntamos a /users que es donde el UserController.getAll responde
+    return this.http.get(`${this.apiUrl}/users`);
   }
 }

@@ -1,1 +1,44 @@
-<p>login works!</p>
+<div class="login-page">
+  <div class="background-blobs">
+    <div class="blob"></div>
+    <div class="blob"></div>
+    <div class="blob"></div>
+  </div>
+
+  <div class="login-card">
+    <div class="logo-section">
+      <div class="icon-box">
+        <span class="shield-icon">🛡️</span>
+      </div>
+      <h1>OPTIMUS</h1>
+      <p>Security Infrastructure</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="input-group">
+        <label for="email">User Email</label>
+        <div class="input-wrapper">
+          <input type="email" id="email" formControlName="email" placeholder="admin@optimus.com">
+          <span class="input-focus"></span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="password">Security Key</label>
+        <div class="input-wrapper">
+          <input type="password" id="password" formControlName="password" placeholder="••••••••">
+          <span class="input-focus"></span>
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="loginForm.invalid" class="login-btn">
+        <span>AUTHENTICATE</span>
+        <div class="btn-glow"></div>
+      </button>
+
+      <div *ngIf="errorMessage" class="error-message">
+        <span class="error-dot"></span> {{ errorMessage }}
+      </div>
+    </form>
+  </div>
+</div>
