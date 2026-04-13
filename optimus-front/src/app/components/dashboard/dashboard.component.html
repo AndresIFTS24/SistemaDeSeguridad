@@ -1,4 +1,72 @@
-<div class="main-container">
-  <h1>Panel de Control OPTIMUS</h1>
-  <p>Acceso concedido.</p>
+<div class="dashboard-screen">
+  <nav class="top-nav">
+    <div class="logo">OPTIMUS <span>SYSTEMS</span></div>
+    <div class="system-status">
+      <span class="pulse-icon"></span> SISTEMA OPERATIVO - SEGURIDAD NIVEL 4
+    </div>
+    <div class="user-profile">
+      <i class="fas fa-user-shield"></i> Administrador
+    </div>
+  </nav>
+
+  <div class="main-content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="label">Total Usuarios</span>
+        <span class="value">{{ listaUsuarios.length }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Sectores Activos</span>
+        <span class="value">4</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Alertas Hoy</span>
+        <span class="value color-alert">0</span>
+      </div>
+    </div>
+
+    <div class="console-container">
+      <div class="console-header">
+        <h3><i class="fas fa-list"></i> REGISTRO GLOBAL DE PERSONAL</h3>
+        <div class="search-box">
+          <input type="text" placeholder="Filtrar base de datos...">
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="optimus-table">
+          <thead>
+            <tr>
+              <th>IDENTIFICADOR</th>
+              <th>OPERADOR</th>
+              <th>CORREO ELECTRÓNICO</th>
+              <th>SECTOR</th>
+              <th>RANGO / ROL</th>
+              <th>ESTADO</th>
+              <th>ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of listaUsuarios">
+              <td class="tech-id">#{{ user.ID_Usuario }}</td>
+              <td class="user-name">{{ user.Nombre }}</td>
+              <td>{{ user.Email }}</td>
+              <td><span class="tag-sector">{{ user.NombreSector }}</span></td>
+              <td><span class="tag-rol">{{ user.NombreRol }}</span></td>
+              <td>
+                <div class="status-indicator">
+                  <span class="dot" [ngClass]="user.Activo ? 'online' : 'offline'"></span>
+                  {{ user.Activo ? 'AUTORIZADO' : 'SUSPENDIDO' }}
+                </div>
+              </td>
+              <td>
+                <button class="btn-action view" title="Ver Detalles"><i class="fas fa-eye"></i></button>
+                <button class="btn-action edit" title="Editar"><i class="fas fa-edit"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
