@@ -2,71 +2,100 @@
   <nav class="top-nav">
     <div class="logo">OPTIMUS <span>SYSTEMS</span></div>
     <div class="system-status">
-      <span class="pulse-icon"></span> SISTEMA OPERATIVO - SEGURIDAD NIVEL 4
+      <span class="pulse-icon"></span> 
+      SISTEMA OPERATIVO - {{ userSectorNombre | uppercase }}
     </div>
     <div class="user-profile">
-      <i class="fas fa-user-shield"></i> Administrador
+      <i class="fas fa-user-shield"></i> {{ userName }}
+      <button (click)="logout()" class="btn-logout" title="Cerrar Sesión">
+        <i class="fas fa-sign-out-alt"></i>
+      </button>
     </div>
   </nav>
 
   <div class="main-content">
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="label">Total Usuarios</span>
-        <span class="value">{{ listaUsuarios.length }}</span>
-      </div>
-      <div class="stat-card">
-        <span class="label">Sectores Activos</span>
-        <span class="value">4</span>
-      </div>
-      <div class="stat-card">
-        <span class="label">Alertas Hoy</span>
-        <span class="value color-alert">0</span>
-      </div>
-    </div>
+    
+    <div [ngSwitch]="idSector">
 
-    <div class="console-container">
-      <div class="console-header">
-        <h3><i class="fas fa-list"></i> REGISTRO GLOBAL DE PERSONAL</h3>
-        <div class="search-box">
-          <input type="text" placeholder="Filtrar base de datos...">
+      <div *ngSwitchCase="3">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="label">Base de Datos Personal</span>
+            <span class="value">{{ listaUsuarios.length }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="label">Estado del Servidor</span>
+            <span class="value color-online">OPTIMAL</span>
+          </div>
+          <div class="stat-card">
+            <span class="label">Accesos Denegados</span>
+            <span class="value">0</span>
+          </div>
+        </div>
+
+        <div class="console-container">
+          <div class="console-header">
+            <h3><i class="fas fa-server"></i> GESTIÓN DE INFRAESTRUCTURA Y USUARIOS</h3>
+            <div class="search-box">
+              <input type="text" placeholder="Filtrar por nombre o email...">
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="optimus-table">
+              <thead>
+                <tr>
+                  <th>IDENTIFICADOR</th>
+                  <th>OPERADOR</th>
+                  <th>CORREO ELECTRÓNICO</th>
+                  <th>SECTOR</th>
+                  <th>TELÉFONO</th> <th>ESTADO</th>
+                  <th>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let user of listaUsuarios">
+                  <td class="tech-id">#{{ user.ID_Usuario }}</td>
+                  <td class="user-name">{{ user.Nombre }}</td>
+                  <td>{{ user.Email }}</td>
+                  <td><span class="tag-sector">{{ user.NombreSector }}</span></td>
+                  <td><span class="tech-tel">{{ user.Telefono }}</span></td>
+                  <td>
+                    <div class="status-indicator">
+                      <span class="dot" [ngClass]="user.Activo ? 'online' : 'offline'"></span>
+                      {{ user.Activo ? 'AUTORIZADO' : 'SUSPENDIDO' }}
+                    </div>
+                  </td>
+                  <td>
+                    <button class="btn-action edit" title="Reset Password"><i class="fas fa-key"></i></button>
+                    <button class="btn-action view" title="Baja"><i class="fas fa-user-minus"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <div class="table-wrapper">
-        <table class="optimus-table">
-          <thead>
-            <tr>
-              <th>IDENTIFICADOR</th>
-              <th>OPERADOR</th>
-              <th>CORREO ELECTRÓNICO</th>
-              <th>SECTOR</th>
-              <th>RANGO / ROL</th>
-              <th>ESTADO</th>
-              <th>ACCIONES</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let user of listaUsuarios">
-              <td class="tech-id">#{{ user.ID_Usuario }}</td>
-              <td class="user-name">{{ user.Nombre }}</td>
-              <td>{{ user.Email }}</td>
-              <td><span class="tag-sector">{{ user.NombreSector }}</span></td>
-              <td><span class="tag-rol">{{ user.NombreRol }}</span></td>
-              <td>
-                <div class="status-indicator">
-                  <span class="dot" [ngClass]="user.Activo ? 'online' : 'offline'"></span>
-                  {{ user.Activo ? 'AUTORIZADO' : 'SUSPENDIDO' }}
-                </div>
-              </td>
-              <td>
-                <button class="btn-action view" title="Ver Detalles"><i class="fas fa-eye"></i></button>
-                <button class="btn-action edit" title="Editar"><i class="fas fa-edit"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div *ngSwitchCase="4">
+        <div class="monitor-grid">
+          <div class="stat-card alert-mode">
+            <span class="label">ALERTAS EN CURSO</span>
+            <span class="value">12</span>
+          </div>
+          <div class="placeholder-view">
+             <h2><i class="fas fa-video"></i> CENTRAL DE MONITOREO EN VIVO</h2>
+             <p>Cargando feeds de seguridad de Buenos Aires...</p>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+
+      <div *ngSwitchDefault>
+        <div class="welcome-container">
+          <h1>Bienvenido a OPTIMUS</h1>
+          <p>Tu sector ({{ userSectorNombre }}) tiene acceso restringido a la consola global.</p>
+        </div>
+      </div>
+
+    </div> </div>
 </div>

@@ -1,86 +1,60 @@
-// src/services/AuthService.js
 const { pool } = require('../config/db.config');
-const bcrypt = require('bcryptjs'); // Lo dejamos importado pero no lo usaremos ahora
 const jwt = require('jsonwebtoken');
 
 class AuthService {
-    /**
-     * Lógica de inicio de sesión (MODO SIMPLE - SIN ENCRIPTACIÓN)
-     */
     static async login({ email, password }) {
-        console.log("----------------------------------------------------");
-        console.log(">> 📥 INTENTO DE LOGIN (MODO SIMPLE) RECIBIDO");
-        console.log(">> Email:", email);
-
-        // 1. Buscar al usuario por email en MySQL
+        // 1. Consulta con JOIN para traer el Sector
         const query = `
-            SELECT u.ID_Usuario, u.Nombre, u.Email, u.PasswordHash, u.Activo, r.NombreRol 
+            SELECT 
+                u.ID_Usuario, u.Nombre, u.Email, u.PasswordHash, 
+                u.ID_Rol, u.ID_Sector, u.Activo, u.Telefono,
+                s.NombreSector
             FROM USUARIOS u
-            INNER JOIN ROLES r ON u.ID_Rol = r.ID_Rol
+            INNER JOIN SECTORES s ON u.ID_Sector = s.ID_Sector
             WHERE u.Email = ?
         `;
-        
-        const [rows] = await pool.execute(query, [email]);
 
-        // 2. Verificar si el usuario existe
-        if (rows.length === 0) {
-            console.log(">> ❌ RESULTADO: Usuario no encontrado.");
-            const error = new Error('Credenciales inválidas');
-            error.cause = 401;
-            throw error;
+        const [users] = await pool.execute(query, [email]); 
+
+        if (users.length === 0) {
+            const err = new Error('Credenciales inválidas');
+            err.cause = 401; // Forzamos la propiedad cause
+            throw err;
         }
 
-        const user = rows[0];
-        console.log(">> ✅ USUARIO ENCONTRADO:", user.Email);
-        console.log(">> 🗄️ PASSWORD EN DB:", user.PasswordHash);
+        const user = users[0];
 
-        // 3. Verificar si el usuario está activo
-        if (!user.Activo) {
-            console.log(">> ⚠️ RESULTADO: El usuario está INACTIVO.");
-            const error = new Error('Usuario desactivado');
-            error.cause = 403;
-            throw error;
+        // 2. Validación de contraseña (Texto plano según tu carga masiva)
+        if (user.PasswordHash !== password) {
+            const err = new Error('Credenciales inválidas');
+            err.cause = 401;
+            throw err;
         }
 
-        // 4. COMPARACIÓN SIMPLE (TEXTO PLANO) ⚡
-        console.log(">> ⚖️ COMPARANDO TEXTO DIRECTO...");
-        
-        // Comparamos lo que escribió el usuario con lo que hay en la columna PasswordHash
-        const isMatch = (password === user.PasswordHash);
-        
-        console.log(">> ¿COINCIDE?:", isMatch);
-
-        if (!isMatch) {
-            console.log(">> ❌ RESULTADO: La contraseña es incorrecta.");
-            const error = new Error('Credenciales inválidas');
-            error.cause = 401;
-            throw error;
+        if (user.Activo !== 1) {
+            const err = new Error('Usuario inactivo');
+            err.cause = 401;
+            throw err;
         }
 
-        // 5. Generar el Token JWT
-        console.log(">> 🔑 GENERANDO TOKEN...");
-        const payload = {
-            id: user.ID_Usuario,
-            nombre: user.Nombre,
-            rol: user.NombreRol
-        };
-
+        // 3. Generación de Token
+        const secret = process.env.JWT_SECRET || 'optimus_secret_2026';
         const token = jwt.sign(
-            payload, 
-            process.env.JWT_SECRET || 'Firma_Secreta_Provisional_123', 
+            { id: user.ID_Usuario, email: user.Email, idSector: user.ID_Sector },
+            secret,
             { expiresIn: '8h' }
         );
 
-        console.log(">> 🚀 LOGIN EXITOSO PARA:", user.Nombre);
-        console.log("----------------------------------------------------");
-
         return {
             token,
-            usuario: {
+            user: {
                 id: user.ID_Usuario,
                 nombre: user.Nombre,
                 email: user.Email,
-                rol: user.NombreRol
+                idRol: user.ID_Rol,
+                idSector: user.ID_Sector,
+                nombreSector: user.NombreSector,
+                telefono: user.Telefono
             }
         };
     }
