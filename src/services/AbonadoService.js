@@ -5,30 +5,32 @@ class AbonadoService {
 
     /**
      * Crear un nuevo abonado
+     * Incluye NumeroDeAbonado y validaciones de duplicados
      */
     static async createAbonado(data) {
-        const { RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto } = data;
+        const { NumeroDeAbonado, RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto } = data;
 
-        // 1. Validar si el RUT ya existe (si se proporciona)
-        if (RUT) {
-            const [existing] = await pool.execute(
-                'SELECT ID_Abonado FROM ABONADOS WHERE RUT = ?',
-                [RUT]
-            );
-            if (existing.length > 0) {
-                const error = new Error('El RUT ya se encuentra registrado.');
-                error.cause = 409;
-                throw error;
-            }
+        // 1. Validar si el NumeroDeAbonado o RUT ya existen
+        const [existing] = await pool.execute(
+            'SELECT NumeroDeAbonado, RUT FROM ABONADOS WHERE NumeroDeAbonado = ? OR (RUT IS NOT NULL AND RUT = ?)',
+            [NumeroDeAbonado, RUT || null]
+        );
+
+        if (existing.length > 0) {
+            const isNro = existing.some(a => a.NumeroDeAbonado === NumeroDeAbonado);
+            const error = new Error(isNro ? 'El Número de Abonado ya existe.' : 'El RUT ya se encuentra registrado.');
+            error.cause = 409;
+            throw error;
         }
 
         // 2. Insertar en la base de datos
         const sql = `
-            INSERT INTO ABONADOS (RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto, Activo) 
-            VALUES (?, ?, ?, ?, ?, 1)
+            INSERT INTO ABONADOS (NumeroDeAbonado, RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto, Activo) 
+            VALUES (?, ?, ?, ?, ?, ?, 1)
         `;
         
         const [result] = await pool.execute(sql, [
+            NumeroDeAbonado,
             RazonSocial, 
             RUT || null, 
             ContactoPrincipal || null, 
@@ -43,10 +45,10 @@ class AbonadoService {
     }
 
     /**
-     * Obtener todos los abonados
+     * Obtener todos los abonados (Ordenados por fecha de alta reciente)
      */
     static async getAllAbonados() {
-        const [rows] = await pool.execute('SELECT * FROM ABONADOS');
+        const [rows] = await pool.execute('SELECT * FROM ABONADOS ORDER BY FechaAlta DESC');
         return rows;
     }
 
@@ -65,26 +67,37 @@ class AbonadoService {
     }
 
     /**
+     * Obtener un abonado por su número de cuenta (Muy usado en Monitoreo)
+     */
+    static async getAbonadoByAccountNumber(nro) {
+        const [rows] = await pool.execute('SELECT * FROM ABONADOS WHERE NumeroDeAbonado = ?', [nro]);
+        if (rows.length === 0) return null;
+        return rows[0];
+    }
+
+    /**
      * Actualizar datos del abonado
      */
     static async updateAbonado(id, data) {
-        const { RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto } = data;
+        const { NumeroDeAbonado, RazonSocial, RUT, ContactoPrincipal, TelefonoContacto, EmailContacto, Activo } = data;
 
-        // Verificar existencia
+        // Verificar si existe el abonado
         await this.getAbonadoById(id);
 
         const sql = `
             UPDATE ABONADOS 
-            SET RazonSocial = ?, RUT = ?, ContactoPrincipal = ?, TelefonoContacto = ?, EmailContacto = ?
+            SET NumeroDeAbonado = ?, RazonSocial = ?, RUT = ?, ContactoPrincipal = ?, TelefonoContacto = ?, EmailContacto = ?, Activo = ?
             WHERE ID_Abonado = ?
         `;
 
         await pool.execute(sql, [
+            NumeroDeAbonado,
             RazonSocial, 
             RUT, 
             ContactoPrincipal, 
             TelefonoContacto, 
             EmailContacto, 
+            Activo !== undefined ? Activo : 1,
             id
         ]);
 
@@ -92,20 +105,33 @@ class AbonadoService {
     }
 
     /**
-     * Desactivar abonado (Borrado lógico)
+     * Alternar estado Activo/Inactivo (Borrado lógico)
      */
-    static async deactivateAbonado(id) {
+    static async toggleStatus(id) {
         const abonado = await this.getAbonadoById(id);
+        const nuevoEstado = abonado.Activo === 1 ? 0 : 1;
 
-        if (abonado.Activo === 0) {
-            const error = new Error('El abonado ya está inactivo.');
-            error.cause = 400;
-            throw error;
-        }
-
-        await pool.execute('UPDATE ABONADOS SET Activo = 0 WHERE ID_Abonado = ?', [id]);
+        await pool.execute('UPDATE ABONADOS SET Activo = ? WHERE ID_Abonado = ?', [nuevoEstado, id]);
         
-        return { id, message: 'Abonado desactivado correctamente' };
+        return { 
+            id, 
+            activo: nuevoEstado, 
+            message: nuevoEstado === 1 ? 'Abonado reactivado' : 'Abonado desactivado' 
+        };
+    }
+
+    /**
+     * Buscar abonados (Para buscadores en el frontend)
+     */
+    static async searchAbonados(termino) {
+        const query = `
+            SELECT * FROM ABONADOS 
+            WHERE RazonSocial LIKE ? OR NumeroDeAbonado LIKE ? OR RUT LIKE ?
+            LIMIT 20
+        `;
+        const t = `%${termino}%`;
+        const [rows] = await pool.execute(query, [t, t, t]);
+        return rows;
     }
 }
 

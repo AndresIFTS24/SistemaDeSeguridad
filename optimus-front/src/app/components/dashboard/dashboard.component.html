@@ -1,101 +1,22 @@
-<div class="dashboard-screen">
-  <nav class="top-nav">
-    <div class="logo">OPTIMUS <span>SYSTEMS</span></div>
-    <div class="system-status">
-      <span class="pulse-icon"></span> 
-      SISTEMA OPERATIVO - {{ userSectorNombre | uppercase }}
-    </div>
-    <div class="user-profile">
-      <i class="fas fa-user-shield"></i> {{ userName }}
-      <button (click)="logout()" class="btn-logout" title="Cerrar Sesión">
-        <i class="fas fa-sign-out-alt"></i>
-      </button>
-    </div>
-  </nav>
+<div class="dashboard-wrapper">
+  <app-navbar [user]="user"></app-navbar>
 
-  <div class="main-content">
-    
-    <div [ngSwitch]="idSector">
+  <div class="main-layout">
+    <app-sidebar [idSector]="user.idSector"></app-sidebar>
 
-      <div *ngSwitchCase="3">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span class="label">Base de Datos Personal</span>
-            <span class="value">{{ listaUsuarios.length }}</span>
-          </div>
-          <div class="stat-card">
-            <span class="label">Estado del Servidor</span>
-            <span class="value color-online">OPTIMAL</span>
-          </div>
-          <div class="stat-card">
-            <span class="label">Accesos Denegados</span>
-            <span class="value">0</span>
-          </div>
-        </div>
+    <main class="content-area" [ngSwitch]="user.idSector">
+      
+      <app-direccion-dash *ngSwitchCase="1"></app-direccion-dash>
 
-        <div class="console-container">
-          <div class="console-header">
-            <h3><i class="fas fa-server"></i> GESTIÓN DE INFRAESTRUCTURA Y USUARIOS</h3>
-            <div class="search-box">
-              <input type="text" placeholder="Filtrar por nombre o email...">
-            </div>
-          </div>
+      <app-it-dash *ngSwitchCase="3"></app-it-dash>
 
-          <div class="table-wrapper">
-            <table class="optimus-table">
-              <thead>
-                <tr>
-                  <th>IDENTIFICADOR</th>
-                  <th>OPERADOR</th>
-                  <th>CORREO ELECTRÓNICO</th>
-                  <th>SECTOR</th>
-                  <th>TELÉFONO</th> <th>ESTADO</th>
-                  <th>ACCIONES</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let user of listaUsuarios">
-                  <td class="tech-id">#{{ user.ID_Usuario }}</td>
-                  <td class="user-name">{{ user.Nombre }}</td>
-                  <td>{{ user.Email }}</td>
-                  <td><span class="tag-sector">{{ user.NombreSector }}</span></td>
-                  <td><span class="tech-tel">{{ user.Telefono }}</span></td>
-                  <td>
-                    <div class="status-indicator">
-                      <span class="dot" [ngClass]="user.Activo ? 'online' : 'offline'"></span>
-                      {{ user.Activo ? 'AUTORIZADO' : 'SUSPENDIDO' }}
-                    </div>
-                  </td>
-                  <td>
-                    <button class="btn-action edit" title="Reset Password"><i class="fas fa-key"></i></button>
-                    <button class="btn-action view" title="Baja"><i class="fas fa-user-minus"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <app-monitoreo-dash *ngSwitchCase="4" [abonados]="abonados"></app-monitoreo-dash>
+
+      <div *ngSwitchDefault class="error-view">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Sector no reconocido. Contacte a soporte IT.</p>
       </div>
 
-      <div *ngSwitchCase="4">
-        <div class="monitor-grid">
-          <div class="stat-card alert-mode">
-            <span class="label">ALERTAS EN CURSO</span>
-            <span class="value">12</span>
-          </div>
-          <div class="placeholder-view">
-             <h2><i class="fas fa-video"></i> CENTRAL DE MONITOREO EN VIVO</h2>
-             <p>Cargando feeds de seguridad de Buenos Aires...</p>
-          </div>
-        </div>
-      </div>
-
-      <div *ngSwitchDefault>
-        <div class="welcome-container">
-          <h1>Bienvenido a OPTIMUS</h1>
-          <p>Tu sector ({{ userSectorNombre }}) tiene acceso restringido a la consola global.</p>
-        </div>
-      </div>
-
-    </div> </div>
+    </main>
+  </div>
 </div>
