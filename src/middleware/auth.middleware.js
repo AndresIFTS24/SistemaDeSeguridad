@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: '../../.env' }); // Asegura que la clave secreta se carga aquí también
 
 // *** ¡CRÍTICO! Esta clave DEBE ser EXACTAMENTE la misma que en AuthService.js ***
-const JWT_SECRET = process.env.JWT_SECRET || 'TuClaveSecretaSuperLargaYCompleja'; 
+const JWT_SECRET = process.env.JWT_SECRET || 'seguridad_total_2024'; 
 
 /**
  * Middleware para verificar la validez del token JWT.
