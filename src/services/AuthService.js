@@ -38,12 +38,17 @@ class AuthService {
         }
 
         // 3. Generación de Token
-        const secret = process.env.JWT_SECRET || 'optimus_secret_2026';
-        const token = jwt.sign(
-            { id: user.ID_Usuario, email: user.Email, idSector: user.ID_Sector },
-            secret,
-            { expiresIn: '8h' }
-        );
+ const secret = process.env.JWT_SECRET || 'seguridad_total_2024';
+const token = jwt.sign(
+    { 
+        id: user.ID_Usuario, 
+        email: user.Email, 
+        idSector: user.ID_Sector,
+        rol: user.NombreSector 
+    },
+    secret, // <--- Esta variable debe usar la misma lógica
+    { expiresIn: '8h' }
+);
 
         return {
             token,
