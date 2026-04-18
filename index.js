@@ -1,6 +1,7 @@
 /**
  * OPTIMUS - SISTEMA DE SEGURIDAD ELECTRÓNICA
  * Archivo: index.js
+ * Estado: Corregido para compatibilidad con Angular (Login y Abonados)
  */
 
 const express = require('express');
@@ -42,11 +43,21 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
-// 4. MONTAJE DE RUTAS MODULARIZADAS (AQUÍ SE DELEGA TODO)
-// IMPORTANTE: No debe haber rutas app.post/app.get de usuarios aquí arriba.
-app.use('/api/auth', authRoutes); // Si tus rutas de auth ya tienen /login, etc.
+// 4. MONTAJE DE RUTAS MODULARIZADAS
+/**
+ * IMPORTANTE: 
+ * - Usamos '/api' para Auth para que coincida con Angular (/api/login).
+ * - Usamos '/api/abonados' para evitar que Node confunda la lista general con un ID.
+ */
+
+// Esto permite que el login funcione como: POST /api/login
+app.use('/api', authRoutes); 
+
+// Esto permite que abonados funcione como: GET /api/abonados
+app.use('/api/abonados', abonadoRoutes); 
+
+// Rutas restantes con prefijos claros
 app.use('/api/usuarios', userRoutes);
-app.use('/api/abonados', abonadoRoutes); // <--- ESTA ES LA CLAVE
 app.use('/api/modelos', modeloDispositivoRoutes);
 app.use('/api/dispositivos', dispositivoRoutes);
 app.use('/api/asignaciones', asignacionRoutes);

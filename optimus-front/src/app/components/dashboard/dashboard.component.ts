@@ -92,12 +92,17 @@ export class DashboardComponent implements OnInit {
   }
 
   cargarAbonados(): void {
-    this.abonadoService.getAllAbonados().subscribe({
-      next: (res: any) => {
-        this.abonados = res;
-      },
-      error: (err: any) => console.error('Error cargando abonados', err)
-    });
+ this.abonadoService.getAllAbonados().subscribe({
+  next: (response) => {
+    // ANTES: this.abonados = response; <-- ERROR
+    // AHORA: Debes apuntar a la propiedad 'abonados' que viene en el JSON
+    this.abonados = response.abonados || []; 
+    console.log('Abonados cargados correctamente:', this.abonados);
+  },
+  error: (err) => {
+    console.error('Error al cargar:', err);
+  }
+});
   }
 
   logout(): void {
