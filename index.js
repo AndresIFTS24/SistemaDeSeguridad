@@ -44,13 +44,13 @@ app.get('/api/status', async (req, res) => {
 
 // 4. MONTAJE DE RUTAS MODULARIZADAS (AQUÍ SE DELEGA TODO)
 // IMPORTANTE: No debe haber rutas app.post/app.get de usuarios aquí arriba.
-app.use('/api', authRoutes);
-app.use('/api', userRoutes); // <--- Este archivo ahora maneja todo lo de usuarios
-app.use('/api', abonadoRoutes);
-app.use('/api', modeloDispositivoRoutes);
-app.use('/api', dispositivoRoutes);
-app.use('/api', asignacionRoutes);
-app.use('/api', eventoRoutes);
+app.use('/api/auth', authRoutes); // Si tus rutas de auth ya tienen /login, etc.
+app.use('/api/usuarios', userRoutes);
+app.use('/api/abonados', abonadoRoutes); // <--- ESTA ES LA CLAVE
+app.use('/api/modelos', modeloDispositivoRoutes);
+app.use('/api/dispositivos', dispositivoRoutes);
+app.use('/api/asignaciones', asignacionRoutes);
+app.use('/api/eventos', eventoRoutes);
 
 // 5. INICIO DEL SERVIDOR
 async function startServer() {
