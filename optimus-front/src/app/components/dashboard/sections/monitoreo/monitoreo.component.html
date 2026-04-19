@@ -1,43 +1,25 @@
 <div class="monitoring-container">
   
   <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon alert">
-        <i class="fas fa-exclamation-triangle"></i>
-      </div>
+    <div class="stat-card critical-bg">
+      <div class="stat-icon"><i class="fas fa-radiation-alt"></i></div>
       <div class="stat-info">
-        <span class="stat-label">Alarmas Activas</span>
-        <h2 class="stat-value">12</h2>
+        <span class="stat-label">Alarmas Críticas</span>
+        <h2 class="stat-value">{{ alertas.length }}</h2>
       </div>
     </div>
-
     <div class="stat-card">
-      <div class="stat-icon subscribers">
-        <i class="fas fa-shield-alt"></i>
-      </div>
+      <div class="stat-icon online"><i class="fas fa-shield-alt"></i></div>
       <div class="stat-info">
-        <span class="stat-label">Abonados Protegidos</span>
-        <h2 class="stat-value">{{ abonados.length }}</h2>
+        <span class="stat-label">Sistemas Online</span>
+        <h2 class="stat-value">{{ stats.activos }}</h2>
       </div>
     </div>
-
     <div class="stat-card">
-      <div class="stat-icon technicians">
-        <i class="fas fa-truck-moving"></i>
-      </div>
+      <div class="stat-icon offline"><i class="fas fa-power-off"></i></div>
       <div class="stat-info">
-        <span class="stat-label">Móviles en Calle</span>
-        <h2 class="stat-value">4</h2>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon clock">
-        <i class="fas fa-history"></i>
-      </div>
-      <div class="stat-info">
-        <span class="stat-label">Tiempo de Respuesta</span>
-        <h2 class="stat-value">02:15 <small>min</small></h2>
+        <span class="stat-label">Sistemas Offline</span>
+        <h2 class="stat-value">{{ stats.suspendidos }}</h2>
       </div>
     </div>
   </div>
@@ -47,14 +29,14 @@
     <section class="subscribers-panel">
       <div class="panel-header">
         <div class="header-title">
-          <h3><i class="fas fa-list"></i> Directorio de Clientes</h3>
-          <span class="count-badge">{{ abonadosFiltrados.length }} registros</span>
+          <h3><i class="fas fa-users-cog"></i> Central de Abonados</h3>
+          <span class="count-badge">{{ abonadosFiltrados.length }} activos en vista</span>
         </div>
         <div class="search-container">
           <i class="fas fa-search"></i>
           <input 
             type="text" 
-            placeholder="Buscar por número, razón social o RUT..." 
+            placeholder="Buscar por Nombre, Nro o Email..." 
             [(ngModel)]="filtroBusqueda"
             (keyup)="filtrarAbonados()"
             class="search-input">
@@ -65,31 +47,26 @@
         <table class="modern-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Abonado</th>
+              <th>Nro Cuenta</th>
               <th>Razón Social</th>
-              <th>Contacto Principal</th>
               <th>Teléfono</th>
+              <th>Sector</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let abonado of abonadosFiltrados" class="row-hover">
-              <td><span class="id-tag">#{{ abonado.ID_Abonado }}</span></td>
+            <tr *ngFor="let abonado of abonadosFiltrados" 
+                (click)="seleccionarAbonado(abonado)"
+                [class.selected]="abonadoSeleccionado?.idAbonado === abonado.idAbonado"
+                class="row-clickable">
               <td><b class="acc-number">{{ abonado.NumeroDeAbonado }}</b></td>
               <td>{{ abonado.RazonSocial }}</td>
-              <td>{{ abonado.ContactoPrincipal || '---' }}</td>
               <td>{{ abonado.TelefonoContacto }}</td>
+              <td><span class="sector-tag">{{ abonado.NombreSector || 'General' }}</span></td>
               <td>
                 <span class="status-pill" [ngClass]="abonado.Activo ? 'active' : 'inactive'">
-                  <i class="fas" [ngClass]="abonado.Activo ? 'fa-check-circle' : 'fa-times-circle'"></i>
-                  {{ abonado.Activo ? 'Monitoreado' : 'Suspendido' }}
+                  {{ abonado.Activo ? 'CONECTADO' : 'SIN SEÑAL' }}
                 </span>
-              </td>
-            </tr>
-            <tr *ngIf="abonadosFiltrados.length === 0">
-              <td colspan="6" class="no-results">
-                No se encontraron abonados con el criterio "{{ filtroBusqueda }}"
               </td>
             </tr>
           </tbody>
@@ -97,33 +74,47 @@
       </div>
     </section>
 
-    <aside class="alerts-panel">
-      <div class="panel-header">
-        <h3><i class="fas fa-satellite-dish"></i> Consola de Eventos</h3>
-      </div>
+    <aside class="side-panel">
       
-      <div class="alerts-list">
-        <div 
-          *ngFor="let alerta of alertas" 
-          class="alert-card" 
-          [class.critical]="alerta.critico"
-          (click)="atenderAlerta(alerta)">
-          
-          <div class="alert-time">{{ alerta.tiempo }}</div>
-          <div class="alert-body">
-            <span class="alert-event">{{ alerta.tipo }}</span>
-            <span class="alert-client">{{ alerta.cliente }}</span>
-            <span class="alert-zone">Zona: {{ alerta.zona }}</span>
-          </div>
-          <div class="alert-action">
-            <i class="fas fa-chevron-right"></i>
+      <div class="info-card" *ngIf="abonadoSeleccionado">
+        <div class="card-header highlight">
+          <h4><i class="fas fa-info-circle"></i> Ficha del Cliente</h4>
+          <button (click)="cerrarFicha()" class="btn-close">&times;</button>
+        </div>
+        <div class="card-body">
+          <p><strong>Razón Social:</strong> {{ abonadoSeleccionado.RazonSocial }}</p>
+          <p><strong>Nro de Cuenta:</strong> {{ abonadoSeleccionado.NumeroDeAbonado }}</p>
+          <p><strong>Email:</strong> {{ abonadoSeleccionado.EmailContacto }}</p>
+          <hr>
+          <small>CONTACTOS DE EMERGENCIA:</small>
+          <ul class="contact-list">
+            <li><i class="fas fa-phone"></i> Titular: {{ abonadoSeleccionado.TelefonoContacto }}</li>
+            <li><i class="fas fa-user-shield"></i> Referencia: 0800-SAFE-911</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="alerts-console">
+        <div class="panel-header">
+          <h3><i class="fas fa-bell"></i> Eventos Recientes</h3>
+        </div>
+        <div class="alerts-list">
+          <div *ngFor="let alerta of alertas" 
+               class="alert-item" 
+               [class.critical]="alerta.critico"
+               (click)="atenderAlerta(alerta)">
+            <div class="alert-meta">
+              <span class="time">{{ alerta.tiempo }}</span>
+              <span class="nro">{{ alerta.nro }}</span>
+            </div>
+            <div class="alert-content">
+              <div class="event-type">{{ alerta.tipo }}</div>
+              <div class="client-name">{{ alerta.cliente }}</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="panel-footer">
-        <button class="btn-full">Ver Historial Completo</button>
-      </div>
     </aside>
 
   </div>
