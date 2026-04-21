@@ -30,25 +30,32 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       this.authService.login(this.loginForm.value).subscribe({
         next: (res: any) => {
-          // --- GUARDADO DE DATOS EN LOCALSTORAGE ---
-          // Guardamos el token para las futuras peticiones a la API
+          // 1. GUARDADO DE DATOS (Vital para el Dashboard Maestro)
           localStorage.setItem('token', res.token);
-          
-          // Guardamos los datos del usuario para el Dashboard camaleón
-          localStorage.setItem('userId', res.user.id.toString());
           localStorage.setItem('userName', res.user.nombre);
-          localStorage.setItem('userEmail', res.user.email);
-          localStorage.setItem('userSector', res.user.idSector.toString());
           localStorage.setItem('userSectorNombre', res.user.nombreSector);
-          localStorage.setItem('userRol', res.user.idRol.toString());
+          
+          // Guardamos el ID del sector como string (el Dashboard hará el parseInt)
+          // Si tu API devuelve 'idSector', asegúrate que el nombre coincida:
+          const idSector = res.user.idSector || res.user.ID_Sector;
+          localStorage.setItem('userSector', idSector.toString());
 
-          // Redirección al Dashboard Maestro
+          // 2. DEBUG en consola
+          console.log('✅ Login Exitoso. Redirigiendo al Dashboard...');
+          console.log('Datos del usuario:', res.user);
+
+          /**
+           * 3. REDIRECCIÓN UNIFICADA
+           * Ya no navegamos a sub-rutas porque tu Dashboard usa [ngSwitch].
+           * Al ir a /dashboard, el componente leerá el ID que guardamos arriba
+           * y mostrará el sector correspondiente automáticamente.
+           */
           this.router.navigate(['/dashboard']);
         },
         error: (err: any) => {
-          console.error('Error en el login:', err);
-          // Si el backend envía un mensaje específico, lo usamos; si no, el genérico.
-          this.errorMessage = err.error?.message || 'Credenciales incorrectas o error de conexión';
+          console.error('❌ Error en el login:', err);
+          // Mostramos el mensaje de error del backend o uno genérico
+          this.errorMessage = err.error?.message || 'Credenciales incorrectas o error de servidor';
         }
       });
     }

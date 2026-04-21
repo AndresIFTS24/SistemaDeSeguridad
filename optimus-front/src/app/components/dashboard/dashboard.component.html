@@ -6,15 +6,26 @@
 
     <main class="content-area" [ngSwitch]="user.idSector">
       
-      <app-direccion-dash *ngSwitchCase="1"></app-direccion-dash>
+      <app-direccion-dash 
+        *ngSwitchCase="1">
+      </app-direccion-dash>
 
-      <app-it-dash *ngSwitchCase="3"></app-it-dash>
+      <app-it-dash 
+        *ngSwitchCase="3">
+      </app-it-dash>
 
-      <app-monitoreo-dash *ngSwitchCase="4" [abonados]="abonados"></app-monitoreo-dash>
+      <app-monitoreo-dash 
+        *ngSwitchCase="4" 
+        [abonados]="abonados">
+      </app-monitoreo-dash>
 
       <div *ngSwitchDefault class="error-view">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Sector no reconocido. Contacte a soporte IT.</p>
+        <div class="error-card">
+          <i class="fas fa-exclamation-circle"></i>
+          <h3>Acceso Restringido</h3>
+          <p>Tu sector (ID: {{ user.idSector }}) no tiene un panel de control configurado.</p>
+          <button (click)="logout()" class="btn-retry">Cerrar Sesión</button>
+        </div>
       </div>
 
     </main>

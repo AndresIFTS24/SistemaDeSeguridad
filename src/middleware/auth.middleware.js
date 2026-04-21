@@ -46,34 +46,27 @@ exports.verifyToken = (req, res, next) => {
  */
 exports.checkRole = (permitidos) => {
     return (req, res, next) => {
-        // Log para ver qué llega en el token (lo verás en el panel de Clever Cloud)
-        console.log("DATOS DEL TOKEN RECIBIDO:", req.user);
-
         if (!req.user) {
-            return res.status(403).json({ message: 'Acceso denegado. Usuario no identificado.' });
+            return res.status(403).json({ message: 'Usuario no identificado.' });
         }
 
-        const uRol = req.user.rol || req.user.NombreSector || req.user.role; // Probamos varios nombres
-        const uSector = String(req.user.idSector || req.user.ID_Sector || '');
+        // Leemos el rol o el nombre del sector que pusimos en el token
+        const uRol = String(req.user.rol || req.user.nombreSector || '').toLowerCase().trim();
+        const uSectorId = String(req.user.idSector || '').trim();
 
-        // NORMALIZACIÓN
+        // Normalizamos la lista de permitidos a minúsculas
         const listaNormalizada = permitidos.map(p => String(p).toLowerCase().trim());
 
-        // BUSCAMOS COINCIDENCIA
-        const coincideRol = uRol && listaNormalizada.includes(uRol.toLowerCase().trim());
-        const coincideSector = uSector && listaNormalizada.includes(uSector);
+        // Si el usuario tiene el nombre del sector o el ID en la lista de permitidos, pasa.
+        const tienePermiso = listaNormalizada.includes(uRol) || listaNormalizada.includes(uSectorId);
 
-        // 🔥 LA SALIDA DE EMERGENCIA: 
-        // Si el email es el de Beatriz (o el tuyo), la dejamos pasar aunque el rol falle
-        const esUsuarioEspecial = req.user.email === 'EL_EMAIL_DE_BEATRIZ@TU_APP.COM'; // Pon el mail de ella aquí
-
-        if (coincideRol || coincideSector || esUsuarioEspecial) {
+        if (tienePermiso) {
             return next();
         }
 
         return res.status(403).json({ 
-            message: 'Acceso denegado. No tiene los permisos necesarios.',
-            debug: { rol_encontrado: uRol, sector_encontrado: uSector } 
+            message: 'Tu perfil no tiene acceso a este sector.',
+            debug: { sector_usuario: uRol } 
         });
     };
 };
