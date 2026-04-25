@@ -24,98 +24,172 @@
     </div>
   </div>
 
-  <div class="main-monitoring-grid">
-    
-    <section class="subscribers-panel">
-      <div class="panel-header">
-        <div class="header-title">
-          <h3><i class="fas fa-users-cog"></i> Central de Abonados</h3>
-          <span class="count-badge">{{ abonadosFiltrados.length }} activos en vista</span>
-        </div>
-        <div class="search-container">
-          <i class="fas fa-search"></i>
-          <input 
-            type="text" 
-            placeholder="Buscar por Nombre, Nro o Email..." 
-            [(ngModel)]="filtroBusqueda"
-            (keyup)="filtrarAbonados()"
-            class="search-input">
-        </div>
-      </div>
+  <nav class="monitoring-tabs">
+    <button (click)="cambiarVista('abonados')" [class.active]="vistaActual === 'abonados'">
+      <i class="fas fa-users-cog"></i> Central de Abonados
+    </button>
+    <button (click)="cambiarVista('alarmas')" [class.active]="vistaActual === 'alarmas'" class="btn-alarmas">
+      <i class="fas fa-headset"></i> Consola de Alarmas
+      <span class="pulse-badge" *ngIf="alertas.length > 0">{{ alertas.length }}</span>
+    </button>
+    <button (click)="cambiarVista('config')" [class.active]="vistaActual === 'config'">
+      <i class="fas fa-tools"></i> Configuración Técnica
+    </button>
+  </nav>
 
-      <div class="table-container">
-        <table class="modern-table">
-          <thead>
-            <tr>
-              <th>Nro Cuenta</th>
-              <th>Razón Social</th>
-              <th>Teléfono</th>
-              <th>Sector</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let abonado of abonadosFiltrados" 
-                (click)="seleccionarAbonado(abonado)"
-                [class.selected]="abonadoSeleccionado?.idAbonado === abonado.idAbonado"
-                class="row-clickable">
-              <td><b class="acc-number">{{ abonado.NumeroDeAbonado }}</b></td>
-              <td>{{ abonado.RazonSocial }}</td>
-              <td>{{ abonado.TelefonoContacto }}</td>
-              <td><span class="sector-tag">{{ abonado.NombreSector || 'General' }}</span></td>
-              <td>
-                <span class="status-pill" [ngClass]="abonado.Activo ? 'active' : 'inactive'">
-                  {{ abonado.Activo ? 'CONECTADO' : 'SIN SEÑAL' }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+  <div [ngSwitch]="vistaActual" class="fade-in">
 
-    <aside class="side-panel">
+    <div *ngSwitchCase="'abonados'" class="main-monitoring-grid">
       
-      <div class="info-card" *ngIf="abonadoSeleccionado">
-        <div class="card-header highlight">
-          <h4><i class="fas fa-info-circle"></i> Ficha del Cliente</h4>
-          <button (click)="cerrarFicha()" class="btn-close">&times;</button>
-        </div>
-        <div class="card-body">
-          <p><strong>Razón Social:</strong> {{ abonadoSeleccionado.RazonSocial }}</p>
-          <p><strong>Nro de Cuenta:</strong> {{ abonadoSeleccionado.NumeroDeAbonado }}</p>
-          <p><strong>Email:</strong> {{ abonadoSeleccionado.EmailContacto }}</p>
-          <hr>
-          <small>CONTACTOS DE EMERGENCIA:</small>
-          <ul class="contact-list">
-            <li><i class="fas fa-phone"></i> Titular: {{ abonadoSeleccionado.TelefonoContacto }}</li>
-            <li><i class="fas fa-user-shield"></i> Referencia: 0800-SAFE-911</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="alerts-console">
+      <section class="subscribers-panel">
         <div class="panel-header">
-          <h3><i class="fas fa-bell"></i> Eventos Recientes</h3>
+          <div class="header-title">
+            <h3><i class="fas fa-users-cog"></i> Directorio de Clientes</h3>
+            <span class="count-badge">{{ abonadosFiltrados.length }} activos en vista</span>
+          </div>
+          <div class="search-container">
+            <i class="fas fa-search"></i>
+            <input 
+              type="text" 
+              placeholder="Buscar por Nombre, Nro o Email..." 
+              [(ngModel)]="filtroBusqueda"
+              (keyup)="filtrarAbonados()"
+              class="search-input">
+          </div>
         </div>
-        <div class="alerts-list">
-          <div *ngFor="let alerta of alertas" 
-               class="alert-item" 
-               [class.critical]="alerta.critico"
-               (click)="atenderAlerta(alerta)">
-            <div class="alert-meta">
-              <span class="time">{{ alerta.tiempo }}</span>
-              <span class="nro">{{ alerta.nro }}</span>
-            </div>
-            <div class="alert-content">
-              <div class="event-type">{{ alerta.tipo }}</div>
-              <div class="client-name">{{ alerta.cliente }}</div>
+
+        <div class="table-container">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Nro Cuenta</th>
+                <th>Razón Social</th>
+                <th>Teléfono</th>
+                <th>Sector</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let abonado of abonadosFiltrados" 
+                  (click)="seleccionarAbonado(abonado)"
+                  [class.selected]="abonadoSeleccionado?.idAbonado === abonado.idAbonado"
+                  class="row-clickable">
+                <td><b class="acc-number">{{ abonado.NumeroDeAbonado }}</b></td>
+                <td>{{ abonado.RazonSocial }}</td>
+                <td>{{ abonado.TelefonoContacto }}</td>
+                <td><span class="sector-tag">{{ abonado.NombreSector || 'General' }}</span></td>
+                <td>
+                  <span class="status-pill" [ngClass]="abonado.Activo ? 'active' : 'inactive'">
+                    {{ abonado.Activo ? 'CONECTADO' : 'SIN SEÑAL' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="info-card" *ngIf="abonadoSeleccionado">
+          <div class="card-header highlight">
+            <h4><i class="fas fa-info-circle"></i> Ficha del Cliente</h4>
+            <button (click)="cerrarFicha()" class="btn-close">&times;</button>
+          </div>
+          <div class="card-body">
+            <p><strong>Razón Social:</strong> {{ abonadoSeleccionado.RazonSocial }}</p>
+            <p><strong>Nro de Cuenta:</strong> {{ abonadoSeleccionado.NumeroDeAbonado }}</p>
+            <p><strong>Email:</strong> {{ abonadoSeleccionado.EmailContacto }}</p>
+            <hr>
+            <small>CONTACTOS DE EMERGENCIA:</small>
+            <ul class="contact-list">
+              <li><i class="fas fa-phone"></i> Titular: {{ abonadoSeleccionado.TelefonoContacto }}</li>
+              <li><i class="fas fa-user-shield"></i> Referencia: 0800-SAFE-911</li>
+            </ul>
+            <button class="btn-action-primary">Ver Historial Completo</button>
+          </div>
+        </div>
+
+        <div class="alerts-console">
+          <div class="panel-header">
+            <h3><i class="fas fa-bell"></i> Eventos Recientes</h3>
+          </div>
+          <div class="alerts-list scrollable">
+            <div *ngFor="let alerta of alertas" 
+                 class="alert-item" 
+                 [class.critical]="alerta.critico"
+                 (click)="atenderAlerta(alerta)">
+              <div class="alert-meta">
+                <span class="time">{{ alerta.tiempo }}</span>
+                <span class="nro">{{ alerta.nro }}</span>
+              </div>
+              <div class="alert-content">
+                <div class="event-type">{{ alerta.tipo }}</div>
+                <div class="client-name">{{ alerta.cliente }}</div>
+              </div>
             </div>
           </div>
         </div>
+      </aside>
+    </div>
+
+    <div *ngSwitchCase="'alarmas'" class="alarm-console-view">
+      <div class="console-header-bar">
+        <h3><i class="fas fa-headset"></i> Despacho de Eventos en Tiempo Real</h3>
+        <div class="console-actions">
+          <button class="btn-filter"><i class="fas fa-filter"></i> Prioridad Alta</button>
+          <button class="btn-filter"><i class="fas fa-history"></i> Historial del Día</button>
+        </div>
       </div>
 
-    </aside>
+      <div class="events-stack">
+        <div *ngFor="let ev of eventos" class="alarm-row" [ngClass]="ev.prioridad">
+          <div class="priority-indicator"></div>
+          <div class="time-col">{{ ev.hora }}</div>
+          <div class="account-col">#{{ ev.cuenta }}</div>
+          <div class="client-col">
+            <strong>{{ ev.cliente }}</strong>
+            <small>{{ ev.evento }}</small>
+          </div>
+          <div class="status-col">
+            <span class="badge-status" [ngClass]="ev.estado">{{ ev.estado | uppercase }}</span>
+          </div>
+          <div class="action-col">
+            <button class="btn-atender" (click)="procesarEvento(ev)">
+              <i class="fas fa-external-link-alt"></i> ATENDER
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="eventos.length === 0" class="empty-state">
+          <i class="fas fa-check-circle"></i>
+          <p>No hay alarmas pendientes de procesamiento.</p>
+        </div>
+      </div>
+    </div>
+
+    <div *ngSwitchCase="'config'" class="config-view">
+      <div class="config-grid">
+        <div class="config-card">
+          <h4><i class="fas fa-desktop"></i> Interfaz de Operador</h4>
+          
+          <div class="control-group">
+            <label for="darkMode">Modo Oscuro</label>
+            <input type="checkbox" id="darkMode" title="Activar modo oscuro">
+          </div>
+
+          <div class="control-group">
+            <label for="alertVolume">Volumen de Alerta</label>
+            <input type="range" id="alertVolume" min="0" max="100" title="Ajustar volumen de alertas">
+          </div>
+        </div>
+
+        <div class="config-card">
+          <h4><i class="fas fa-database"></i> Sincronización</h4>
+          <p>Última actualización: hace 2 minutos</p>
+          <button class="btn-refresh"><i class="fas fa-sync"></i> Forzar Recarga de Datos</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </div>

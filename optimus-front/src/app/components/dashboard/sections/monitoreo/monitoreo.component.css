@@ -154,3 +154,76 @@
 .panel-footer { padding: 15px; }
 .btn-full { width: 100%; padding: 12px; background: #3b82f6; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; }
 .btn-full:hover { background: #2563eb; }
+
+.monitoring-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.monitoring-tabs button {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #666;
+  transition: 0.3s;
+}
+
+.monitoring-tabs button.active {
+  color: #2196f3;
+  border-bottom: 3px solid #2196f3;
+}
+
+/* Tarjetas de Eventos */
+.events-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-card {
+  display: grid;
+  grid-template-columns: 8px 100px 1fr 150px 120px;
+  align-items: center;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.event-card:hover { transform: scale(1.01); }
+
+/* Colores de Prioridad */
+.event-card.critica { background: #fff5f5; }
+.event-card.critica .event-priority-bar { background: #ff0000; animation: blink 1s infinite; }
+
+.event-card.alta { background: #fff9f0; }
+.event-card.alta .event-priority-bar { background: #ff9800; }
+
+.event-card.baja { background: #f0fff4; }
+.event-card.baja .event-priority-bar { background: #4caf50; }
+
+.event-time { font-family: 'Courier New', monospace; font-weight: bold; padding: 15px; border-right: 1px solid #eee; }
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.status-tag.pendiente { color: #e53e3e; font-weight: bold; }
+.status-tag.en-proceso { color: #d69e2e; font-weight: bold; }
+
+.btn-action {
+  background: #2d3748;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}

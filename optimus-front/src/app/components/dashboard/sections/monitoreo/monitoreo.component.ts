@@ -52,6 +52,25 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     this.abonadosFiltrados = [...this.abonados];
   }
 
+public vistaActual: string = 'abonados'; // 'abonados' | 'alarmas' | 'config'
+
+public eventos = [
+  { id: 1, cuenta: '1071', cliente: 'Adidas Argentina', evento: 'ROBO - ZONA 04', prioridad: 'alta', hora: '20:15:02', estado: 'pendiente' },
+  { id: 2, cuenta: '1004', cliente: 'Schmidt & Co.', evento: 'PÁNICO ASISTIDO', prioridad: 'critica', hora: '20:10:30', estado: 'en-proceso' },
+  { id: 3, cuenta: '1025', cliente: 'Café Tortoni', evento: 'FALLO DE RED', prioridad: 'media', hora: '20:05:12', estado: 'pendiente' },
+  { id: 4, cuenta: '1053', cliente: 'Frigorífico El 10', evento: 'TEST PERIÓDICO', prioridad: 'baja', hora: '19:50:00', estado: 'atendido' }
+];
+
+cambiarVista(vista: string) {
+  this.vistaActual = vista;
+}
+
+procesarEvento(evento: any) {
+  alert(`Iniciando protocolo para: ${evento.cliente}\nEvento: ${evento.evento}`);
+  evento.estado = 'en-proceso';
+}
+
+
   private calcularStats(): void {
     this.stats.activos = this.abonados.filter(a => a.Activo).length;
     this.stats.suspendidos = this.abonados.filter(a => !a.Activo).length;
