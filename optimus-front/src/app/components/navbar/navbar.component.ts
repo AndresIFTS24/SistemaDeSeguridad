@@ -21,7 +21,7 @@ import { CommonModule } from '@angular/common';
         <div class="session-info">
           <div class="text-data">
             <span class="welcome-msg">Bienvenido,</span>
-            <span class="user-name">{{ user?.name || 'Cargando...' }}</span>
+            <span class="user-name">{{ user?.nombre || 'Cargando...' }}</span>
           </div>
           <div class="sector-badge" [title]="'Sector: ' + (user?.sectorNombre || 'No definido')">
             <i class="fas fa-network-wired"></i>
