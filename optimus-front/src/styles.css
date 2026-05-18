@@ -3,3 +3,25 @@
 * {
     font-family: 'Poppins', sans-serif !important;
 }
+
+/* ========================================= */
+/* EFECTO PULSO PARA ALERTAS CRÍTICAS (ROJO) */
+/* ========================================= */
+@keyframes latido-alerta {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 59, 48, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+    }
+}
+
+.efecto-pulso-rojo {
+    animation: latido-alerta 1.5s infinite;
+    border: 1px solid #FF3B30 !important;
+    background-color: rgba(255, 59, 48, 0.1) !important;
+    border-radius: 8px; /* Bordes un poquito redondeados para más elegancia */
+}
