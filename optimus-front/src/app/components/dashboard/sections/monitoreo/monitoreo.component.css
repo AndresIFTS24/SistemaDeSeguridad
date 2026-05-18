@@ -529,9 +529,11 @@
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    transform: translateY(-8px); /* Lo levanta el doble */
+    border-color: rgba(255, 255, 255, 0.3); /* Borde mucho más nítido */
+    /* Sombra extra profunda + el brillo blanco superior simulando vidrio grueso */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.15);
+    cursor: pointer;
 }
 
 /* Rediseño base de los círculos de los íconos */
