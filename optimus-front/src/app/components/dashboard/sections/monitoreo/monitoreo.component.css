@@ -600,3 +600,44 @@
     color: #f8fafc;
     line-height: 1;
 }
+
+
+/* ========================================= */
+/* MODAL DE DESPACHO DE EMERGENCIAS          */
+/* ========================================= */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(11, 15, 25, 0.85); backdrop-filter: blur(8px);
+    display: flex; justify-content: center; align-items: center; z-index: 9999;
+}
+
+.modal-despacho {
+    background: #121926; border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px; width: 500px; max-width: 90%; overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+    padding: 20px; display: flex; justify-content: space-between; align-items: center;
+    background: rgba(59, 130, 246, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-header.critica { background: rgba(239, 68, 68, 0.2); border-bottom-color: rgba(239, 68, 68, 0.3); }
+.modal-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; color: #f8fafc; }
+
+.btn-close-modal { background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1; transition: 0.2s;}
+.btn-close-modal:hover { color: #ef4444; }
+
+.modal-body { padding: 25px; }
+
+.evento-detalle { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+.evento-detalle .label { color: #94a3b8; font-size: 0.9rem; }
+.evento-detalle .valor { color: #f8fafc; font-weight: 600; font-size: 0.95rem; }
+.evento-detalle .alert-text { color: #ef4444; font-weight: 800; }
+
+.accion-tecnica { background: rgba(15, 23, 42, 0.5); padding: 20px; border-radius: 12px; margin-top: 25px; border: 1px solid rgba(255, 255, 255, 0.05); }
+.accion-tecnica h4 { color: #60a5fa; margin: 0 0 10px 0; font-size: 1rem; }
+.accion-tecnica p { color: #94a3b8; font-size: 0.85rem; line-height: 1.4; margin-bottom: 20px; }
+
+.btn-despachar { width: 100%; padding: 15px; border: none; border-radius: 8px; background: #2563eb; color: white; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+.btn-despachar:hover { background: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); }
