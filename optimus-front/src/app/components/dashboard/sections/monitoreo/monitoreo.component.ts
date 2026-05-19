@@ -17,6 +17,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
   public abonadosFiltrados: any[] = [];
   public cargando: boolean = true;
   public abonadoSeleccionado: any = null;
+  public eventoSeleccionado: any = null;
 
   // Estadísticas calculadas
   public stats = {
@@ -66,8 +67,18 @@ cambiarVista(vista: string) {
 }
 
 procesarEvento(evento: any) {
-  alert(`Iniciando protocolo para: ${evento.cliente}\nEvento: ${evento.evento}`);
-  evento.estado = 'en-proceso';
+  this.eventoSeleccionado = evento;
+}
+
+cerrarModalDespacho() {
+  this.eventoSeleccionado = null;
+}
+
+despacharTecnico() {
+  if (this.eventoSeleccionado) {
+    this.eventoSeleccionado.estado = 'en-proceso';
+  }
+  this.cerrarModalDespacho();
 }
 
 
@@ -111,152 +122,3 @@ procesarEvento(evento: any) {
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

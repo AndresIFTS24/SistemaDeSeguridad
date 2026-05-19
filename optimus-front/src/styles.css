@@ -3,3 +3,53 @@
 * {
     font-family: 'Poppins', sans-serif !important;
 }
+
+/* ========================================= */
+/* EFECTO PULSO PARA ALERTAS CRÍTICAS (ROJO) */
+/* ========================================= */
+@keyframes latido-alerta {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 59, 48, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0);
+    }
+}
+
+.efecto-pulso-rojo {
+    animation: latido-alerta 1.5s infinite;
+    border: 1px solid #FF3B30 !important;
+    background-color: rgba(255, 59, 48, 0.1) !important;
+    border-radius: 8px; /* Bordes un poquito redondeados para más elegancia */
+}
+
+
+/* ========================================= */
+/* BARRA DE SCROLL  */
+/* ========================================= */
+
+/* Ancho total de la barra */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+/* El fondo por donde se desliza la barra */
+::-webkit-scrollbar-track {
+    background: #1e1e2f; 
+    border-radius: 10px;
+}
+
+/* La barrita que vos agarrás y arrastrás */
+::-webkit-scrollbar-thumb {
+    background: #4a4a6a; 
+    border-radius: 10px;
+}
+
+/* El efecto cuando le pasás el mouse por encima a la barrita */
+::-webkit-scrollbar-thumb:hover {
+    background: #6b6b93; 
+}
