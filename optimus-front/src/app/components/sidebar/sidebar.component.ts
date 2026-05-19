@@ -23,8 +23,8 @@ import { CommonModule } from '@angular/common';
               <i class="fas fa-user-shield"></i> Control de Usuarios
             </li>
             
-            <li *ngSwitchCase="4" [class.active]="menuActivo === 'alarmas'" (click)="seleccionarMenu('alarmas')">
-              <i class="fas fa-broadcast-tower"></i> Consola de Alarmas
+            <li *ngSwitchCase="4" [class.active]="menuActivo === 'monitoreo'" (click)="seleccionarMenu('monitoreo')">
+              <i class="fas fa-broadcast-tower"></i> Panel de Monitoreo
             </li>
           </ng-container>
 
@@ -67,9 +67,9 @@ export class SidebarComponent {
 
   cerrarSesion() {
     console.log("Cerrando sesión de usuario...");
-    this.logout.emit(); // Emite el evento por si Angular lo está escuchando
+    this.logout.emit();
     
-    // Fallback de seguridad: Destruye el almacenamiento y patea al usuario al login
+    // Fallback de seguridad
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = '/login'; 

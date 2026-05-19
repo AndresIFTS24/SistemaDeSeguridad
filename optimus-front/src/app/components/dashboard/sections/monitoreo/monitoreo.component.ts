@@ -17,16 +17,13 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
   public abonadosFiltrados: any[] = [];
   public cargando: boolean = true;
   public abonadoSeleccionado: any = null;
+  
+  // Variable unificada para el Modal de Despacho
   public eventoSeleccionado: any = null;
 
-  // Estadísticas calculadas
-  public stats = {
-    activos: 0,
-    suspendidos: 0,
-    criticos: 5
-  };
+  public stats = { activos: 0, suspendidos: 0, criticos: 5 };
 
-  // Feed de Alertas (Simulando recepción en tiempo real)
+  // LISTA 1: Feed de Alertas (Panel Lateral)
   public alertas = [
     { nro: 'A-1071', tipo: 'ALARMA DE ROBO', zona: 'Sector Depósito', tiempo: '19:02:15', critico: true, cliente: 'Adidas Argentina' },
     { nro: 'A-1004', tipo: 'PÁNICO ASISTIDO', zona: 'Caja Principal', tiempo: '18:55:30', critico: true, cliente: 'Schmidt & Co.' },
@@ -35,11 +32,19 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     { nro: 'A-1096', tipo: 'CORTE DE ENERGÍA', zona: 'General', tiempo: '18:30:00', critico: true, cliente: 'Edenor S.A' }
   ];
 
+  // LISTA 2: Consola Central
+  public eventos = [
+    { id: 1, cuenta: '1071', cliente: 'Adidas Argentina', evento: 'ROBO - ZONA 04', prioridad: 'alta', hora: '20:15:02', estado: 'pendiente' },
+    { id: 2, cuenta: '1004', cliente: 'Schmidt & Co.', evento: 'PÁNICO ASISTIDO', prioridad: 'critica', hora: '20:10:30', estado: 'en-proceso' },
+    { id: 3, cuenta: '1025', cliente: 'Café Tortoni', evento: 'FALLO DE RED', prioridad: 'media', hora: '20:05:12', estado: 'pendiente' },
+    { id: 4, cuenta: '1053', cliente: 'Frigorífico El 10', evento: 'TEST PERIÓDICO', prioridad: 'baja', hora: '19:50:00', estado: 'atendido' }
+  ];
+
+  public vistaActual: string = 'abonados';
+
   constructor() {}
 
-  ngOnInit(): void {
-    this.actualizarVista();
-  }
+  ngOnInit(): void { this.actualizarVista(); }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['abonados'] && this.abonados) {
@@ -49,38 +54,63 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     }
   }
 
-  private actualizarVista(): void {
-    this.abonadosFiltrados = [...this.abonados];
+  private actualizarVista(): void { this.abonadosFiltrados = [...this.abonados]; }
+
+  cambiarVista(vista: string) { this.vistaActual = vista; }
+
+  // ==========================================
+  // LÓGICA DEL PANEL DE DESPACHO (NORMALIZADA)
+  // ==========================================
+
+  // Atrapa el clic de la tabla central
+  procesarEvento(evento: any) {
+    this.eventoSeleccionado = {
+      origen: 'eventos',
+      idOriginal: evento.id,
+      cliente: evento.cliente,
+      evento: evento.evento,
+      hora: evento.hora,
+      prioridad: evento.prioridad
+    };
   }
 
-public vistaActual: string = 'abonados'; // 'abonados' | 'alarmas' | 'config'
-
-public eventos = [
-  { id: 1, cuenta: '1071', cliente: 'Adidas Argentina', evento: 'ROBO - ZONA 04', prioridad: 'alta', hora: '20:15:02', estado: 'pendiente' },
-  { id: 2, cuenta: '1004', cliente: 'Schmidt & Co.', evento: 'PÁNICO ASISTIDO', prioridad: 'critica', hora: '20:10:30', estado: 'en-proceso' },
-  { id: 3, cuenta: '1025', cliente: 'Café Tortoni', evento: 'FALLO DE RED', prioridad: 'media', hora: '20:05:12', estado: 'pendiente' },
-  { id: 4, cuenta: '1053', cliente: 'Frigorífico El 10', evento: 'TEST PERIÓDICO', prioridad: 'baja', hora: '19:50:00', estado: 'atendido' }
-];
-
-cambiarVista(vista: string) {
-  this.vistaActual = vista;
-}
-
-procesarEvento(evento: any) {
-  this.eventoSeleccionado = evento;
-}
-
-cerrarModalDespacho() {
-  this.eventoSeleccionado = null;
-}
-
-despacharTecnico() {
-  if (this.eventoSeleccionado) {
-    this.eventoSeleccionado.estado = 'en-proceso';
+  // Atrapa el clic del panel lateral y lo traduce para el mismo Modal
+  atenderAlerta(alerta: any): void {
+    this.eventoSeleccionado = {
+      origen: 'alertas',
+      idOriginal: alerta.nro,
+      cliente: alerta.cliente,
+      evento: alerta.tipo,
+      hora: alerta.tiempo,
+      prioridad: alerta.critico ? 'critica' : 'media'
+    };
   }
-  this.cerrarModalDespacho();
-}
 
+  cerrarModalDespacho() {
+    this.eventoSeleccionado = null;
+  }
+
+  // El botón "Generar OT y Despachar" ahora es inteligente
+  despacharTecnico() {
+    if (this.eventoSeleccionado) {
+      
+      if (this.eventoSeleccionado.origen === 'eventos') {
+        // Si viene del centro, cambiamos la etiqueta a "EN-PROCESO"
+        const ev = this.eventos.find(e => e.id === this.eventoSeleccionado.idOriginal);
+        if (ev) ev.estado = 'en-proceso';
+      
+      } else if (this.eventoSeleccionado.origen === 'alertas') {
+        // Si viene del lateral, la eliminamos de la lista para limpiar la cola
+        this.alertas = this.alertas.filter(a => a.nro !== this.eventoSeleccionado.idOriginal);
+      }
+
+    }
+    this.cerrarModalDespacho();
+  }
+
+  // ==========================================
+  // LÓGICA DE DIRECTORIO DE ABONADOS
+  // ==========================================
 
   private calcularStats(): void {
     this.stats.activos = this.abonados.filter(a => a.Activo).length;
@@ -101,24 +131,6 @@ despacharTecnico() {
     });
   }
 
-  seleccionarAbonado(abonado: any): void {
-    this.abonadoSeleccionado = abonado;
-  }
-
-  cerrarFicha(): void {
-    this.abonadoSeleccionado = null;
-  }
-
-  atenderAlerta(alerta: any): void {
-    const confirmacion = confirm(
-      `SISTEMA DE DESPACHO\n----------------------------\n` +
-      `CLIENTE: ${alerta.cliente}\nEVENTO: ${alerta.tipo}\n` +
-      `¿Confirmar envío de unidad de respuesta rápida?`
-    );
-
-    if (confirmacion) {
-      this.alertas = this.alertas.filter(ev => ev.nro !== alerta.nro);
-      alert(`Móvil en camino a ${alerta.cliente}. Evento cerrado.`);
-    }
-  }
+  seleccionarAbonado(abonado: any): void { this.abonadoSeleccionado = abonado; }
+  cerrarFicha(): void { this.abonadoSeleccionado = null; }
 }
