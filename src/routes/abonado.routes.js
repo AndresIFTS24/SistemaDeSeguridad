@@ -10,20 +10,26 @@ const router = express.Router();
  * Incluimos todas las variantes para que Beatriz (Monitoreo) no sea rebotada.
  */
 const accesoLectura = [
-    'Administrador General', 
-    'Monitoreo', 
-    'MONITOREO', 
-    'monitoreo', 
-    'Administración', 
-    'ADMINISTRACION',
-    '4', 
-    4
+    'Administrador',
+    'Administrador General',
+    'Dirección General',
+    'Jefe Monitoreo',
+    'Jefe de Monitoreo',
+    'Operario de Monitoreo',
+    'Monitoreo',
+    'Coordinador Técnico',
+    'Jefe Técnico',
+    'Técnico',
+    '1', 1, '4', 4, '5', 5, '9', 9
 ];
 
 const accesoEscritura = [
-    'Administrador General', 
+    'Administrador',
+    'Administrador General',
+    'Dirección General',
     'Administración',
-    'ADMINISTRACION'
+    'ADMINISTRACION',
+    '1', 1
 ];
 
 // ==========================================

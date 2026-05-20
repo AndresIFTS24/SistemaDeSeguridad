@@ -1,25 +1,38 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http'; // Importa HttpHeaders
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AbonadoService {
-  private apiUrl = 'https://app-c923eddd-1b84-41d8-bc9f-0985196bd087.cleverapps.io/api';
 
-  constructor(private http: HttpClient) { }
+  private apiUrl = 'http://localhost:3000/api';
+
+  constructor(private http: HttpClient) {}
+
+  private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  }
 
   getAllAbonados(): Observable<any> {
-    // 1. Buscamos el token que guardamos al hacer login
-    const token = localStorage.getItem('token'); 
+    return this.http.get(`${this.apiUrl}/abonados`, { headers: this.getHeaders() });
+  }
 
-    // 2. Creamos la cabecera con el formato "Bearer TOKEN"
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
+  getAbonadoById(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/abonados/${id}`, { headers: this.getHeaders() });
+  }
 
-    // 3. Enviamos la petición incluyendo las cabeceras
-    return this.http.get(`${this.apiUrl}/abonados`, { headers });
+  createAbonado(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/abonados`, data, { headers: this.getHeaders() });
+  }
+
+  updateAbonado(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/abonados/${id}`, data, { headers: this.getHeaders() });
+  }
+
+  desactivarAbonado(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/abonados/${id}`, { headers: this.getHeaders() });
   }
 }

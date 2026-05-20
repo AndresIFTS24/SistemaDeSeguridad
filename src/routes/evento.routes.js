@@ -1,19 +1,24 @@
-// src/routes/evento.routes.js (CORREGIDO)
-
 const express = require('express');
 const EventoController = require('../controllers/EventoController');
 const { verifyToken, checkRole } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// 🚨 CORRECCIÓN: Usamos 'Administrador General' para ser consistente con el token del usuario.
-const adminOnly = [verifyToken, checkRole(['Administrador General'])];
+const accesoEventos = [
+    'Administrador',
+    'Administrador General',
+    'Dirección General',
+    'Jefe Monitoreo',
+    'Operario de Monitoreo',
+    'Monitoreo',
+    '1', 1, '4', 4, '5', 5, '9', 9
+];
 
-// Rutas Eventos
-router.post('/eventos', adminOnly, EventoController.create);
-router.get('/eventos', adminOnly, EventoController.getAll);
-router.get('/eventos/dispositivo/:id', adminOnly, EventoController.getByDispositivo);
-router.get('/eventos/:id', adminOnly, EventoController.getById);
-router.put('/eventos/:id', [verifyToken, checkRole(['Administrador General'])], EventoController.updateEstado);
-router.delete('/eventos/:id', adminOnly, EventoController.delete);
+router.get('/', verifyToken, checkRole(accesoEventos), EventoController.getAll);
+router.get('/dispositivo/:id', verifyToken, checkRole(accesoEventos), EventoController.getByDispositivo);
+router.get('/:id', verifyToken, checkRole(accesoEventos), EventoController.getById);
+router.post('/', verifyToken, checkRole(accesoEventos), EventoController.create);
+router.put('/:id', verifyToken, checkRole(accesoEventos), EventoController.updateEstado);
+router.delete('/:id', verifyToken, checkRole(accesoEventos), EventoController.delete);
+
 module.exports = router;

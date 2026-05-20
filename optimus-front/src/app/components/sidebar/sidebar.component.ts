@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <aside class="sidebar">
       <div class="menu-section">
@@ -16,15 +17,18 @@ import { CommonModule } from '@angular/common';
           
           <ng-container [ngSwitch]="idSector">
             <li *ngSwitchCase="1" [class.active]="menuActivo === 'estadisticas'" (click)="seleccionarMenu('estadisticas')">
-              <i class="fas fa-chart-pie"></i> Estadísticas Globales
-            </li>
+  <i class="fas fa-chart-pie"></i> Estadísticas Globales
+</li>
+<li *ngSwitchCase="1" [class.active]="menuActivo === 'abonados'" (click)="navegarA('abonados')">
+  <i class="fas fa-users"></i> Gestión de Abonados
+</li>
             
             <li *ngSwitchCase="3" [class.active]="menuActivo === 'usuarios'" (click)="seleccionarMenu('usuarios')">
               <i class="fas fa-user-shield"></i> Control de Usuarios
             </li>
             
-            <li *ngSwitchCase="4" [class.active]="menuActivo === 'alarmas'" (click)="seleccionarMenu('alarmas')">
-              <i class="fas fa-broadcast-tower"></i> Consola de Alarmas
+            <li *ngSwitchCase="4" [class.active]="menuActivo === 'monitoreo'" (click)="seleccionarMenu('monitoreo')">
+              <i class="fas fa-broadcast-tower"></i> Panel de Monitoreo
             </li>
           </ng-container>
 
@@ -62,14 +66,19 @@ export class SidebarComponent {
   menuActivo: string = 'dashboard';
 
   seleccionarMenu(menu: string) {
-    this.menuActivo = menu;
-  }
+  this.menuActivo = menu;
+}
+
+navegarA(ruta: string) {
+  this.menuActivo = ruta;
+  window.location.href = '/' + ruta;
+}
 
   cerrarSesion() {
     console.log("Cerrando sesión de usuario...");
-    this.logout.emit(); // Emite el evento por si Angular lo está escuchando
+    this.logout.emit();
     
-    // Fallback de seguridad: Destruye el almacenamiento y patea al usuario al login
+    // Fallback de seguridad
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = '/login'; 

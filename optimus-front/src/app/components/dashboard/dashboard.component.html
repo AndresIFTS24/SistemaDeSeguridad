@@ -1,30 +1,123 @@
 <div class="dashboard-wrapper">
   <app-navbar [user]="user"></app-navbar>
-
   <div class="main-layout">
     <app-sidebar [idSector]="user.idSector"></app-sidebar>
 
-    <main class="content-area" [ngSwitch]="user.idSector">
-      
-      <app-direccion-dash 
-        *ngSwitchCase="1">
-      </app-direccion-dash>
+    <main class="content-area">
 
-      <app-it-dash 
-        *ngSwitchCase="3">
-      </app-it-dash>
+      <!-- HEADER DE BIENVENIDA -->
+      <div class="page-header">
+        <div class="header-left">
+          <span class="page-label">PANEL DE CONTROL</span>
+          <h1 class="page-title">Bienvenido, <span class="highlight">{{ user.nombre }}</span></h1>
+          <p class="page-date">{{ currentDate }}</p>
+        </div>
+        <div class="header-right">
+          <div class="status-badge">
+            <span class="status-dot"></span>
+            Sistema Operativo
+          </div>
+        </div>
+      </div>
 
-      <app-monitoreo-dash 
-        *ngSwitchCase="4" 
-        [abonados]="abonados">
-      </app-monitoreo-dash>
+      <!-- KPI CARDS -->
+      <div class="kpi-grid" *ngIf="!loadingKpis; else loadingTpl">
+        <div class="kpi-card abonados">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Abonados Activos</span>
+            <span class="kpi-value">{{ kpis.totalAbonados }}</span>
+            <span class="kpi-sub">clientes en el sistema</span>
+          </div>
+        </div>
 
-      <div *ngSwitchDefault class="error-view">
-        <div class="error-card">
-          <i class="fas fa-exclamation-circle"></i>
-          <h3>Acceso Restringido</h3>
-          <p>Tu sector (ID: {{ user.idSector }}) no tiene un panel de control configurado.</p>
-          <button (click)="logout()" class="btn-retry">Cerrar Sesión</button>
+        <div class="kpi-card eventos">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Eventos Pendientes</span>
+            <span class="kpi-value">{{ kpis.eventosHoy }}</span>
+            <span class="kpi-sub">requieren atención hoy</span>
+          </div>
+        </div>
+
+        <div class="kpi-card tickets">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Tickets Abiertos</span>
+            <span class="kpi-value">{{ kpis.ticketsAbiertos }}</span>
+            <span class="kpi-sub">en soporte técnico</span>
+          </div>
+        </div>
+
+        <div class="kpi-card tecnicos">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">Técnicos Activos</span>
+            <span class="kpi-value">{{ kpis.tecnicosActivos }}</span>
+            <span class="kpi-sub">disponibles en campo</span>
+          </div>
+        </div>
+
+        <div class="kpi-card asignaciones">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="kpi-info">
+            <span class="kpi-label">OT Programadas Hoy</span>
+            <span class="kpi-value">{{ kpis.asignacionesHoy }}</span>
+            <span class="kpi-sub">órdenes de trabajo</span>
+          </div>
+        </div>
+      </div>
+
+      <ng-template #loadingTpl>
+        <div class="loading-kpis">
+          <div class="spinner"></div>
+          <span>Cargando datos del sistema...</span>
+        </div>
+      </ng-template>
+
+      <!-- CONTENIDO POR SECTOR -->
+      <div class="sector-content" [ngSwitch]="user.idSector">
+        <app-direccion-dash *ngSwitchCase="1" [abonados]="abonados" [usuarios]="listaUsuarios"></app-direccion-dash>
+        <app-it-dash *ngSwitchCase="3"></app-it-dash>
+        <app-monitoreo-dash *ngSwitchCase="4" [abonados]="abonados"></app-monitoreo-dash>
+        <div *ngSwitchDefault class="error-view">
+          <div class="error-card">
+            <h3>Acceso Restringido</h3>
+            <p>Tu sector (ID: {{ user.idSector }}) no tiene un panel configurado.</p>
+            <button (click)="logout()" class="btn-retry">Cerrar Sesión</button>
+          </div>
         </div>
       </div>
 

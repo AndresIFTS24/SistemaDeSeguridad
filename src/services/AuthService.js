@@ -10,14 +10,16 @@ class AuthService {
     static async login({ email, password }) {
         // 1. Consulta con JOIN para traer el nombre del Sector real
         const query = `
-            SELECT 
-                u.ID_Usuario, u.Nombre, u.Email, u.PasswordHash, 
-                u.ID_Rol, u.ID_Sector, u.Activo, u.Telefono,
-                s.NombreSector
-            FROM USUARIOS u
-            INNER JOIN SECTORES s ON u.ID_Sector = s.ID_Sector
-            WHERE u.Email = ?
-        `;
+    SELECT 
+        u.ID_Usuario, u.Nombre, u.Email, u.PasswordHash, 
+        u.ID_Rol, u.ID_Sector, u.Activo, u.Telefono,
+        s.NombreSector,
+        r.NombreRol
+    FROM USUARIOS u
+    INNER JOIN SECTORES s ON u.ID_Sector = s.ID_Sector
+    INNER JOIN ROLES r ON u.ID_Rol = r.ID_Rol
+    WHERE u.Email = ?
+`;
 
         const [users] = await pool.execute(query, [email]); 
 
@@ -48,17 +50,17 @@ class AuthService {
         // Usamos la misma clave que el Middleware
         const secret = process.env.JWT_SECRET || 'seguridad_total_2024';
         
-        const token = jwt.sign(
-            { 
-                id: user.ID_Usuario, 
-                email: user.Email, 
-                idSector: user.ID_Sector,
-                nombreSector: user.NombreSector, // Agregamos el nombre para el checkRole
-                rol: user.NombreSector           // Alias para compatibilidad con middlewares anteriores
-            },
-            secret,
-            { expiresIn: '8h' }
-        );
+         const token = jwt.sign(
+    { 
+        id: user.ID_Usuario, 
+        email: user.Email, 
+        idSector: user.ID_Sector,
+        nombreSector: user.NombreSector,
+        rol: user.NombreRol
+    },
+    secret,
+    { expiresIn: '8h' }
+);
 
         // 4. Retorno de información estructurada para el Frontend
         return {

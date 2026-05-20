@@ -1,99 +1,68 @@
-// src/models/DispositivoModel.js (VERSIÓN FINAL Y COMPLETA CORREGIDA PARA MSSQL)
-
-const { executeQuery } = require('../config/db.config');
+const { pool } = require('../config/db.config');
 
 class DispositivoModel {
-    
-    /** 🔄 Crea un nuevo dispositivo. */
-    static async create({ 
-        ID_Modelo, 
-        Serie, 
-        NombreDispositivo, 
-        Ubicacion, 
-        ID_Direccion, 
-        FechaInstalacion, 
-        Estado = 'Operativo' 
-    }) {
-        const NumeroSerie = Serie; 
-        const ZonaUbicacionParam = !Ubicacion ? null : Ubicacion; // Mapea indefinido/nulo/vacío a NULL
-        
-        const query = `
-            INSERT INTO DISPOSITIVOS (ID_Modelo, NumeroSerie, NombreDispositivo, Zona_Ubicacion, ID_Direccion, FechaInstalacion, Estado)
-            OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.NombreDispositivo
-            -- 🚨 CORRECCIÓN: Usar @Nombre
-            VALUES (@ID_Modelo, @NumeroSerie, @NombreDispositivo, @Zona_Ubicacion, @ID_Direccion, @FechaInstalacion, @Estado)
-        `;
-        
-        // 🚨 CORRECCIÓN CLAVE: Objeto de parámetros
-        const params = {
-            ID_Modelo, 
-            NumeroSerie, 
-            NombreDispositivo,
-            Zona_Ubicacion: ZonaUbicacionParam,
-            ID_Direccion, 
-            FechaInstalacion, 
-            Estado
-        };
-        
-        const result = await executeQuery(query, params);
-        return result[0];
-    }
-    
-    /** Obtiene todos los dispositivos (incluyendo detalles del modelo). */
+
     static async findAll() {
-        const query = `
+        const sql = `
             SELECT 
-                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado, D.ID_Direccion,
-                MD.ID_Modelo, MD.NombreModelo, MD.Fabricante
+                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo,
+                D.Zona_Ubicacion, D.FechaInstalacion, D.Estado, D.ID_Direccion,
+                MD.ID_Modelo, MD.NombreModelo, MD.Fabricante,
+                DIR.Calle, DIR.Numero, DIR.Ciudad
             FROM DISPOSITIVOS D
             JOIN MODELOS_DISPOSITIVOS MD ON D.ID_Modelo = MD.ID_Modelo
+            JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
             ORDER BY D.NombreDispositivo
         `;
-        return executeQuery(query);
+        const [rows] = await pool.execute(sql);
+        return rows;
     }
 
-    /** Busca un dispositivo por su ID. */
     static async findById(id) {
-        const query = `
+        const sql = `
             SELECT 
-                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo, D.Zona_Ubicacion, D.FechaInstalacion, D.Estado, D.ID_Direccion,
-                MD.ID_Modelo, MD.NombreModelo, MD.Fabricante
+                D.ID_Dispositivo, D.NumeroSerie, D.NombreDispositivo,
+                D.Zona_Ubicacion, D.FechaInstalacion, D.Estado, D.ID_Direccion,
+                MD.ID_Modelo, MD.NombreModelo, MD.Fabricante,
+                DIR.Calle, DIR.Numero, DIR.Ciudad
             FROM DISPOSITIVOS D
             JOIN MODELOS_DISPOSITIVOS MD ON D.ID_Modelo = MD.ID_Modelo
-            WHERE D.ID_Dispositivo = @ID_Dispositivo -- 🚨 CORRECCIÓN: Usar @ID_Dispositivo
+            JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
+            WHERE D.ID_Dispositivo = ?
         `;
-        // 🚨 CORRECCIÓN CLAVE: Objeto de parámetros
-        const result = await executeQuery(query, { ID_Dispositivo: id });
-        return result[0];
-    }
-    
-    /** Actualiza campos de un dispositivo. */
-    static async update(id, updates, params) {
-        // updates: ["NumeroSerie = @NumeroSerie", "Estado = @Estado"]
-        // params: { NumeroSerie: '123', Estado: 'Averiado' }
-        const query = `
-            UPDATE DISPOSITIVOS 
-            SET ${updates.join(', ')}
-            OUTPUT INSERTED.ID_Dispositivo, INSERTED.NumeroSerie, INSERTED.Estado
-            WHERE ID_Dispositivo = @ID_Dispositivo -- 🚨 CORRECCIÓN: Usar @ID_Dispositivo
-        `;
-        // Agregamos el ID para la cláusula WHERE al objeto de parámetros
-        const finalParams = { ...params, ID_Dispositivo: id }; 
-        const result = await executeQuery(query, finalParams);
-        return result[0];
+        const [rows] = await pool.execute(sql, [id]);
+        return rows[0];
     }
 
-    /** Realiza una eliminación lógica (cambio de Estado). */
-    static async softDelete(id) {
-        const query = `
-            UPDATE DISPOSITIVOS 
-            SET Estado = 'Inactivo' 
-            OUTPUT DELETED.ID_Dispositivo, DELETED.NombreDispositivo, INSERTED.Estado
-            WHERE ID_Dispositivo = @ID_Dispositivo AND Estado = 'Operativo' -- 🚨 CORRECCIÓN: Usar @ID_Dispositivo
+    static async create({ ID_Modelo, NumeroSerie, NombreDispositivo, Zona_Ubicacion, ID_Direccion, FechaInstalacion, Estado = 'Operativo' }) {
+        const sql = `
+            INSERT INTO DISPOSITIVOS (ID_Modelo, NumeroSerie, NombreDispositivo, Zona_Ubicacion, ID_Direccion, FechaInstalacion, Estado)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        // 🚨 CORRECCIÓN CLAVE: Objeto de parámetros
-        const result = await executeQuery(query, { ID_Dispositivo: id });
-        return result[0];
+        const [result] = await pool.execute(sql, [
+            ID_Modelo, NumeroSerie, NombreDispositivo,
+            Zona_Ubicacion || null, ID_Direccion, FechaInstalacion, Estado
+        ]);
+        return this.findById(result.insertId);
+    }
+
+    static async update(id, data) {
+        const { NumeroSerie, NombreDispositivo, Zona_Ubicacion, Estado } = data;
+        const sql = `
+            UPDATE DISPOSITIVOS 
+            SET NumeroSerie = ?, NombreDispositivo = ?, Zona_Ubicacion = ?, Estado = ?
+            WHERE ID_Dispositivo = ?
+        `;
+        await pool.execute(sql, [NumeroSerie, NombreDispositivo, Zona_Ubicacion, Estado, id]);
+        return this.findById(id);
+    }
+
+    static async softDelete(id) {
+        await pool.execute(
+            'UPDATE DISPOSITIVOS SET Estado = ? WHERE ID_Dispositivo = ?',
+            ['Inactivo', id]
+        );
+        return this.findById(id);
     }
 }
 
