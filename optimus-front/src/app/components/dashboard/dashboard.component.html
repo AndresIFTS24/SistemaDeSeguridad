@@ -109,7 +109,7 @@
 
       <!-- CONTENIDO POR SECTOR -->
       <div class="sector-content" [ngSwitch]="user.idSector">
-        <app-direccion-dash *ngSwitchCase="1"></app-direccion-dash>
+        <app-direccion-dash *ngSwitchCase="1" [abonados]="abonados" [usuarios]="listaUsuarios"></app-direccion-dash>
         <app-it-dash *ngSwitchCase="3"></app-it-dash>
         <app-monitoreo-dash *ngSwitchCase="4" [abonados]="abonados"></app-monitoreo-dash>
         <div *ngSwitchDefault class="error-view">

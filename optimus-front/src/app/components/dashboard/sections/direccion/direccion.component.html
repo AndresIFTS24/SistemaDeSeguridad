@@ -1,0 +1,106 @@
+<div class="direccion-container">
+
+  <!-- TABS DE NAVEGACIÓN -->
+  <nav class="direccion-tabs">
+    <button (click)="cambiarVista('usuarios')" [class.active]="vistaActual === 'usuarios'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Gestión de Usuarios
+      <span class="tab-count">{{ usuarios.length }}</span>
+    </button>
+    <button (click)="cambiarVista('abonados')" [class.active]="vistaActual === 'abonados'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      Directorio de Abonados
+      <span class="tab-count">{{ abonados.length }}</span>
+    </button>
+  </nav>
+
+  <!-- BUSCADOR -->
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input
+      type="text"
+      [(ngModel)]="filtroBusqueda"
+      (keyup)="filtrar()"
+      [placeholder]="vistaActual === 'usuarios' ? 'Buscar por nombre, email o rol...' : 'Buscar por razón social, número o email...'"
+    />
+  </div>
+
+  <!-- TABLA USUARIOS -->
+  <div *ngIf="vistaActual === 'usuarios'" class="tabla-container fade-in">
+    <table class="direccion-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Sector</th>
+          <th>Rol</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of usuariosFiltrados">
+          <td><span class="id-badge">#{{ u.ID_Usuario }}</span></td>
+          <td><span class="nombre-text">{{ u.Nombre }}</span></td>
+          <td><span class="email-text">{{ u.Email }}</span></td>
+          <td><span class="sector-tag">{{ u.NombreSector }}</span></td>
+          <td><span class="rol-tag">{{ u.NombreRol }}</span></td>
+          <td>
+            <span class="estado-pill activo">
+              <span class="dot"></span> Activo
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="usuariosFiltrados.length === 0">
+          <td colspan="6" class="empty-row">No se encontraron usuarios.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TABLA ABONADOS -->
+  <div *ngIf="vistaActual === 'abonados'" class="tabla-container fade-in">
+    <table class="direccion-table">
+      <thead>
+        <tr>
+          <th>Nro</th>
+          <th>Razón Social</th>
+          <th>Contacto</th>
+          <th>Teléfono</th>
+          <th>Email</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of abonadosFiltrados">
+          <td><span class="id-badge">{{ a.NumeroDeAbonado }}</span></td>
+          <td><span class="nombre-text">{{ a.RazonSocial }}</span></td>
+          <td>{{ a.ContactoPrincipal }}</td>
+          <td>{{ a.TelefonoContacto }}</td>
+          <td><span class="email-text">{{ a.EmailContacto }}</span></td>
+          <td>
+            <span class="estado-pill" [ngClass]="a.Activo ? 'activo' : 'inactivo'">
+              <span class="dot"></span>
+              {{ a.Activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="abonadosFiltrados.length === 0">
+          <td colspan="6" class="empty-row">No se encontraron abonados.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
