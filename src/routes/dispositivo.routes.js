@@ -1,31 +1,24 @@
-// src/routes/dispositivo.routes.js
-
 const express = require('express');
 const DispositivoController = require('../controllers/DispositivoController');
 const { verifyToken, checkRole } = require('../middleware/auth.middleware');
 
 const router = express.Router();
 
-// Middleware de seguridad: solo administradores pueden acceder
-const adminOnly = [verifyToken, checkRole(['Administrador General'])];
+const accesoDispositivos = [
+    'Administrador',
+    'Administrador General',
+    'Dirección General',
+    'Jefe Monitoreo',
+    'Operario de Monitoreo',
+    'Jefe Técnico',
+    'Técnico',
+    '1', 1, '4', 4, '5', 5
+];
 
-// Rutas Dispositivos (CRUD)
-
-// 1. CREAR (POST)
-router.post('/dispositivos', adminOnly, DispositivoController.create);
-
-// 2. OBTENER TODOS (GET /dispositivos)
-router.get('/dispositivos', adminOnly, DispositivoController.getAll); 
-
-// 3. OBTENER POR ID (GET /dispositivos/:id) 🚨 ESTA ES LA RUTA QUE FALTABA
-router.get('/dispositivos/:id', adminOnly, DispositivoController.getById);
-
-// 4. ACTUALIZAR (PUT)
-router.put('/dispositivos/:id', adminOnly, DispositivoController.update);
-
-// 5. ELIMINACIÓN LÓGICA (DELETE)
-router.delete('/dispositivos/:id', adminOnly, DispositivoController.softDelete); 
-// O si tu controlador usa 'deactivate':
-// router.delete('/dispositivos/:id', adminOnly, DispositivoController.deactivate); 
+router.get('/', verifyToken, checkRole(accesoDispositivos), DispositivoController.getAll);
+router.get('/:id', verifyToken, checkRole(accesoDispositivos), DispositivoController.getById);
+router.post('/', verifyToken, checkRole(accesoDispositivos), DispositivoController.create);
+router.put('/:id', verifyToken, checkRole(accesoDispositivos), DispositivoController.update);
+router.delete('/:id', verifyToken, checkRole(accesoDispositivos), DispositivoController.softDelete);
 
 module.exports = router;

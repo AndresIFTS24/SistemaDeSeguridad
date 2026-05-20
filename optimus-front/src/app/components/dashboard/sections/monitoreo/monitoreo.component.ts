@@ -1,6 +1,7 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EventoService, Evento } from '../../../../services/evento.service';
 
 @Component({
   selector: 'app-monitoreo-dash',
@@ -10,41 +11,39 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./monitoreo.component.css']
 })
 export class MonitoreoDashComponent implements OnInit, OnChanges {
-  
+
   @Input() abonados: any[] = [];
-  
+
   public filtroBusqueda: string = '';
   public abonadosFiltrados: any[] = [];
   public cargando: boolean = true;
   public abonadoSeleccionado: any = null;
-  
-  // Variable unificada para el Modal de Despacho
   public eventoSeleccionado: any = null;
-
-  public stats = { activos: 0, suspendidos: 0, criticos: 5 };
-
-  // LISTA 1: Feed de Alertas (Panel Lateral)
-  public alertas = [
-    { nro: 'A-1071', tipo: 'ALARMA DE ROBO', zona: 'Sector Depósito', tiempo: '19:02:15', critico: true, cliente: 'Adidas Argentina' },
-    { nro: 'A-1004', tipo: 'PÁNICO ASISTIDO', zona: 'Caja Principal', tiempo: '18:55:30', critico: true, cliente: 'Schmidt & Co.' },
-    { nro: 'A-1025', tipo: 'TEST DE COMUNICACIÓN', zona: 'Panel Central', tiempo: '18:50:12', critico: false, cliente: 'Café Tortoni' },
-    { nro: 'A-1053', tipo: 'FALLO DE RED', zona: 'Router Rack 1', tiempo: '18:42:05', critico: false, cliente: 'Frigorífico El 10' },
-    { nro: 'A-1096', tipo: 'CORTE DE ENERGÍA', zona: 'General', tiempo: '18:30:00', critico: true, cliente: 'Edenor S.A' }
-  ];
-
-  // LISTA 2: Consola Central
-  public eventos = [
-    { id: 1, cuenta: '1071', cliente: 'Adidas Argentina', evento: 'ROBO - ZONA 04', prioridad: 'alta', hora: '20:15:02', estado: 'pendiente' },
-    { id: 2, cuenta: '1004', cliente: 'Schmidt & Co.', evento: 'PÁNICO ASISTIDO', prioridad: 'critica', hora: '20:10:30', estado: 'en-proceso' },
-    { id: 3, cuenta: '1025', cliente: 'Café Tortoni', evento: 'FALLO DE RED', prioridad: 'media', hora: '20:05:12', estado: 'pendiente' },
-    { id: 4, cuenta: '1053', cliente: 'Frigorífico El 10', evento: 'TEST PERIÓDICO', prioridad: 'baja', hora: '19:50:00', estado: 'atendido' }
-  ];
-
   public vistaActual: string = 'abonados';
 
-  constructor() {}
+  public stats = { activos: 0, suspendidos: 0, criticos: 0 };
 
-  ngOnInit(): void { this.actualizarVista(); }
+  // Eventos reales desde la BD
+  public eventos: Evento[] = [];
+  public cargandoEventos: boolean = true;
+
+  // Feed lateral — derivado de eventos reales
+  public get alertas(): Evento[] {
+    return this.eventos.filter(e => e.Estado === 'Pendiente');
+  }
+
+  public get eventosCriticos(): number {
+    return this.eventos.filter(e =>
+      e.NivelCriticidad === 'Crítico' && e.Estado === 'Pendiente'
+    ).length;
+  }
+
+  constructor(private eventoService: EventoService) {}
+
+  ngOnInit(): void {
+    this.actualizarVista();
+    this.cargarEventos();
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['abonados'] && this.abonados) {
@@ -54,56 +53,65 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     }
   }
 
-  private actualizarVista(): void { this.abonadosFiltrados = [...this.abonados]; }
+  cargarEventos(): void {
+    this.cargandoEventos = true;
+    this.eventoService.getEventos().subscribe({
+      next: (response: any) => {
+        this.eventos = response.eventos || [];
+        this.cargandoEventos = false;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar eventos:', err);
+        this.cargandoEventos = false;
+      }
+    });
+  }
 
-  cambiarVista(vista: string) { this.vistaActual = vista; }
+  private actualizarVista(): void {
+    this.abonadosFiltrados = [...this.abonados];
+  }
+
+  cambiarVista(vista: string): void {
+    this.vistaActual = vista;
+  }
 
   // ==========================================
-  // LÓGICA DEL PANEL DE DESPACHO (NORMALIZADA)
+  // LÓGICA DEL PANEL DE DESPACHO
   // ==========================================
 
-  // Atrapa el clic de la tabla central
-  procesarEvento(evento: any) {
+  procesarEvento(evento: Evento): void {
     this.eventoSeleccionado = {
       origen: 'eventos',
-      idOriginal: evento.id,
-      cliente: evento.cliente,
-      evento: evento.evento,
-      hora: evento.hora,
-      prioridad: evento.prioridad
+      idOriginal: evento.ID_Evento,
+      cliente: evento.NombreAbonado,
+      evento: evento.DescripcionEvento,
+      hora: new Date(evento.FechaHoraRecepcion).toLocaleTimeString('es-AR'),
+      prioridad: evento.NivelCriticidad === 'Crítico' ? 'critica' :
+                 evento.NivelCriticidad === 'Alta' ? 'alta' : 'media',
+      dispositivo: evento.NombreDispositivo,
+      tipoEvento: evento.TipoEvento
     };
   }
 
-  // Atrapa el clic del panel lateral y lo traduce para el mismo Modal
-  atenderAlerta(alerta: any): void {
-    this.eventoSeleccionado = {
-      origen: 'alertas',
-      idOriginal: alerta.nro,
-      cliente: alerta.cliente,
-      evento: alerta.tipo,
-      hora: alerta.tiempo,
-      prioridad: alerta.critico ? 'critica' : 'media'
-    };
+  atenderAlerta(evento: Evento): void {
+    this.procesarEvento(evento);
   }
 
-  cerrarModalDespacho() {
+  cerrarModalDespacho(): void {
     this.eventoSeleccionado = null;
   }
 
-  // El botón "Generar OT y Despachar" ahora es inteligente
-  despacharTecnico() {
+  despacharTecnico(): void {
     if (this.eventoSeleccionado) {
-      
-      if (this.eventoSeleccionado.origen === 'eventos') {
-        // Si viene del centro, cambiamos la etiqueta a "EN-PROCESO"
-        const ev = this.eventos.find(e => e.id === this.eventoSeleccionado.idOriginal);
-        if (ev) ev.estado = 'en-proceso';
-      
-      } else if (this.eventoSeleccionado.origen === 'alertas') {
-        // Si viene del lateral, la eliminamos de la lista para limpiar la cola
-        this.alertas = this.alertas.filter(a => a.nro !== this.eventoSeleccionado.idOriginal);
-      }
-
+      this.eventoService.updateEstado(
+        this.eventoSeleccionado.idOriginal,
+        'En Progreso'
+      ).subscribe({
+        next: () => {
+          this.cargarEventos();
+        },
+        error: (err: any) => console.error('Error al actualizar evento:', err)
+      });
     }
     this.cerrarModalDespacho();
   }
@@ -131,6 +139,29 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     });
   }
 
-  seleccionarAbonado(abonado: any): void { this.abonadoSeleccionado = abonado; }
-  cerrarFicha(): void { this.abonadoSeleccionado = null; }
+  seleccionarAbonado(abonado: any): void {
+    this.abonadoSeleccionado = abonado;
+  }
+
+  cerrarFicha(): void {
+    this.abonadoSeleccionado = null;
+  }
+
+  getPrioridadClass(criticidad: string): string {
+    switch (criticidad) {
+      case 'Crítico': return 'critica';
+      case 'Alta': return 'alta';
+      case 'Baja': return 'baja';
+      default: return 'media';
+    }
+  }
+
+  getEstadoClass(estado: string): string {
+    switch (estado) {
+      case 'Pendiente': return 'pendiente';
+      case 'En Progreso': return 'en-proceso';
+      case 'Cerrado': return 'atendido';
+      default: return 'pendiente';
+    }
+  }
 }
