@@ -15,7 +15,13 @@ const bcrypt = require('bcrypt');
 router.get('/usuarios', async (req, res) => {
     try {
         // Quitamos PasswordHash de aquí para que nadie pueda verla, ni hasheada ni plana.
-        const query = 'SELECT ID_Usuario, Nombre, Email, Telefono, ID_Rol, ID_Sector FROM USUARIOS';
+        const query = `
+    SELECT U.ID_Usuario, U.Nombre, U.Email, U.Telefono, U.Activo,
+           S.NombreSector, R.NombreRol
+    FROM USUARIOS U
+    INNER JOIN SECTORES S ON U.ID_Sector = S.ID_Sector
+    INNER JOIN ROLES R ON U.ID_Rol = R.ID_Rol
+`;
         const [rows] = await pool.execute(query);
         res.status(200).json(rows);
     } catch (error) {

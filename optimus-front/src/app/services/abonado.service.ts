@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class AbonadoService {
-  private apiUrl = 'https://app-c923eddd-1b84-41d8-bc9f-0985196bd087.cleverapps.io/api';
+  private apiUrl = 'http://localhost:3000/api';
 
   constructor(private http: HttpClient) { }
 
