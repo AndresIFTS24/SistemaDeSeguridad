@@ -18,6 +18,7 @@ const modeloDispositivoRoutes = require('./src/routes/modeloDispositivo.routes')
 const dispositivoRoutes = require('./src/routes/dispositivo.routes');
 const asignacionRoutes = require('./src/routes/asignacion.routes');
 const eventoRoutes = require('./src/routes/evento.routes');
+const dashboardRoutes = require('./src/routes/dashboard.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000; 
@@ -62,6 +63,7 @@ app.use('/api/modelos', modeloDispositivoRoutes);
 app.use('/api/dispositivos', dispositivoRoutes);
 app.use('/api/asignaciones', asignacionRoutes);
 app.use('/api/eventos', eventoRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // 5. INICIO DEL SERVIDOR
 async function startServer() {
