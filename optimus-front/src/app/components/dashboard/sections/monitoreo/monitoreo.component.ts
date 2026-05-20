@@ -1,12 +1,13 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { EventoService, Evento } from '../../../../services/evento.service';
+import { EventoService, Evento, CodigoEvento } from '../../../../services/evento.service';
+import { ArgentinaDatePipe } from '../../../../pipes/argentina-date.pipe';
 
 @Component({
   selector: 'app-monitoreo-dash',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ArgentinaDatePipe],
   templateUrl: './monitoreo.component.html',
   styleUrls: ['./monitoreo.component.css']
 })
@@ -23,11 +24,22 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
 
   public stats = { activos: 0, suspendidos: 0, criticos: 0 };
 
-  // Eventos reales desde la BD
   public eventos: Evento[] = [];
   public cargandoEventos: boolean = true;
 
-  // Feed lateral — derivado de eventos reales
+  // Formulario nuevo evento
+  public mostrarFormEvento: boolean = false;
+  public dispositivos: any[] = [];
+  public codigosEvento: CodigoEvento[] = [];
+  public guardandoEvento: boolean = false;
+  public mensajeEventoExito: string = '';
+  public mensajeEventoError: string = '';
+
+  public nuevoEvento = {
+    ID_Dispositivo: 0,
+    ID_CodigoEvento: 0
+  };
+
   public get alertas(): Evento[] {
     return this.eventos.filter(e => e.Estado === 'Pendiente');
   }
@@ -43,6 +55,8 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.actualizarVista();
     this.cargarEventos();
+    this.cargarDispositivos();
+    this.cargarCodigosEvento();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -67,6 +81,57 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     });
   }
 
+  cargarDispositivos(): void {
+    this.eventoService.getDispositivos().subscribe({
+      next: (response: any) => {
+        this.dispositivos = response.dispositivos || [];
+      },
+      error: (err: any) => console.error('Error al cargar dispositivos:', err)
+    });
+  }
+
+  cargarCodigosEvento(): void {
+    this.eventoService.getCodigosEvento().subscribe({
+      next: (response: any) => {
+        this.codigosEvento = response.codigos || [];
+      },
+      error: (err: any) => console.error('Error al cargar códigos:', err)
+    });
+  }
+
+  abrirFormEvento(): void {
+    this.mostrarFormEvento = true;
+    this.nuevoEvento = { ID_Dispositivo: 0, ID_CodigoEvento: 0 };
+    this.mensajeEventoExito = '';
+    this.mensajeEventoError = '';
+  }
+
+  cerrarFormEvento(): void {
+    this.mostrarFormEvento = false;
+  }
+
+  registrarEvento(): void {
+    if (!this.nuevoEvento.ID_Dispositivo || !this.nuevoEvento.ID_CodigoEvento) {
+      this.mensajeEventoError = 'Seleccioná un dispositivo y un tipo de evento.';
+      return;
+    }
+    this.guardandoEvento = true;
+    this.mensajeEventoError = '';
+
+    this.eventoService.crearEvento(this.nuevoEvento).subscribe({
+      next: () => {
+        this.mensajeEventoExito = '✅ Evento registrado exitosamente.';
+        this.guardandoEvento = false;
+        this.cargarEventos();
+        setTimeout(() => this.cerrarFormEvento(), 1500);
+      },
+      error: (err: any) => {
+        this.mensajeEventoError = err.error?.message || 'Error al registrar el evento.';
+        this.guardandoEvento = false;
+      }
+    });
+  }
+
   private actualizarVista(): void {
     this.abonadosFiltrados = [...this.abonados];
   }
@@ -74,10 +139,6 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
   }
-
-  // ==========================================
-  // LÓGICA DEL PANEL DE DESPACHO
-  // ==========================================
 
   procesarEvento(evento: Evento): void {
     this.eventoSeleccionado = {
@@ -107,18 +168,12 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
         this.eventoSeleccionado.idOriginal,
         'En Progreso'
       ).subscribe({
-        next: () => {
-          this.cargarEventos();
-        },
+        next: () => { this.cargarEventos(); },
         error: (err: any) => console.error('Error al actualizar evento:', err)
       });
     }
     this.cerrarModalDespacho();
   }
-
-  // ==========================================
-  // LÓGICA DE DIRECTORIO DE ABONADOS
-  // ==========================================
 
   private calcularStats(): void {
     this.stats.activos = this.abonados.filter(a => a.Activo).length;
@@ -139,13 +194,8 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     });
   }
 
-  seleccionarAbonado(abonado: any): void {
-    this.abonadoSeleccionado = abonado;
-  }
-
-  cerrarFicha(): void {
-    this.abonadoSeleccionado = null;
-  }
+  seleccionarAbonado(abonado: any): void { this.abonadoSeleccionado = abonado; }
+  cerrarFicha(): void { this.abonadoSeleccionado = null; }
 
   getPrioridadClass(criticidad: string): string {
     switch (criticidad) {

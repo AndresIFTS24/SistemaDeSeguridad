@@ -11,15 +11,16 @@ const router = express.Router();
  */
 const accesoLectura = [
     'Administrador',
-    'Administrador General', 
+    'Administrador General',
     'Dirección General',
-    'Monitoreo', 
-    'MONITOREO', 
-    'monitoreo', 
-    'Administración', 
-    'ADMINISTRACION',
-    '1', 1,
-    '4', 4
+    'Jefe Monitoreo',
+    'Jefe de Monitoreo',
+    'Operario de Monitoreo',
+    'Monitoreo',
+    'Coordinador Técnico',
+    'Jefe Técnico',
+    'Técnico',
+    '1', 1, '4', 4, '5', 5, '9', 9
 ];
 
 const accesoEscritura = [
