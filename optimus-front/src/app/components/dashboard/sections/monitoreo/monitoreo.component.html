@@ -5,7 +5,7 @@
       <div class="stat-icon"><i class="fas fa-radiation-alt"></i></div>
       <div class="stat-info">
         <span class="stat-label">Alarmas Críticas</span>
-        <h2 class="stat-value">{{ alertas.length }}</h2>
+        <h2 class="stat-value">{{ eventosCriticos }}</h2>
       </div>
     </div>
     <div class="stat-card">
@@ -39,6 +39,7 @@
 
   <div [ngSwitch]="vistaActual" class="fade-in">
 
+    <!-- VISTA ABONADOS -->
     <div *ngSwitchCase="'abonados'" class="main-monitoring-grid">
       
       <section class="subscribers-panel">
@@ -72,7 +73,6 @@
             <tbody>
               <tr *ngFor="let abonado of abonadosFiltrados" 
                   (click)="seleccionarAbonado(abonado)"
-                  [class.selected]="abonadoSeleccionado?.idAbonado === abonado.idAbonado"
                   class="row-clickable">
                 <td><b class="acc-number">{{ abonado.NumeroDeAbonado }}</b></td>
                 <td>{{ abonado.RazonSocial }}</td>
@@ -114,79 +114,103 @@
             <h3><i class="fas fa-bell"></i> Eventos Recientes</h3>
           </div>
           <div class="alerts-list scrollable">
-            <div *ngFor="let alerta of alertas" 
-                 class="alert-item" 
-                 [class.critical]="alerta.critico"
+
+            <div *ngIf="cargandoEventos" class="loading-eventos">
+              <i class="fas fa-spinner fa-spin"></i> Cargando eventos...
+            </div>
+
+            <div *ngFor="let alerta of alertas"
+                 class="alert-item"
+                 [class.critical]="alerta.NivelCriticidad === 'Crítico'"
                  (click)="atenderAlerta(alerta)">
               <div class="alert-meta">
-                <span class="time">{{ alerta.tiempo }}</span>
-                <span class="nro">{{ alerta.nro }}</span>
+                <span class="time">{{ alerta.FechaHoraRecepcion | date:'HH:mm:ss' }}</span>
+                <span class="nro">{{ alerta.TipoEvento }}</span>
               </div>
               <div class="alert-content">
-                <div class="event-type">{{ alerta.tipo }}</div>
-                <div class="client-name">{{ alerta.cliente }}</div>
+                <div class="event-type">{{ alerta.DescripcionEvento }}</div>
+                <div class="client-name">{{ alerta.NombreAbonado }}</div>
               </div>
             </div>
+
+            <div *ngIf="!cargandoEventos && alertas.length === 0" class="empty-alerts">
+              <i class="fas fa-check-circle"></i>
+              <p>Sin eventos pendientes</p>
+            </div>
+
           </div>
         </div>
       </aside>
     </div>
 
+    <!-- VISTA ALARMAS -->
     <div *ngSwitchCase="'alarmas'" class="alarm-console-view">
       <div class="console-header-bar">
         <h3><i class="fas fa-headset"></i> Despacho de Eventos en Tiempo Real</h3>
         <div class="console-actions">
-          <button class="btn-filter"><i class="fas fa-filter"></i> Prioridad Alta</button>
-          <button class="btn-filter"><i class="fas fa-history"></i> Historial del Día</button>
+          <button class="btn-filter" (click)="cargarEventos()">
+            <i class="fas fa-sync"></i> Actualizar
+          </button>
         </div>
       </div>
 
       <div class="events-stack">
-        <div *ngFor="let ev of eventos" class="alarm-row" [ngClass]="ev.prioridad">
+        <div *ngFor="let ev of eventos" 
+             class="alarm-row" 
+             [ngClass]="getPrioridadClass(ev.NivelCriticidad)">
           <div class="priority-indicator"></div>
-          <div class="time-col">{{ ev.hora }}</div>
-          <div class="account-col">#{{ ev.cuenta }}</div>
+          <div class="time-col">{{ ev.FechaHoraRecepcion | date:'HH:mm:ss' }}</div>
+          <div class="account-col">#{{ ev.NumeroDeAbonado }}</div>
           <div class="client-col">
-            <strong>{{ ev.cliente }}</strong>
-            <small>{{ ev.evento }}</small>
+            <strong>{{ ev.NombreAbonado }}</strong>
+            <small>{{ ev.DescripcionEvento }} — {{ ev.NombreDispositivo }}</small>
           </div>
           <div class="status-col">
-            <span class="badge-status" [ngClass]="ev.estado">{{ ev.estado | uppercase }}</span>
+            <span class="badge-status" [ngClass]="getEstadoClass(ev.Estado)">
+              {{ ev.Estado | uppercase }}
+            </span>
           </div>
           <div class="action-col">
-            <button class="btn-atender" (click)="procesarEvento(ev)">
+            <button class="btn-atender" 
+                    (click)="procesarEvento(ev)"
+                    *ngIf="ev.Estado !== 'Cerrado'">
               <i class="fas fa-external-link-alt"></i> ATENDER
             </button>
           </div>
         </div>
 
-        <div *ngIf="eventos.length === 0" class="empty-state">
+        <div *ngIf="!cargandoEventos && eventos.length === 0" class="empty-state">
           <i class="fas fa-check-circle"></i>
-          <p>No hay alarmas pendientes de procesamiento.</p>
+          <p>No hay eventos registrados.</p>
+        </div>
+
+        <div *ngIf="cargandoEventos" class="empty-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Cargando eventos...</p>
         </div>
       </div>
     </div>
 
+    <!-- VISTA CONFIG -->
     <div *ngSwitchCase="'config'" class="config-view">
       <div class="config-grid">
         <div class="config-card">
           <h4><i class="fas fa-desktop"></i> Interfaz de Operador</h4>
-          
           <div class="control-group">
             <label for="darkMode">Modo Oscuro</label>
             <input type="checkbox" id="darkMode" title="Activar modo oscuro">
           </div>
-
           <div class="control-group">
             <label for="alertVolume">Volumen de Alerta</label>
             <input type="range" id="alertVolume" min="0" max="100" title="Ajustar volumen de alertas">
           </div>
         </div>
-
         <div class="config-card">
           <h4><i class="fas fa-database"></i> Sincronización</h4>
-          <p>Última actualización: hace 2 minutos</p>
-          <button class="btn-refresh"><i class="fas fa-sync"></i> Forzar Recarga de Datos</button>
+          <p>Eventos cargados: {{ eventos.length }}</p>
+          <button class="btn-refresh" (click)="cargarEventos()">
+            <i class="fas fa-sync"></i> Forzar Recarga de Datos
+          </button>
         </div>
       </div>
     </div>
@@ -194,13 +218,13 @@
   </div>
 </div>
 
+<!-- MODAL DE DESPACHO -->
 <div class="modal-overlay" *ngIf="eventoSeleccionado">
   <div class="modal-despacho fade-in">
     <div class="modal-header" [ngClass]="eventoSeleccionado.prioridad">
       <h3><i class="fas fa-exclamation-triangle"></i> Protocolo de Acción Requerido</h3>
       <button class="btn-close-modal" (click)="cerrarModalDespacho()">&times;</button>
     </div>
-    
     <div class="modal-body">
       <div class="evento-detalle">
         <span class="label">Abonado:</span>
@@ -211,13 +235,16 @@
         <span class="valor alert-text">{{ eventoSeleccionado.evento }}</span>
       </div>
       <div class="evento-detalle">
+        <span class="label">Dispositivo:</span>
+        <span class="valor">{{ eventoSeleccionado.dispositivo }}</span>
+      </div>
+      <div class="evento-detalle">
         <span class="label">Hora de Recepción:</span>
         <span class="valor">{{ eventoSeleccionado.hora }}</span>
       </div>
-
       <div class="accion-tecnica">
         <h4><i class="fas fa-user-shield"></i> Asignación de Móvil/Técnico</h4>
-        <p>El sistema requiere generar una Orden de Trabajo (OT) para que el personal de campo reciba la alerta en su aplicación móvil instantáneamente.</p>
+        <p>El sistema requiere generar una Orden de Trabajo (OT) para que el personal de campo reciba la alerta instantáneamente.</p>
         <button class="btn-despachar" (click)="despacharTecnico()">
           <i class="fas fa-truck-pickup"></i> GENERAR OT Y DESPACHAR MÓVIL
         </button>
