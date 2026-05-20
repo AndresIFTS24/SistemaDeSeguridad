@@ -17,6 +17,13 @@ export interface Evento {
   NumeroDeAbonado: string;
 }
 
+export interface CodigoEvento {
+  ID_CodigoEvento: number;
+  Codigo: string;
+  DescripcionAlarma: string;
+  Prioridad: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -41,5 +48,21 @@ export class EventoService {
       { Estado: estado },
       { headers: this.getHeaders() }
     );
+  }
+
+  crearEvento(data: { ID_Dispositivo: number, ID_CodigoEvento: number }): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/eventos`,
+      data,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  getDispositivos(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/dispositivos`, { headers: this.getHeaders() });
+  }
+
+  getCodigosEvento(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/codigos-eventos`, { headers: this.getHeaders() });
   }
 }

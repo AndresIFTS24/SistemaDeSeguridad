@@ -6,7 +6,7 @@ class EventoModel {
     static async create({ ID_Dispositivo, ID_CodigoEvento, Estado = 'Pendiente' }) {
         const sql = `
             INSERT INTO EVENTOS (ID_Dispositivo, ID_CodigoEvento, FechaHoraRecepcion, Estado)
-            VALUES (?, ?, NOW(), ?)
+            VALUES (?, ?, CONVERT_TZ(NOW(), '+00:00', '-03:00'), ?)
         `;
         const [result] = await pool.execute(sql, [ID_Dispositivo, ID_CodigoEvento, Estado]);
         
