@@ -18,11 +18,15 @@ export class AbonadosComponent implements OnInit {
   public filtroBusqueda: string = '';
   public loading: boolean = true;
   public error: boolean = false;
-  public abonadoSeleccionado: any = null;
   public mostrarModal: boolean = false;
   public modoModal: string = 'ver';
+  public guardando: boolean = false;
+  public mensajeExito: string = '';
+  public mensajeError: string = '';
 
-  public nuevoAbonado = {
+  public abonadoSeleccionado: any = null;
+
+  public formAbonado = {
     NumeroDeAbonado: '',
     RazonSocial: '',
     RUT: '',
@@ -47,6 +51,7 @@ export class AbonadosComponent implements OnInit {
 
   cargarAbonados(): void {
     this.loading = true;
+    this.error = false;
     this.abonadoService.getAllAbonados().subscribe({
       next: (response: any) => {
         this.abonados = response.abonados || response || [];
@@ -79,17 +84,29 @@ export class AbonadosComponent implements OnInit {
     this.abonadoSeleccionado = { ...abonado };
     this.modoModal = 'ver';
     this.mostrarModal = true;
+    this.mensajeExito = '';
+    this.mensajeError = '';
   }
 
-  editarAbonado(abonado: any): void {
+  abrirEditar(abonado: any): void {
     this.abonadoSeleccionado = { ...abonado };
+    this.formAbonado = {
+      NumeroDeAbonado: abonado.NumeroDeAbonado,
+      RazonSocial: abonado.RazonSocial,
+      RUT: abonado.RUT || '',
+      ContactoPrincipal: abonado.ContactoPrincipal || '',
+      TelefonoContacto: abonado.TelefonoContacto || '',
+      EmailContacto: abonado.EmailContacto || ''
+    };
     this.modoModal = 'editar';
     this.mostrarModal = true;
+    this.mensajeExito = '';
+    this.mensajeError = '';
   }
 
-  nuevoAbonadoModal(): void {
+  abrirNuevo(): void {
     this.abonadoSeleccionado = null;
-    this.nuevoAbonado = {
+    this.formAbonado = {
       NumeroDeAbonado: '',
       RazonSocial: '',
       RUT: '',
@@ -99,11 +116,69 @@ export class AbonadosComponent implements OnInit {
     };
     this.modoModal = 'nuevo';
     this.mostrarModal = true;
+    this.mensajeExito = '';
+    this.mensajeError = '';
   }
 
   cerrarModal(): void {
     this.mostrarModal = false;
     this.abonadoSeleccionado = null;
+    this.mensajeExito = '';
+    this.mensajeError = '';
+  }
+
+  guardarNuevo(): void {
+    if (!this.formAbonado.NumeroDeAbonado || !this.formAbonado.RazonSocial) {
+      this.mensajeError = 'Número de abonado y Razón Social son obligatorios.';
+      return;
+    }
+    this.guardando = true;
+    this.mensajeError = '';
+    this.abonadoService.createAbonado(this.formAbonado).subscribe({
+      next: () => {
+        this.mensajeExito = '✅ Abonado creado exitosamente.';
+        this.guardando = false;
+        this.cargarAbonados();
+        setTimeout(() => this.cerrarModal(), 1500);
+      },
+      error: (err: any) => {
+        this.mensajeError = err.error?.message || 'Error al crear el abonado.';
+        this.guardando = false;
+      }
+    });
+  }
+
+  guardarEdicion(): void {
+    if (!this.formAbonado.NumeroDeAbonado || !this.formAbonado.RazonSocial) {
+      this.mensajeError = 'Número de abonado y Razón Social son obligatorios.';
+      return;
+    }
+    this.guardando = true;
+    this.mensajeError = '';
+    this.abonadoService.updateAbonado(this.abonadoSeleccionado.ID_Abonado, this.formAbonado).subscribe({
+      next: () => {
+        this.mensajeExito = '✅ Abonado actualizado exitosamente.';
+        this.guardando = false;
+        this.cargarAbonados();
+        setTimeout(() => this.cerrarModal(), 1500);
+      },
+      error: (err: any) => {
+        this.mensajeError = err.error?.message || 'Error al actualizar el abonado.';
+        this.guardando = false;
+      }
+    });
+  }
+
+  desactivarAbonado(abonado: any): void {
+    if (!confirm(`¿Desactivar a ${abonado.RazonSocial}?`)) return;
+    this.abonadoService.desactivarAbonado(abonado.ID_Abonado).subscribe({
+      next: () => {
+        this.cargarAbonados();
+      },
+      error: (err: any) => {
+        console.error('Error al desactivar:', err);
+      }
+    });
   }
 
   volverDashboard(): void {

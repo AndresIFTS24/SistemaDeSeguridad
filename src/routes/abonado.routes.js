@@ -23,9 +23,12 @@ const accesoLectura = [
 ];
 
 const accesoEscritura = [
-    'Administrador General', 
+    'Administrador',
+    'Administrador General',
+    'Dirección General',
     'Administración',
-    'ADMINISTRACION'
+    'ADMINISTRACION',
+    '1', 1
 ];
 
 // ==========================================

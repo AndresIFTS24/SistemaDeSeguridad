@@ -120,6 +120,20 @@ class AbonadoService {
         };
     }
 
+    static async deactivateAbonado(id) {
+    const abonado = await this.getAbonadoById(id);
+    
+    if (abonado.Activo === 0) {
+        const error = new Error('El abonado ya está inactivo.');
+        error.cause = 400;
+        throw error;
+    }
+
+    await pool.execute('UPDATE ABONADOS SET Activo = 0 WHERE ID_Abonado = ?', [id]);
+    
+    return { id, activo: 0, message: 'Abonado desactivado exitosamente.' };
+}
+
     /**
      * Buscar abonados (Para buscadores en el frontend)
      */
