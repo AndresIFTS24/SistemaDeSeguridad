@@ -1,18 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
-// Servicios
 import { AuthService } from '../../services/auth.service';
-import { AbonadoService } from '../../services/abonado.service'; 
+import { AbonadoService } from '../../services/abonado.service';
+import { DashboardService, DashboardKpis } from '../../services/dashboard.service';
 
-// Componentes de Sectores (Rutas según tu estructura de carpetas)
-import { ItDashComponent } from './sections/it-admin/it-dash.component'; 
+import { ItDashComponent } from './sections/it-admin/it-dash.component';
 import { DireccionDashComponent } from './sections/direccion/direccion.component';
 import { MonitoreoDashComponent } from './sections/monitoreo/monitoreo.component';
-
-// Componentes Globales (Navbar y Sidebar)
-import { NavbarComponent } from '../navbar/navbar.component'; 
+import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 
 @Component({
@@ -20,74 +17,96 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MonitoreoDashComponent,
     ItDashComponent,
     DireccionDashComponent,
-    NavbarComponent, 
-    SidebarComponent 
+    NavbarComponent,
+    SidebarComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  
-  /**
-   * Objeto de usuario que se pasa a Navbar y Sidebar.
-   * idSector es vital para el [ngSwitch] del HTML.
-   */
+
   public user = {
     nombre: '',
     sectorNombre: '',
     idSector: 0
   };
 
-  // Listas de datos para los sub-componentes
   public abonados: any[] = [];
   public listaUsuarios: any[] = [];
 
+  kpis: DashboardKpis = {
+    totalAbonados: 0,
+    eventosHoy: 0,
+    ticketsAbiertos: 0,
+    tecnicosActivos: 0,
+    asignacionesHoy: 0
+  };
+
+  loadingKpis: boolean = true;
+  currentDate: string = '';
+
   constructor(
-    private authService: AuthService, 
+    private authService: AuthService,
     private abonadoService: AbonadoService,
+    private dashboardService: DashboardService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    // 1. Verificación de seguridad básica
     const token = localStorage.getItem('token');
     if (!token) {
       this.logout();
       return;
     }
 
-    // 2. Carga de datos desde LocalStorage (guardados durante el Login)
     this.user.nombre = localStorage.getItem('userName') || 'Operador';
     this.user.sectorNombre = localStorage.getItem('userSectorNombre') || 'General';
-    
-    // Convertimos a número para que el ngSwitchCase funcione correctamente
     const savedSector = localStorage.getItem('userSector');
     this.user.idSector = savedSector ? parseInt(savedSector, 10) : 0;
 
-    console.log('--- Dashboard Inicializado ---');
-    console.log('Usuario:', this.user.nombre);
-    console.log('Sector ID:', this.user.idSector);
-
-    // 3. Disparar carga de datos según corresponda
+    this.setCurrentDate();
+    this.loadKpis();
     this.inicializarDatosSector();
   }
 
-  /**
-   * Decide qué datos pedir a la API según quién esté logueado
-   */
+  setCurrentDate(): void {
+    const now = new Date();
+    this.currentDate = now.toLocaleDateString('es-AR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
+
+  loadKpis(): void {
+    this.loadingKpis = true;
+    this.dashboardService.getKpis().subscribe({
+      next: (data) => {
+        this.kpis = data;
+        this.loadingKpis = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar KPIs:', err);
+        this.loadingKpis = false;
+      }
+    });
+  }
+
   private inicializarDatosSector(): void {
     switch (this.user.idSector) {
-      case 1: // Dirección General
+      case 1:
         this.cargarUsuarios();
         this.cargarAbonados();
         break;
-      case 3: // Infraestructura e IT
+      case 3:
         this.cargarUsuarios();
         break;
-      case 4: // Monitoreo
+      case 4:
         this.cargarAbonados();
         break;
       default:
@@ -96,38 +115,24 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  /**
-   * Carga la lista de usuarios para los paneles administrativos
-   */
   cargarUsuarios(): void {
     this.authService.getUsers().subscribe({
       next: (res: any) => {
-        // Adaptamos a tu respuesta de API (Array directo o propiedad usuarios)
         this.listaUsuarios = res.usuarios || res;
       },
       error: (err: any) => console.error('Error cargando usuarios:', err)
     });
   }
 
-  /**
-   * Carga la lista de abonados desde Clever Cloud
-   */
   cargarAbonados(): void {
     this.abonadoService.getAllAbonados().subscribe({
       next: (response: any) => {
-        // Extraemos el array desde la propiedad 'abonados' del JSON
-        this.abonados = response.abonados || []; 
-        console.log('Abonados cargados:', this.abonados.length);
+        this.abonados = response.abonados || [];
       },
-      error: (err: any) => {
-        console.error('Error al cargar abonados:', err);
-      }
+      error: (err: any) => console.error('Error al cargar abonados:', err)
     });
   }
 
-  /**
-   * Limpia la sesión y vuelve al login
-   */
   logout(): void {
     localStorage.clear();
     this.router.navigate(['/login']);
