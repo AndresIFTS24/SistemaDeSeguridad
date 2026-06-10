@@ -1,7 +1,13 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component, Input, OnInit, OnChanges,
+  OnDestroy, SimpleChanges
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+
 import { EventoService, Evento, CodigoEvento } from '../../../../services/evento.service';
+import { SocketService } from '../../../../services/socket.service';
 import { ArgentinaDatePipe } from '../../../../pipes/argentina-date.pipe';
 
 @Component({
@@ -11,7 +17,7 @@ import { ArgentinaDatePipe } from '../../../../pipes/argentina-date.pipe';
   templateUrl: './monitoreo.component.html',
   styleUrls: ['./monitoreo.component.css']
 })
-export class MonitoreoDashComponent implements OnInit, OnChanges {
+export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() abonados: any[] = [];
 
@@ -22,10 +28,13 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
   public eventoSeleccionado: any = null;
   public vistaActual: string = 'abonados';
 
-  public stats = { activos: 0, suspendidos: 0, criticos: 0 };
+  public stats = { activos: 0, suspendidos: 0 };
 
   public eventos: Evento[] = [];
   public cargandoEventos: boolean = true;
+
+  // Indicador visual cuando llega un evento nuevo vía socket
+  public nuevoEventoRecibido: boolean = false;
 
   // Formulario nuevo evento
   public mostrarFormEvento: boolean = false;
@@ -40,6 +49,9 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     ID_CodigoEvento: 0
   };
 
+  // Suscripciones para limpiar en ngOnDestroy
+  private socketSubs: Subscription[] = [];
+
   public get alertas(): Evento[] {
     return this.eventos.filter(e => e.Estado === 'Pendiente');
   }
@@ -50,13 +62,17 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     ).length;
   }
 
-  constructor(private eventoService: EventoService) {}
+  constructor(
+    private eventoService: EventoService,
+    private socketService: SocketService
+  ) {}
 
   ngOnInit(): void {
     this.actualizarVista();
     this.cargarEventos();
     this.cargarDispositivos();
     this.cargarCodigosEvento();
+    this.iniciarWebSocket();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -66,6 +82,48 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
       this.cargando = false;
     }
   }
+
+  ngOnDestroy(): void {
+    this.socketSubs.forEach(sub => sub.unsubscribe());
+    this.socketService.disconnect();
+    console.log('🔌 WebSocket desconectado al salir del módulo Monitoreo.');
+  }
+
+  // =====================================================
+  // WEBSOCKET
+  // =====================================================
+
+  private iniciarWebSocket(): void {
+    this.socketService.connect();
+
+    const subNuevo = this.socketService.on<Evento>('nuevo_evento').subscribe({
+      next: (evento) => {
+        console.log('📡 nuevo_evento recibido:', evento);
+        this.eventos = [evento, ...this.eventos];
+        this.activarIndicadorNuevo();
+      }
+    });
+
+    const subActualizado = this.socketService.on<Evento>('evento_actualizado').subscribe({
+      next: (eventoActualizado) => {
+        console.log('📡 evento_actualizado recibido:', eventoActualizado);
+        this.eventos = this.eventos.map(e =>
+          e.ID_Evento === eventoActualizado.ID_Evento ? eventoActualizado : e
+        );
+      }
+    });
+
+    this.socketSubs.push(subNuevo, subActualizado);
+  }
+
+  private activarIndicadorNuevo(): void {
+    this.nuevoEventoRecibido = true;
+    setTimeout(() => { this.nuevoEventoRecibido = false; }, 4000);
+  }
+
+  // =====================================================
+  // HTTP — carga inicial
+  // =====================================================
 
   cargarEventos(): void {
     this.cargandoEventos = true;
@@ -83,21 +141,21 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
 
   cargarDispositivos(): void {
     this.eventoService.getDispositivos().subscribe({
-      next: (response: any) => {
-        this.dispositivos = response.dispositivos || [];
-      },
+      next: (response: any) => { this.dispositivos = response.dispositivos || []; },
       error: (err: any) => console.error('Error al cargar dispositivos:', err)
     });
   }
 
   cargarCodigosEvento(): void {
     this.eventoService.getCodigosEvento().subscribe({
-      next: (response: any) => {
-        this.codigosEvento = response.codigos || [];
-      },
+      next: (response: any) => { this.codigosEvento = response.codigos || []; },
       error: (err: any) => console.error('Error al cargar códigos:', err)
     });
   }
+
+  // =====================================================
+  // FORMULARIO NUEVO EVENTO
+  // =====================================================
 
   abrirFormEvento(): void {
     this.mostrarFormEvento = true;
@@ -120,9 +178,8 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
 
     this.eventoService.crearEvento(this.nuevoEvento).subscribe({
       next: () => {
-        this.mensajeEventoExito = '✅ Evento registrado exitosamente.';
+        this.mensajeEventoExito = '✅ Evento registrado. Actualizando consola...';
         this.guardandoEvento = false;
-        this.cargarEventos();
         setTimeout(() => this.cerrarFormEvento(), 1500);
       },
       error: (err: any) => {
@@ -132,13 +189,9 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
     });
   }
 
-  private actualizarVista(): void {
-    this.abonadosFiltrados = [...this.abonados];
-  }
-
-  cambiarVista(vista: string): void {
-    this.vistaActual = vista;
-  }
+  // =====================================================
+  // DESPACHO
+  // =====================================================
 
   procesarEvento(evento: Evento): void {
     this.eventoSeleccionado = {
@@ -148,7 +201,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
       evento: evento.DescripcionEvento,
       hora: new Date(evento.FechaHoraRecepcion).toLocaleTimeString('es-AR'),
       prioridad: evento.NivelCriticidad === 'Crítico' ? 'critica' :
-                 evento.NivelCriticidad === 'Alta' ? 'alta' : 'media',
+                 evento.NivelCriticidad === 'Alta'    ? 'alta'    : 'media',
       dispositivo: evento.NombreDispositivo,
       tipoEvento: evento.TipoEvento
     };
@@ -168,16 +221,22 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
         this.eventoSeleccionado.idOriginal,
         'En Progreso'
       ).subscribe({
-        next: () => { this.cargarEventos(); },
         error: (err: any) => console.error('Error al actualizar evento:', err)
       });
     }
     this.cerrarModalDespacho();
   }
 
-  private calcularStats(): void {
-    this.stats.activos = this.abonados.filter(a => a.Activo).length;
-    this.stats.suspendidos = this.abonados.filter(a => !a.Activo).length;
+  // =====================================================
+  // UTILIDADES
+  // =====================================================
+
+  private actualizarVista(): void {
+    this.abonadosFiltrados = [...this.abonados];
+  }
+
+  cambiarVista(vista: string): void {
+    this.vistaActual = vista;
   }
 
   filtrarAbonados(): void {
@@ -186,32 +245,36 @@ export class MonitoreoDashComponent implements OnInit, OnChanges {
       return;
     }
     const term = this.filtroBusqueda.toLowerCase().trim();
-    this.abonadosFiltrados = this.abonados.filter(a => {
-      const nro = a.NumeroDeAbonado?.toString().toLowerCase() || '';
-      const razon = a.RazonSocial?.toLowerCase() || '';
-      const email = a.EmailContacto?.toLowerCase() || '';
-      return nro.includes(term) || razon.includes(term) || email.includes(term);
-    });
+    this.abonadosFiltrados = this.abonados.filter(a =>
+      a.NumeroDeAbonado?.toString().toLowerCase().includes(term) ||
+      a.RazonSocial?.toLowerCase().includes(term) ||
+      a.EmailContacto?.toLowerCase().includes(term)
+    );
   }
 
   seleccionarAbonado(abonado: any): void { this.abonadoSeleccionado = abonado; }
   cerrarFicha(): void { this.abonadoSeleccionado = null; }
 
+  private calcularStats(): void {
+    this.stats.activos     = this.abonados.filter(a =>  a.Activo).length;
+    this.stats.suspendidos = this.abonados.filter(a => !a.Activo).length;
+  }
+
   getPrioridadClass(criticidad: string): string {
     switch (criticidad) {
       case 'Crítico': return 'critica';
-      case 'Alta': return 'alta';
-      case 'Baja': return 'baja';
-      default: return 'media';
+      case 'Alta':    return 'alta';
+      case 'Baja':    return 'baja';
+      default:        return 'media';
     }
   }
 
   getEstadoClass(estado: string): string {
     switch (estado) {
-      case 'Pendiente': return 'pendiente';
+      case 'Pendiente':   return 'pendiente';
       case 'En Progreso': return 'en-proceso';
-      case 'Cerrado': return 'atendido';
-      default: return 'pendiente';
+      case 'Cerrado':     return 'atendido';
+      default:            return 'pendiente';
     }
   }
 }

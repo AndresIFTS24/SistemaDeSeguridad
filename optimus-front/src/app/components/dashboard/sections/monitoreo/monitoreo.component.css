@@ -1010,3 +1010,24 @@
     70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
     100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+
+/* BANNER NUEVO EVENTO EN TIEMPO REAL */
+.nuevo-evento-banner {
+    background: linear-gradient(90deg, rgba(59,130,246,0.15), rgba(0,212,255,0.15));
+    border: 1px solid rgba(0, 212, 255, 0.4);
+    color: #00d4ff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    animation: fadeInOut 4s ease forwards;
+    margin-bottom: 10px;
+}
+
+@keyframes fadeInOut {
+    0%   { opacity: 0; transform: translateY(-5px); }
+    10%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; }
+    100% { opacity: 0; }
+}

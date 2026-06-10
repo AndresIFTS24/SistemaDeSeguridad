@@ -1,4 +1,8 @@
 <div class="monitoring-container">
+  <!-- BANNER TIEMPO REAL -->
+<div *ngIf="nuevoEventoRecibido" class="nuevo-evento-banner">
+  <i class="fas fa-satellite-dish"></i> Nuevo evento recibido en tiempo real
+</div>
   
   <div class="stats-grid">
     <div class="stat-card critical-bg efecto-pulso-rojo">
