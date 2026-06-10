@@ -101,6 +101,13 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
         console.log('📡 nuevo_evento recibido:', evento);
         this.eventos = [evento, ...this.eventos];
         this.activarIndicadorNuevo();
+
+        // Sonido según criticidad
+        if (evento.NivelCriticidad === 'Crítico') {
+          this.socketService.reproducirAlarmaCritica();
+        } else {
+          this.socketService.reproducirAlarmaNormal();
+        }
       }
     });
 
