@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnChanges, Input, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ItService } from '../../../../services/it.service';
@@ -10,8 +10,8 @@ import { ItService } from '../../../../services/it.service';
   templateUrl: './it-dash.component.html',
   styleUrls: ['./it-dash.component.css']
 })
-export class ItDashComponent implements OnInit {
-
+export class ItDashComponent implements OnInit, OnChanges {
+  @Input() seccionActiva: string = '';
   public vistaActual: string = 'usuarios';
 
   // ===== PESTAÑA 1: USUARIOS =====
@@ -61,6 +61,12 @@ export class ItDashComponent implements OnInit {
         this.cambiarVista('usuarios');
     }, 800);
 }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['seccionActiva'] && this.seccionActiva && this.seccionActiva !== 'dashboard') {
+      this.cambiarVista(this.seccionActiva);
+    }
+  }
+
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
 

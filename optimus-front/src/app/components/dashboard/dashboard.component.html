@@ -1,9 +1,14 @@
 <div class="dashboard-wrapper">
   <app-navbar [user]="user"></app-navbar>
   <div class="main-layout">
-    <app-sidebar [idSector]="user.idSector"></app-sidebar>
+    <app-sidebar 
+      [idSector]="user.idSector"
+      [seccionActiva]="seccionActiva"
+      (seccionSeleccionada)="onSeccionSeleccionada($event)"
+      (logout)="logout()">
+    </app-sidebar>
 
-    <main class="content-area">
+    <main class="content-area" #contentArea>
 
       <!-- HEADER DE BIENVENIDA -->
       <div class="page-header">
@@ -109,9 +114,21 @@
 
       <!-- CONTENIDO POR SECTOR -->
       <div class="sector-content" [ngSwitch]="user.idSector">
-        <app-direccion-dash *ngSwitchCase="1" [abonados]="abonados" [usuarios]="listaUsuarios"></app-direccion-dash>
-        <app-it-dash *ngSwitchCase="3"></app-it-dash>
-        <app-monitoreo-dash *ngSwitchCase="4" [abonados]="abonados"></app-monitoreo-dash>
+        <app-direccion-dash 
+          *ngSwitchCase="1" 
+          [abonados]="abonados" 
+          [usuarios]="listaUsuarios"
+          [seccionActiva]="seccionActiva">
+        </app-direccion-dash>
+        <app-it-dash 
+          *ngSwitchCase="3"
+          [seccionActiva]="seccionActiva">
+        </app-it-dash>
+        <app-monitoreo-dash 
+          *ngSwitchCase="4" 
+          [abonados]="abonados"
+          [seccionActiva]="seccionActiva">
+        </app-monitoreo-dash>
         <div *ngSwitchDefault class="error-view">
           <div class="error-card">
             <h3>Acceso Restringido</h3>

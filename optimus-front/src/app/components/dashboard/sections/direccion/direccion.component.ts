@@ -13,6 +13,7 @@ export class DireccionDashComponent implements OnInit {
 
   @Input() abonados: any[] = [];
   @Input() usuarios: any[] = [];
+  @Input() seccionActiva: string = '';
 
   public vistaActual: string = 'usuarios';
   public filtroBusqueda: string = '';
@@ -27,6 +28,9 @@ export class DireccionDashComponent implements OnInit {
   ngOnChanges(): void {
     this.usuariosFiltrados = [...this.usuarios];
     this.abonadosFiltrados = [...this.abonados];
+    if (this.seccionActiva && this.seccionActiva !== 'dashboard') {
+      this.cambiarVista(this.seccionActiva);
+    }
   }
 
   cambiarVista(vista: string): void {

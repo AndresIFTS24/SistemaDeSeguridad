@@ -20,23 +20,22 @@ import { ArgentinaDatePipe } from '../../../../pipes/argentina-date.pipe';
 export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() abonados: any[] = [];
+  @Input() seccionActiva: string = '';
 
   public filtroBusqueda: string = '';
   public abonadosFiltrados: any[] = [];
   public cargando: boolean = true;
   public abonadoSeleccionado: any = null;
   public eventoSeleccionado: any = null;
-  public vistaActual: string = 'abonados';
+  public vistaActual: string = 'central';
 
   public stats = { activos: 0, suspendidos: 0 };
 
   public eventos: Evento[] = [];
   public cargandoEventos: boolean = true;
 
-  // Indicador visual cuando llega un evento nuevo vía socket
   public nuevoEventoRecibido: boolean = false;
 
-  // Formulario nuevo evento
   public mostrarFormEvento: boolean = false;
   public dispositivos: any[] = [];
   public codigosEvento: CodigoEvento[] = [];
@@ -49,7 +48,6 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
     ID_CodigoEvento: 0
   };
 
-  // Suscripciones para limpiar en ngOnDestroy
   private socketSubs: Subscription[] = [];
 
   public get alertas(): Evento[] {
@@ -81,6 +79,9 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
       this.calcularStats();
       this.cargando = false;
     }
+    if (changes['seccionActiva'] && this.seccionActiva && this.seccionActiva !== 'dashboard') {
+      this.cambiarVista(this.seccionActiva);
+    }
   }
 
   ngOnDestroy(): void {
@@ -101,8 +102,6 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
         console.log('📡 nuevo_evento recibido:', evento);
         this.eventos = [evento, ...this.eventos];
         this.activarIndicadorNuevo();
-
-        // Sonido según criticidad
         if (evento.NivelCriticidad === 'Crítico') {
           this.socketService.reproducirAlarmaCritica();
         } else {
