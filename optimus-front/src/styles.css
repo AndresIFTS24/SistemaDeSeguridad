@@ -1,7 +1,9 @@
+@import '@fortawesome/fontawesome-free/css/all.css';
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-* {
-    font-family: 'Poppins', sans-serif !important;
+body, p, span, div, h1, h2, h3, h4, h5, h6,
+input, button, label, a, td, th, li, select, textarea {
+    font-family: 'Poppins', sans-serif;
 }
 
 /* ========================================= */
@@ -23,7 +25,7 @@
     animation: latido-alerta 1.5s infinite;
     border: 1px solid #FF3B30 !important;
     background-color: rgba(255, 59, 48, 0.1) !important;
-    border-radius: 8px; /* Bordes un poquito redondeados para más elegancia */
+    border-radius: 8px;
 }
 
 
@@ -31,25 +33,21 @@
 /* BARRA DE SCROLL  */
 /* ========================================= */
 
-/* Ancho total de la barra */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-/* El fondo por donde se desliza la barra */
 ::-webkit-scrollbar-track {
-    background: #1e1e2f; 
+    background: #1e1e2f;
     border-radius: 10px;
 }
 
-/* La barrita que vos agarrás y arrastrás */
 ::-webkit-scrollbar-thumb {
-    background: #4a4a6a; 
+    background: #4a4a6a;
     border-radius: 10px;
 }
 
-/* El efecto cuando le pasás el mouse por encima a la barrita */
 ::-webkit-scrollbar-thumb:hover {
-    background: #6b6b93; 
+    background: #6b6b93;
 }

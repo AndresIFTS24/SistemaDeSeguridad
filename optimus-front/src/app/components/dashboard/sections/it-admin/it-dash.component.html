@@ -1,29 +1,403 @@
 <div class="it-container">
-  <header class="section-header">
-    <h1><i class="fas fa-microchip"></i> Panel de Control IT</h1>
-    <button class="btn-primary">Nuevo Usuario</button>
-  </header>
 
-  <div class="it-grid">
-    <div class="it-card status">
-      <h3>Estado de Base de Datos</h3>
-      <div class="db-status online">CONECTADO A CLEVER CLOUD</div>
+  <!-- HEADER -->
+  <div class="it-header">
+    <div>
+      <span class="it-label">PANEL DE ADMINISTRACIÓN</span>
+      <h1 class="it-title">Centro de <span class="highlight">Control IT</span></h1>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <nav class="it-tabs">
+    <button (click)="cambiarVista('usuarios')" [class.active]="vistaActual === 'usuarios'">
+      <i class="fas fa-users-cog"></i> Usuarios
+    </button>
+    <button (click)="cambiarVista('sistema')" [class.active]="vistaActual === 'sistema'">
+      <i class="fas fa-server"></i> Estado del Sistema
+    </button>
+    <button (click)="cambiarVista('auditoria')" [class.active]="vistaActual === 'auditoria'">
+      <i class="fas fa-history"></i> Auditoría
+    </button>
+    <button (click)="cambiarVista('infraestructura')" [class.active]="vistaActual === 'infraestructura'">
+      <i class="fas fa-chart-pie"></i> Infraestructura
+    </button>
+    <button (click)="cambiarVista('roles')" [class.active]="vistaActual === 'roles'">
+      <i class="fas fa-sitemap"></i> Roles y Sectores
+    </button>
+  </nav>
+
+  <div [ngSwitch]="vistaActual" class="it-content fade-in">
+
+    <!-- ============================================= -->
+    <!-- PESTAÑA 1: USUARIOS -->
+    <!-- ============================================= -->
+    <div *ngSwitchCase="'usuarios'" class="tab-usuarios">
+
+      <div class="tab-actions">
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, email, rol o sector..."
+            [(ngModel)]="filtroUsuarios"
+            (keyup)="filtrarUsuarios()">
+        </div>
+        <button class="btn-nuevo" (click)="abrirNuevoUsuario()">
+          <i class="fas fa-user-plus"></i> Nuevo Usuario
+        </button>
+      </div>
+
+      <div class="loading-state" *ngIf="cargandoUsuarios">
+        <div class="spinner"></div>
+        <span>Cargando usuarios...</span>
+      </div>
+
+      <div class="tabla-container" *ngIf="!cargandoUsuarios">
+        <table class="it-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th>Sector</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of usuariosFiltrados">
+              <td><span class="id-badge">#{{ u.ID_Usuario }}</span></td>
+              <td><span class="nombre-text">{{ u.Nombre }}</span></td>
+              <td><span class="email-text">{{ u.Email }}</span></td>
+              <td>{{ u.Telefono || '—' }}</td>
+              <td><span class="sector-tag">{{ u.NombreSector || 'Sin sector' }}</span></td>
+              <td><span class="rol-tag">{{ u.NombreRol }}</span></td>
+              <td>
+                <span class="estado-pill" [ngClass]="u.Activo ? 'activo' : 'inactivo'">
+                  <span class="dot"></span>
+                  {{ u.Activo ? 'Activo' : 'Inactivo' }}
+                </span>
+              </td>
+              <td>
+                <div class="acciones">
+                  <button class="btn-icon edit" (click)="abrirEditarUsuario(u)" title="Editar">
+                    <i class="fas fa-pen"></i>
+                  </button>
+                  <button class="btn-icon toggle" [class.danger]="u.Activo" (click)="toggleUsuario(u)" [title]="u.Activo ? 'Desactivar' : 'Activar'">
+                    <i class="fas" [ngClass]="u.Activo ? 'fa-user-slash' : 'fa-user-check'"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="usuariosFiltrados.length === 0">
+              <td colspan="8" class="empty-row">No se encontraron usuarios.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="it-card table-card">
-      <h3>Usuarios del Sistema (Total: 80)</h3>
-      <table class="it-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Sector</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          </tbody>
-      </table>
+     <!-- ============================================= -->
+    <!-- PESTAÑA 2: ESTADO DEL SISTEMA -->
+    <!-- ============================================= -->
+    <div *ngSwitchCase="'sistema'" class="tab-sistema">
+
+      <div class="loading-state" *ngIf="cargandoStatus">
+        <div class="spinner"></div>
+        <span>Consultando estado del sistema...</span>
+      </div>
+
+      <div class="sistema-grid" *ngIf="!cargandoStatus && status">
+
+        <div class="status-card" [ngClass]="status.baseDeDatos?.conectado ? 'online' : 'offline'">
+          <div class="status-icon"><i class="fas fa-database"></i></div>
+          <div class="status-info">
+            <span class="status-label">Base de Datos MySQL</span>
+            <span class="status-value">{{ status.baseDeDatos?.conectado ? 'CONECTADA' : 'DESCONECTADA' }}</span>
+            <span class="status-sub">{{ status.baseDeDatos?.nombre }}</span>
+          </div>
+        </div>
+
+        <div class="status-card online">
+          <div class="status-icon"><i class="fas fa-bolt"></i></div>
+          <div class="status-info">
+            <span class="status-label">WebSockets Activos</span>
+            <span class="status-value">{{ status.webSockets?.clientesConectados || 0 }}</span>
+            <span class="status-sub">clientes conectados ahora</span>
+          </div>
+        </div>
+
+        <div class="status-card neutral">
+          <div class="status-icon"><i class="fas fa-clock"></i></div>
+          <div class="status-info">
+            <span class="status-label">Uptime del Servidor</span>
+            <span class="status-value">{{ formatUptime(status.servidor?.uptimeSegundos) }}</span>
+            <span class="status-sub">desde el último reinicio</span>
+          </div>
+        </div>
+
+        <div class="status-card neutral">
+          <div class="status-icon"><i class="fab fa-node-js"></i></div>
+          <div class="status-info">
+            <span class="status-label">Versión de Node.js</span>
+            <span class="status-value">{{ status.servidor?.nodeVersion }}</span>
+            <span class="status-sub">entorno: {{ status.servidor?.entorno }}</span>
+          </div>
+        </div>
+
+        <div class="status-card neutral">
+          <div class="status-icon"><i class="fas fa-server"></i></div>
+          <div class="status-info">
+            <span class="status-label">Versión MySQL</span>
+            <span class="status-value">{{ status.baseDeDatos?.version }}</span>
+            <span class="status-sub">Clever Cloud</span>
+          </div>
+        </div>
+
+        <div class="status-card neutral">
+          <div class="status-icon"><i class="fas fa-link"></i></div>
+          <div class="status-info">
+            <span class="status-label">Pool de Conexiones</span>
+            <span class="status-value">{{ status.baseDeDatos?.connectionLimit }}</span>
+            <span class="status-sub">conexiones máximas simultáneas</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="refresh-row" *ngIf="!cargandoStatus">
+        <button class="btn-refresh" (click)="cargarStatus()">
+          <i class="fas fa-sync"></i> Actualizar Estado
+        </button>
+        <span class="fecha-servidor" *ngIf="status?.baseDeDatos?.fechaServidor">
+          Hora del servidor: {{ status.baseDeDatos.fechaServidor | date:'dd/MM/yyyy HH:mm:ss' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- PESTAÑA 3: AUDITORÍA -->
+    <!-- ============================================= -->
+    <div *ngSwitchCase="'auditoria'" class="tab-auditoria">
+
+      <div class="loading-state" *ngIf="cargandoAuditoria">
+        <div class="spinner"></div>
+        <span>Cargando auditoría...</span>
+      </div>
+
+      <div *ngIf="!cargandoAuditoria" class="auditoria-grid">
+
+        <div class="audit-panel">
+          <h3><i class="fas fa-history"></i> Últimas Acciones de Operadores</h3>
+          <div class="audit-list">
+            <div *ngFor="let s of seguimientos" class="audit-item">
+              <div class="audit-time">{{ s.FechaHoraAccion | date:'dd/MM HH:mm' }}</div>
+              <div class="audit-content">
+                <strong>{{ s.NombreOperador }}</strong> — {{ s.AccionRealizada }}
+                <div class="audit-sub">{{ s.DescripcionAlarma }} · {{ s.NombreAbonado }}</div>
+              </div>
+            </div>
+            <div *ngIf="seguimientos.length === 0" class="empty-state-small">
+              No hay registros de auditoría todavía.
+            </div>
+          </div>
+        </div>
+
+        <div class="audit-panel">
+          <h3><i class="fas fa-fire"></i> Dispositivos con Más Eventos</h3>
+          <div class="audit-list">
+            <div *ngFor="let d of topDispositivos; let i = index" class="top-item">
+              <span class="top-rank">#{{ i + 1 }}</span>
+              <div class="top-content">
+                <strong>{{ d.NombreDispositivo }}</strong>
+                <div class="audit-sub">{{ d.NombreAbonado }}</div>
+              </div>
+              <span class="top-count">{{ d.TotalEventos }}</span>
+            </div>
+            <div *ngIf="topDispositivos.length === 0" class="empty-state-small">
+              No hay datos de eventos todavía.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- PESTAÑA 4: INFRAESTRUCTURA -->
+    <!-- ============================================= -->
+    <div *ngSwitchCase="'infraestructura'" class="tab-infraestructura">
+
+      <div class="loading-state" *ngIf="cargandoInfraestructura">
+        <div class="spinner"></div>
+        <span>Cargando datos de infraestructura...</span>
+      </div>
+
+      <div *ngIf="!cargandoInfraestructura && infraestructura">
+
+        <div class="infra-kpis">
+          <div class="infra-kpi">
+            <span class="infra-label">Abonados Activos</span>
+            <span class="infra-value color-green">{{ infraestructura.abonados?.activos || 0 }}</span>
+            <span class="infra-sub">{{ infraestructura.abonados?.inactivos || 0 }} inactivos</span>
+          </div>
+          <div class="infra-kpi">
+            <span class="infra-label">Dispositivos Operativos</span>
+            <span class="infra-value color-cyan">{{ infraestructura.dispositivos?.operativos || 0 }}</span>
+            <span class="infra-sub">de {{ infraestructura.dispositivos?.total || 0 }} totales</span>
+          </div>
+          <div class="infra-kpi">
+            <span class="infra-label">Tickets Abiertos</span>
+            <span class="infra-value color-amber">{{ infraestructura.tickets?.abiertos || 0 }}</span>
+            <span class="infra-sub">de {{ infraestructura.tickets?.total || 0 }} totales</span>
+          </div>
+          <div class="infra-kpi">
+            <span class="infra-label">Items en Stock Crítico</span>
+            <span class="infra-value color-red">{{ infraestructura.stockCritico?.length || 0 }}</span>
+            <span class="infra-sub">por debajo del mínimo</span>
+          </div>
+        </div>
+
+        <div class="infra-grid">
+
+          <div class="infra-panel">
+            <h3><i class="fas fa-exclamation-triangle"></i> Eventos por Estado</h3>
+            <div class="estado-bars">
+              <div *ngFor="let e of infraestructura.eventosPorEstado" class="estado-bar-row">
+                <span class="estado-bar-label">{{ e.Estado }}</span>
+                <span class="estado-bar-value">{{ e.total }}</span>
+              </div>
+              <div *ngIf="!infraestructura.eventosPorEstado?.length" class="empty-state-small">
+                No hay eventos registrados.
+              </div>
+            </div>
+          </div>
+
+          <div class="infra-panel">
+            <h3><i class="fas fa-box-open"></i> Stock por Modelo</h3>
+            <div class="stock-list">
+              <div *ngFor="let s of infraestructura.stockTotal" class="stock-row" [class.critico]="s.Cantidad <= 5">
+                <div class="stock-info">
+                  <strong>{{ s.NombreModelo }}</strong>
+                  <span class="audit-sub">{{ s.UbicacionFisica || 'Sin ubicación' }}</span>
+                </div>
+                <span class="stock-cantidad" [class.critico]="s.Cantidad <= 5">{{ s.Cantidad }}</span>
+              </div>
+              <div *ngIf="!infraestructura.stockTotal?.length" class="empty-state-small">
+                No hay registros de stock.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- PESTAÑA 5: ROLES Y SECTORES -->
+    <!-- ============================================= -->
+    <div *ngSwitchCase="'roles'" class="tab-roles">
+
+      <div class="loading-state" *ngIf="cargandoRolesSectores">
+        <div class="spinner"></div>
+        <span>Cargando roles y sectores...</span>
+      </div>
+
+      <div *ngIf="!cargandoRolesSectores" class="roles-grid-container">
+
+        <div class="roles-panel">
+          <h3><i class="fas fa-user-tag"></i> Roles del Sistema ({{ roles.length }})</h3>
+          <div class="tabla-container">
+            <table class="it-table small">
+              <thead>
+                <tr><th>ID</th><th>Rol</th><th>Usuarios</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of roles">
+                  <td><span class="id-badge">#{{ r.ID_Rol }}</span></td>
+                  <td><span class="rol-tag">{{ r.NombreRol }}</span></td>
+                  <td><span class="count-badge">{{ r.TotalUsuarios }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="roles-panel">
+          <h3><i class="fas fa-building"></i> Sectores ({{ sectores.length }})</h3>
+          <div class="tabla-container">
+            <table class="it-table small">
+              <thead>
+                <tr><th>ID</th><th>Sector</th><th>Usuarios</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of sectores">
+                  <td><span class="id-badge">#{{ s.ID_Sector }}</span></td>
+                  <td><span class="sector-tag">{{ s.NombreSector }}</span></td>
+                  <td><span class="count-badge">{{ s.TotalUsuarios }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="modal-overlay" *ngIf="mostrarModalUsuario" (click)="cerrarModalUsuario()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ modoModalUsuario === 'nuevo' ? 'Nuevo Usuario' : 'Editar Usuario' }}</h3>
+      <button class="btn-close" (click)="cerrarModalUsuario()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="mensaje-exito" *ngIf="mensajeUsuarioExito">{{ mensajeUsuarioExito }}</div>
+      <div class="mensaje-error" *ngIf="mensajeUsuarioError">{{ mensajeUsuarioError }}</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre completo *</label>
+          <input type="text" [(ngModel)]="formUsuario.Nombre" placeholder="Nombre y apellido">
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" [(ngModel)]="formUsuario.Email" placeholder="usuario@optimus.com">
+        </div>
+        <div class="form-group">
+          <label>{{ modoModalUsuario === 'nuevo' ? 'Contraseña *' : 'Nueva contraseña (opcional)' }}</label>
+          <input type="password" [(ngModel)]="formUsuario.PasswordHash" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" [(ngModel)]="formUsuario.Telefono" placeholder="Ej: 11-4455-6677">
+        </div>
+        <div class="form-group">
+          <label>ID Rol *</label>
+          <input type="number" [(ngModel)]="formUsuario.ID_Rol" placeholder="Ej: 1">
+        </div>
+        <div class="form-group">
+          <label>ID Sector</label>
+          <input type="number" [(ngModel)]="formUsuario.ID_Sector" placeholder="Ej: 4">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" (click)="cerrarModalUsuario()">Cancelar</button>
+        <button class="btn-guardar" (click)="guardarUsuario()" [disabled]="guardandoUsuario">
+          {{ guardandoUsuario ? 'Guardando...' : (modoModalUsuario === 'nuevo' ? 'Crear Usuario' : 'Guardar Cambios') }}
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
+
