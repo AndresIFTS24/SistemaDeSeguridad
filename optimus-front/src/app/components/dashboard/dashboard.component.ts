@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 
@@ -29,6 +29,8 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 })
 export class DashboardComponent implements OnInit {
 
+  @ViewChild('contentArea') contentArea!: ElementRef;
+
   public user = {
     nombre: '',
     sectorNombre: '',
@@ -37,6 +39,7 @@ export class DashboardComponent implements OnInit {
 
   public abonados: any[] = [];
   public listaUsuarios: any[] = [];
+  public seccionActiva: string = 'dashboard';
 
   kpis: DashboardKpis = {
     totalAbonados: 0,
@@ -97,6 +100,23 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  onSeccionSeleccionada(seccion: string): void {
+    if (seccion === 'dashboard') {
+      this.seccionActiva = 'dashboard';
+      if (this.contentArea) {
+        this.contentArea.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+    this.seccionActiva = seccion;
+
+    // Scroll suave hacia el panel del sector
+    setTimeout(() => {
+      const el = document.querySelector('.sector-content');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+
   private inicializarDatosSector(): void {
     switch (this.user.idSector) {
       case 1:
@@ -104,13 +124,12 @@ export class DashboardComponent implements OnInit {
         this.cargarAbonados();
         break;
       case 3:
-        this.cargarUsuarios();
         break;
       case 4:
         this.cargarAbonados();
         break;
       default:
-        console.warn('El sector actual no tiene peticiones de datos asignadas.');
+        console.warn('Sector sin panel configurado:', this.user.idSector);
         break;
     }
   }
