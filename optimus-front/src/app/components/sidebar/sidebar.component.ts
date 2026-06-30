@@ -185,12 +185,11 @@ export class SidebarComponent implements OnChanges {
       { id: 'abonados',  label: 'Directorio de Abonados', icon: 'fa-address-book', seccion: 'abonados'  },
     ],
     3: [
-      { id: 'dashboard',       label: 'Dashboard',          icon: 'fa-th-large',       seccion: 'dashboard'       },
-      { id: 'usuarios',        label: 'Usuarios',           icon: 'fa-users-cog',      seccion: 'usuarios'        },
-      { id: 'sistema',         label: 'Estado del Sistema', icon: 'fa-server',         seccion: 'sistema'         },
-      { id: 'auditoria',       label: 'Auditoría',          icon: 'fa-history',        seccion: 'auditoria'       },
-      { id: 'infraestructura', label: 'Infraestructura',    icon: 'fa-chart-pie',      seccion: 'infraestructura' },
-      { id: 'roles',           label: 'Roles y Sectores',   icon: 'fa-sitemap',        seccion: 'roles'           },
+      { id: 'dashboard',       label: 'Dashboard',          icon: 'fa-th-large',  seccion: 'dashboard'       },
+      { id: 'usuarios',        label: 'Usuarios',           icon: 'fa-users-cog', seccion: 'usuarios'        },
+      { id: 'sistema',         label: 'Estado del Sistema', icon: 'fa-server',    seccion: 'sistema'         },
+      { id: 'auditoria',       label: 'Auditoría',          icon: 'fa-history',   seccion: 'auditoria'       },
+      { id: 'infraestructura', label: 'Infraestructura',    icon: 'fa-chart-pie', seccion: 'infraestructura' },
     ],
     4: [
       { id: 'dashboard', label: 'Dashboard',           icon: 'fa-th-large',        seccion: 'dashboard' },

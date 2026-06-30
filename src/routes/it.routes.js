@@ -165,31 +165,31 @@ router.get('/status', verifyToken, checkRole(accesoIT), async (req, res) => {
 router.get('/auditoria', verifyToken, checkRole(accesoIT), async (req, res) => {
     try {
         const [seguimientos] = await pool.execute(`
-            SELECT 
-                SE.ID_Seguimiento, SE.FechaHoraAccion, SE.AccionRealizada,
-                U.Nombre AS NombreOperador,
-                E.ID_Evento, CE.DescripcionAlarma, AB.RazonSocial AS NombreAbonado
-            FROM SEGUIMIENTOS_EVENTOS SE
-            INNER JOIN USUARIOS U ON SE.ID_Operador = U.ID_Usuario
-            INNER JOIN EVENTOS E ON SE.ID_Evento = E.ID_Evento
-            INNER JOIN CODIGOS_EVENTOS CE ON E.ID_CodigoEvento = CE.ID_CodigoEvento
-            INNER JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
-            INNER JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
-            INNER JOIN ABONADOS AB ON DIR.ID_Abonado = AB.ID_Abonado
-            ORDER BY SE.FechaHoraAccion DESC
-            LIMIT 25
-        `);
+    SELECT 
+        SE.ID_Seguimiento, SE.FechaHoraAccion, SE.AccionRealizada,
+        U.Nombre AS NombreOperador,
+        E.ID_Evento, CE.DescripcionAlarma, AB.RazonSocial AS NombreAbonado
+    FROM SEGUIMIENTOS_EVENTOS SE
+    INNER JOIN USUARIOS U ON SE.ID_Operador = U.ID_Usuario
+    INNER JOIN EVENTOS E ON SE.ID_Evento = E.ID_Evento
+    INNER JOIN CODIGOS_EVENTOS CE ON E.ID_CodigoEvento = CE.ID_CodigoEvento
+    INNER JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
+    INNER JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
+    INNER JOIN ABONADOS AB ON DIR.ID_Abonado = AB.ID_Abonado
+    ORDER BY SE.FechaHoraAccion DESC
+    LIMIT 25
+`);
 
         const [topDispositivos] = await pool.execute(`
-            SELECT D.NombreDispositivo, AB.RazonSocial AS NombreAbonado, COUNT(E.ID_Evento) AS TotalEventos
-            FROM EVENTOS E
-            INNER JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
-            INNER JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
-            INNER JOIN ABONADOS AB ON DIR.ID_Abonado = AB.ID_Abonado
-            GROUP BY D.ID_Dispositivo
-            ORDER BY TotalEventos DESC
-            LIMIT 5
-        `);
+    SELECT D.NombreDispositivo, AB.RazonSocial AS NombreAbonado, COUNT(E.ID_Evento) AS TotalEventos
+    FROM EVENTOS E
+    INNER JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
+    INNER JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
+    INNER JOIN ABONADOS AB ON DIR.ID_Abonado = AB.ID_Abonado
+    GROUP BY D.ID_Dispositivo, D.NombreDispositivo, AB.RazonSocial
+    ORDER BY TotalEventos DESC
+    LIMIT 5
+`);
 
         res.status(200).json({
             message: '✅ Auditoría obtenida correctamente.',
@@ -200,6 +200,7 @@ router.get('/auditoria', verifyToken, checkRole(accesoIT), async (req, res) => {
         res.status(500).json({ message: 'Error al obtener la auditoría.', error: error.message });
     }
 });
+
 
 // ====================================================================
 // PESTAÑA 4 — INFRAESTRUCTURA
@@ -294,6 +295,68 @@ router.get('/roles-sectores', verifyToken, checkRole(accesoIT), async (req, res)
         });
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener roles y sectores.', error: error.message });
+    }
+});
+
+
+// ====================================================================
+// HISTORIAL DE ACTIVIDAD POR USUARIO
+// ====================================================================
+
+router.get('/usuarios/:id/actividad', verifyToken, checkRole(accesoIT), async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [usuario] = await pool.execute(`
+            SELECT U.ID_Usuario, U.Nombre, U.Email, U.Activo,
+                   R.NombreRol, S.NombreSector
+            FROM USUARIOS U
+            INNER JOIN ROLES R ON U.ID_Rol = R.ID_Rol
+            LEFT JOIN SECTORES S ON U.ID_Sector = S.ID_Sector
+            WHERE U.ID_Usuario = ?
+        `, [id]);
+
+        if (usuario.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado.' });
+        }
+
+        const [actividad] = await pool.execute(`
+    SELECT 
+        SE.ID_Seguimiento,
+        SE.FechaHoraAccion,
+        SE.AccionRealizada,
+        E.ID_Evento,
+        CE.DescripcionAlarma,
+        AB.RazonSocial AS NombreAbonado,
+        E.Estado AS EstadoEvento
+    FROM SEGUIMIENTOS_EVENTOS SE
+    INNER JOIN EVENTOS E ON SE.ID_Evento = E.ID_Evento
+    INNER JOIN CODIGOS_EVENTOS CE ON E.ID_CodigoEvento = CE.ID_CodigoEvento
+    INNER JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
+    INNER JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
+    INNER JOIN ABONADOS AB ON DIR.ID_Abonado = AB.ID_Abonado
+    WHERE SE.ID_Operador = ?
+    ORDER BY SE.FechaHoraAccion DESC
+    LIMIT 50
+`, [id]);
+
+        const [resumen] = await pool.execute(`
+            SELECT 
+                COUNT(*) AS totalAcciones,
+                MAX(SE.FechaHoraAccion) AS ultimaAccion,
+                COUNT(DISTINCT SE.ID_Evento) AS eventosAtendidos
+            FROM SEGUIMIENTOS_EVENTOS SE
+            WHERE SE.ID_Operador = ?
+        `, [id]);
+
+        res.status(200).json({
+            message: '✅ Actividad obtenida correctamente.',
+            usuario: usuario[0],
+            resumen: resumen[0],
+            actividad
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener actividad.', error: error.message });
     }
 });
 

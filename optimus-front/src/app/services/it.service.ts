@@ -57,4 +57,8 @@ export class ItService {
   getRolesSectores(): Observable<any> {
     return this.http.get(`${this.apiUrl}/roles-sectores`, { headers: this.getHeaders() });
   }
+
+  getActividadUsuario(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/usuarios/${id}/actividad`, { headers: this.getHeaders() });
+  }
 }
