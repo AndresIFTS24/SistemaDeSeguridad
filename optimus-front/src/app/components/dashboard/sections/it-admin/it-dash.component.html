@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <!-- TABS -->
+  <!-- TABS (4 pestañas) -->
   <nav class="it-tabs">
     <button (click)="cambiarVista('usuarios')" [class.active]="vistaActual === 'usuarios'">
       <i class="fas fa-users-cog"></i> Usuarios
@@ -22,9 +22,6 @@
     <button (click)="cambiarVista('infraestructura')" [class.active]="vistaActual === 'infraestructura'">
       <i class="fas fa-chart-pie"></i> Infraestructura
     </button>
-    <button (click)="cambiarVista('roles')" [class.active]="vistaActual === 'roles'">
-      <i class="fas fa-sitemap"></i> Roles y Sectores
-    </button>
   </nav>
 
   <div [ngSwitch]="vistaActual" class="it-content fade-in">
@@ -34,26 +31,102 @@
     <!-- ============================================= -->
     <div *ngSwitchCase="'usuarios'" class="tab-usuarios">
 
+      <!-- TOOLBAR -->
       <div class="tab-actions">
-        <div class="search-bar">
+        <div class="vista-toggle">
+          <button
+            (click)="toggleVistaUsuarios()"
+            class="btn-toggle-vista"
+            [class.activo]="vistaUsuarios === 'organigrama'">
+            <i class="fas fa-th-large"></i>
+          </button>
+          <button
+            (click)="toggleVistaUsuarios()"
+            class="btn-toggle-vista"
+            [class.activo]="vistaUsuarios === 'tabla'">
+            <i class="fas fa-list"></i>
+          </button>
+        </div>
+
+        <div class="search-bar" *ngIf="vistaUsuarios === 'tabla'">
           <i class="fas fa-search"></i>
           <input
             type="text"
             placeholder="Buscar por nombre, email, rol o sector..."
-            [(ngModel)]="filtroUsuarios"
+            [(ngModel)]="filtroTexto"
             (keyup)="filtrarUsuarios()">
         </div>
+
+        <div class="filtro-sector-chip" *ngIf="sectorFiltroActivo">
+          <i class="fas fa-filter"></i>
+          {{ sectorFiltroActivo }}
+          <button (click)="limpiarFiltroSector()" class="chip-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
         <button class="btn-nuevo" (click)="abrirNuevoUsuario()">
           <i class="fas fa-user-plus"></i> Nuevo Usuario
         </button>
       </div>
 
+      <!-- LOADING -->
       <div class="loading-state" *ngIf="cargandoUsuarios">
         <div class="spinner"></div>
         <span>Cargando usuarios...</span>
       </div>
 
-      <div class="tabla-container" *ngIf="!cargandoUsuarios">
+      <!-- VISTA ORGANIGRAMA -->
+      <div *ngIf="!cargandoUsuarios && vistaUsuarios === 'organigrama'" class="organigrama-view">
+
+        <div class="org-header">
+          <h3>Composición organizacional <span class="org-total">{{ usuarios.length }} personas</span></h3>
+          <p class="org-sub">Hacé clic en un sector para ver sus usuarios</p>
+        </div>
+
+        <div class="sectores-grid">
+          <div
+            *ngFor="let sector of sectoresStats"
+            class="sector-card"
+            (click)="filtrarPorSector(sector.nombre)"
+            [style.--sector-color]="sector.color">
+
+            <div class="sector-card-header">
+              <div class="sector-dot" [style.background]="sector.color"></div>
+              <span class="sector-nombre">{{ sector.nombre }}</span>
+              <span class="sector-pct">{{ sector.porcentaje }}%</span>
+            </div>
+
+            <div class="sector-bar-wrap">
+              <div class="sector-bar-fill" [style.width.%]="sector.porcentaje" [style.background]="sector.color"></div>
+            </div>
+
+            <div class="sector-stats">
+              <div class="sector-stat">
+                <span class="stat-num" [style.color]="sector.color">{{ sector.total }}</span>
+                <span class="stat-label">total</span>
+              </div>
+              <div class="sector-stat">
+                <span class="stat-num verde">{{ sector.activos }}</span>
+                <span class="stat-label">activos</span>
+              </div>
+              <div class="sector-stat" *ngIf="sector.inactivos > 0">
+                <span class="stat-num rojo">{{ sector.inactivos }}</span>
+                <span class="stat-label">inactivos</span>
+              </div>
+            </div>
+
+            <div class="sector-cta">
+              <i class="fas fa-arrow-right"></i> Ver usuarios
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- VISTA TABLA -->
+      <div class="tabla-container" *ngIf="!cargandoUsuarios && vistaUsuarios === 'tabla'">
         <table class="it-table">
           <thead>
             <tr>
@@ -73,7 +146,11 @@
               <td><span class="nombre-text">{{ u.Nombre }}</span></td>
               <td><span class="email-text">{{ u.Email }}</span></td>
               <td>{{ u.Telefono || '—' }}</td>
-              <td><span class="sector-tag">{{ u.NombreSector || 'Sin sector' }}</span></td>
+              <td>
+                <span class="sector-tag" [style.background]="getColorSector(u.NombreSector) + '22'" [style.color]="getColorSector(u.NombreSector)">
+                  {{ u.NombreSector || 'Sin sector' }}
+                </span>
+              </td>
               <td><span class="rol-tag">{{ u.NombreRol }}</span></td>
               <td>
                 <span class="estado-pill" [ngClass]="u.Activo ? 'activo' : 'inactivo'">
@@ -83,8 +160,11 @@
               </td>
               <td>
                 <div class="acciones">
-                  <button class="btn-icon edit" (click)="abrirEditarUsuario(u)" title="Editar">
+                  <button class="btn-icon edit" (click)="abrirEditarUsuario(u)" title="Editar usuario">
                     <i class="fas fa-pen"></i>
+                  </button>
+                  <button class="btn-icon history" (click)="verActividad(u)" title="Ver historial de actividad">
+                    <i class="fas fa-history"></i>
                   </button>
                   <button class="btn-icon toggle" [class.danger]="u.Activo" (click)="toggleUsuario(u)" [title]="u.Activo ? 'Desactivar' : 'Activar'">
                     <i class="fas" [ngClass]="u.Activo ? 'fa-user-slash' : 'fa-user-check'"></i>
@@ -98,9 +178,11 @@
           </tbody>
         </table>
       </div>
-    </div>
 
-     <!-- ============================================= -->
+    </div>
+    <!-- FIN PESTAÑA 1 -->
+
+    <!-- ============================================= -->
     <!-- PESTAÑA 2: ESTADO DEL SISTEMA -->
     <!-- ============================================= -->
     <div *ngSwitchCase="'sistema'" class="tab-sistema">
@@ -161,8 +243,8 @@
           <div class="status-icon"><i class="fas fa-link"></i></div>
           <div class="status-info">
             <span class="status-label">Pool de Conexiones</span>
-            <span class="status-value">{{ status.baseDeDatos?.connectionLimit }}</span>
-            <span class="status-sub">conexiones máximas simultáneas</span>
+            <span class="status-value">{{ status.baseDeDatos?.connectionLimit }} <span class="status-limit">de 5</span></span>
+            <span class="status-sub">conexiones máximas Clever Cloud</span>
           </div>
         </div>
 
@@ -255,9 +337,9 @@
             <span class="infra-sub">de {{ infraestructura.tickets?.total || 0 }} totales</span>
           </div>
           <div class="infra-kpi">
-            <span class="infra-label">Items en Stock Crítico</span>
+            <span class="infra-label">Stock Crítico</span>
             <span class="infra-value color-red">{{ infraestructura.stockCritico?.length || 0 }}</span>
-            <span class="infra-sub">por debajo del mínimo</span>
+            <span class="infra-sub">items por debajo del mínimo</span>
           </div>
         </div>
 
@@ -296,58 +378,6 @@
       </div>
     </div>
 
-    <!-- ============================================= -->
-    <!-- PESTAÑA 5: ROLES Y SECTORES -->
-    <!-- ============================================= -->
-    <div *ngSwitchCase="'roles'" class="tab-roles">
-
-      <div class="loading-state" *ngIf="cargandoRolesSectores">
-        <div class="spinner"></div>
-        <span>Cargando roles y sectores...</span>
-      </div>
-
-      <div *ngIf="!cargandoRolesSectores" class="roles-grid-container">
-
-        <div class="roles-panel">
-          <h3><i class="fas fa-user-tag"></i> Roles del Sistema ({{ roles.length }})</h3>
-          <div class="tabla-container">
-            <table class="it-table small">
-              <thead>
-                <tr><th>ID</th><th>Rol</th><th>Usuarios</th></tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let r of roles">
-                  <td><span class="id-badge">#{{ r.ID_Rol }}</span></td>
-                  <td><span class="rol-tag">{{ r.NombreRol }}</span></td>
-                  <td><span class="count-badge">{{ r.TotalUsuarios }}</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="roles-panel">
-          <h3><i class="fas fa-building"></i> Sectores ({{ sectores.length }})</h3>
-          <div class="tabla-container">
-            <table class="it-table small">
-              <thead>
-                <tr><th>ID</th><th>Sector</th><th>Usuarios</th></tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let s of sectores">
-                  <td><span class="id-badge">#{{ s.ID_Sector }}</span></td>
-                  <td><span class="sector-tag">{{ s.NombreSector }}</span></td>
-                  <td><span class="count-badge">{{ s.TotalUsuarios }}</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-
   </div>
 </div>
 
@@ -380,13 +410,25 @@
           <label>Teléfono</label>
           <input type="text" [(ngModel)]="formUsuario.Telefono" placeholder="Ej: 11-4455-6677">
         </div>
+
         <div class="form-group">
-          <label>ID Rol *</label>
-          <input type="number" [(ngModel)]="formUsuario.ID_Rol" placeholder="Ej: 1">
+          <label>Sector</label>
+          <select [(ngModel)]="formUsuario.ID_Sector">
+            <option [ngValue]="null">— Sin sector —</option>
+            <option *ngFor="let s of sectores" [ngValue]="s.ID_Sector">
+              {{ s.NombreSector }}
+            </option>
+          </select>
         </div>
+
         <div class="form-group">
-          <label>ID Sector</label>
-          <input type="number" [(ngModel)]="formUsuario.ID_Sector" placeholder="Ej: 4">
+          <label>Rol *</label>
+          <select [(ngModel)]="formUsuario.ID_Rol">
+            <option [ngValue]="null">— Seleccioná un rol —</option>
+            <option *ngFor="let r of roles" [ngValue]="r.ID_Rol">
+              {{ r.NombreRol }} ({{ getUserCountForRol(r.ID_Rol) }} usuarios)
+            </option>
+          </select>
         </div>
       </div>
 
@@ -401,3 +443,73 @@
   </div>
 </div>
 
+<!-- PANEL LATERAL ACTIVIDAD USUARIO -->
+<div class="actividad-overlay" *ngIf="mostrarPanelActividad" (click)="cerrarPanelActividad()">
+  <div class="actividad-panel" (click)="$event.stopPropagation()">
+
+    <div class="actividad-header">
+      <div class="actividad-user-info">
+        <div class="actividad-avatar"
+          [style.background]="getColorSector(usuarioActividad?.NombreSector) + '33'"
+          [style.color]="getColorSector(usuarioActividad?.NombreSector)">
+          {{ usuarioActividad?.Nombre?.charAt(0) }}
+        </div>
+        <div>
+          <h3>{{ usuarioActividad?.Nombre }}</h3>
+          <span class="actividad-rol">{{ usuarioActividad?.NombreRol }} · {{ usuarioActividad?.NombreSector }}</span>
+        </div>
+      </div>
+      <button class="btn-close" (click)="cerrarPanelActividad()">×</button>
+    </div>
+
+    <div class="loading-state" *ngIf="cargandoActividad">
+      <div class="spinner"></div>
+      <span>Cargando historial...</span>
+    </div>
+
+    <div *ngIf="!cargandoActividad && actividadData">
+
+      <div class="actividad-resumen">
+        <div class="resumen-item">
+          <span class="resumen-num">{{ actividadData.resumen?.totalAcciones || 0 }}</span>
+          <span class="resumen-label">acciones totales</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-num">{{ actividadData.resumen?.eventosAtendidos || 0 }}</span>
+          <span class="resumen-label">eventos atendidos</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-num ultima">
+            {{ actividadData.resumen?.ultimaAccion ? (actividadData.resumen.ultimaAccion | date:'dd/MM') : '—' }}
+          </span>
+          <span class="resumen-label">última acción</span>
+        </div>
+      </div>
+
+      <div class="actividad-timeline">
+        <p class="timeline-title">Últimas 50 acciones</p>
+
+        <div *ngIf="actividadData.actividad?.length === 0" class="empty-state-small">
+          Este usuario no tiene acciones registradas todavía.
+        </div>
+
+        <div *ngFor="let a of actividadData.actividad" class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-action">{{ a.AccionRealizada }}</div>
+            <div class="timeline-meta">
+              <span class="timeline-evento">{{ a.DescripcionAlarma }}</span>
+              <span class="timeline-abonado">{{ a.NombreAbonado }}</span>
+            </div>
+            <div class="timeline-time">{{ a.FechaHoraAccion | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!cargandoActividad && !actividadData" class="empty-state-small">
+      No se pudo cargar la actividad.
+    </div>
+
+  </div>
+</div>

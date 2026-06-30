@@ -11,15 +11,26 @@ import { ItService } from '../../../../services/it.service';
   styleUrls: ['./it-dash.component.css']
 })
 export class ItDashComponent implements OnInit, OnChanges {
+
   @Input() seccionActiva: string = '';
   public vistaActual: string = 'usuarios';
 
-  // ===== PESTAÑA 1: USUARIOS =====
+  // ===== VISTA USUARIOS =====
+  public vistaUsuarios: 'tabla' | 'organigrama' = 'organigrama';
   public usuarios: any[] = [];
   public usuariosFiltrados: any[] = [];
-  public filtroUsuarios: string = '';
+  public filtroTexto: string = '';
+  public sectorFiltroActivo: string = '';
   public cargandoUsuarios: boolean = true;
+  public sectoresStats: any[] = [];
 
+  // ===== PANEL ACTIVIDAD USUARIO =====
+  public mostrarPanelActividad: boolean = false;
+  public usuarioActividad: any = null;
+  public actividadData: any = null;
+  public cargandoActividad: boolean = false;
+
+  // ===== MODAL USUARIO =====
   public mostrarModalUsuario: boolean = false;
   public modoModalUsuario: 'nuevo' | 'editar' = 'nuevo';
   public usuarioSeleccionado: any = null;
@@ -32,9 +43,13 @@ export class ItDashComponent implements OnInit, OnChanges {
     Email: '',
     PasswordHash: '',
     Telefono: '',
-    ID_Sector: 0,
-    ID_Rol: 0
+    ID_Sector: null as number | null,
+    ID_Rol: null as number | null
   };
+
+  // ===== ROLES Y SECTORES (para dropdowns) =====
+  public roles: any[] = [];
+  public sectores: any[] = [];
 
   // ===== PESTAÑA 2: ESTADO DEL SISTEMA =====
   public status: any = null;
@@ -49,18 +64,22 @@ export class ItDashComponent implements OnInit, OnChanges {
   public infraestructura: any = null;
   public cargandoInfraestructura: boolean = true;
 
-  // ===== PESTAÑA 5: ROLES Y SECTORES =====
-  public roles: any[] = [];
-  public sectores: any[] = [];
-  public cargandoRolesSectores: boolean = true;
+  private coloresSector: Record<string, string> = {
+    'Técnica y Campo':      '#10b981',
+    'Monitoreo':            '#3b82f6',
+    'Infraestructura e IT': '#00d4ff',
+    'Operaciones':          '#f59e0b',
+    'Comercial':            '#8b5cf6',
+    'Dirección General':    '#ef4444',
+    'Recursos Humanos':     '#64748b'
+  };
 
   constructor(private itService: ItService) {}
 
   ngOnInit(): void {
-    setTimeout(() => {
-        this.cambiarVista('usuarios');
-    }, 800);
-}
+    setTimeout(() => this.cambiarVista('usuarios'), 800);
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['seccionActiva'] && this.seccionActiva && this.seccionActiva !== 'dashboard') {
       this.cambiarVista(this.seccionActiva);
@@ -69,7 +88,6 @@ export class ItDashComponent implements OnInit, OnChanges {
 
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
-
     switch (vista) {
       case 'usuarios':
         if (this.usuarios.length === 0) this.cargarUsuarios();
@@ -83,9 +101,6 @@ export class ItDashComponent implements OnInit, OnChanges {
       case 'infraestructura':
         if (!this.infraestructura) this.cargarInfraestructura();
         break;
-      case 'roles':
-        if (this.roles.length === 0) this.cargarRolesSectores();
-        break;
     }
   }
 
@@ -98,8 +113,10 @@ export class ItDashComponent implements OnInit, OnChanges {
     this.itService.getUsuarios().subscribe({
       next: (res: any) => {
         this.usuarios = res.usuarios || [];
-        this.usuariosFiltrados = [...this.usuarios];
+        this.aplicarFiltros();
+        this.computarSectoresStats();
         this.cargandoUsuarios = false;
+        if (this.roles.length === 0) this.cargarDropdowns();
       },
       error: (err: any) => {
         console.error('Error al cargar usuarios:', err);
@@ -108,24 +125,100 @@ export class ItDashComponent implements OnInit, OnChanges {
     });
   }
 
-  filtrarUsuarios(): void {
-    const term = this.filtroUsuarios.toLowerCase().trim();
-    if (!term) {
-      this.usuariosFiltrados = [...this.usuarios];
-      return;
-    }
-    this.usuariosFiltrados = this.usuarios.filter(u =>
-      u.Nombre?.toLowerCase().includes(term) ||
-      u.Email?.toLowerCase().includes(term) ||
-      u.NombreRol?.toLowerCase().includes(term) ||
-      u.NombreSector?.toLowerCase().includes(term)
-    );
+  private cargarDropdowns(): void {
+    this.itService.getRolesSectores().subscribe({
+      next: (res: any) => {
+        this.roles = res.roles || [];
+        this.sectores = res.sectores || [];
+      },
+      error: (err: any) => console.error('Error al cargar dropdowns:', err)
+    });
   }
+
+  private computarSectoresStats(): void {
+    const sectorMap: Record<string, { total: number; activos: number; inactivos: number }> = {};
+    this.usuarios.forEach(u => {
+      const s = u.NombreSector || 'Sin sector';
+      if (!sectorMap[s]) sectorMap[s] = { total: 0, activos: 0, inactivos: 0 };
+      sectorMap[s].total++;
+      if (u.Activo) sectorMap[s].activos++;
+      else sectorMap[s].inactivos++;
+    });
+
+    const totalUsuarios = this.usuarios.length;
+    this.sectoresStats = Object.entries(sectorMap)
+      .map(([nombre, data]) => ({
+        nombre,
+        total: data.total,
+        activos: data.activos,
+        inactivos: data.inactivos,
+        porcentaje: Math.round(data.total / totalUsuarios * 100),
+        color: this.coloresSector[nombre] || '#64748b'
+      }))
+      .sort((a, b) => b.total - a.total);
+  }
+
+  toggleVistaUsuarios(): void {
+    this.vistaUsuarios = this.vistaUsuarios === 'tabla' ? 'organigrama' : 'tabla';
+    if (this.vistaUsuarios === 'organigrama') {
+      this.sectorFiltroActivo = '';
+      this.filtroTexto = '';
+      this.aplicarFiltros();
+    }
+  }
+
+  filtrarPorSector(sectorNombre: string): void {
+    this.sectorFiltroActivo = sectorNombre;
+    this.vistaUsuarios = 'tabla';
+    this.filtroTexto = '';
+    this.aplicarFiltros();
+  }
+
+  limpiarFiltroSector(): void {
+    this.sectorFiltroActivo = '';
+    this.aplicarFiltros();
+  }
+
+  filtrarUsuarios(): void {
+    this.aplicarFiltros();
+  }
+
+  private aplicarFiltros(): void {
+    let resultado = [...this.usuarios];
+
+    if (this.sectorFiltroActivo) {
+      resultado = resultado.filter(u => u.NombreSector === this.sectorFiltroActivo);
+    }
+
+    const term = this.filtroTexto.toLowerCase().trim();
+    if (term) {
+      resultado = resultado.filter(u =>
+        u.Nombre?.toLowerCase().includes(term) ||
+        u.Email?.toLowerCase().includes(term) ||
+        u.NombreRol?.toLowerCase().includes(term) ||
+        u.NombreSector?.toLowerCase().includes(term)
+      );
+    }
+
+    this.usuariosFiltrados = resultado;
+  }
+
+  getColorSector(nombre: string): string {
+    return this.coloresSector[nombre] || '#64748b';
+  }
+
+  getUserCountForRol(idRol: number): number {
+    return this.usuarios.filter(u => u.ID_Rol === idRol).length;
+  }
+
+  // =====================================================
+  // MODAL USUARIO
+  // =====================================================
 
   abrirNuevoUsuario(): void {
     this.modoModalUsuario = 'nuevo';
     this.usuarioSeleccionado = null;
-    this.formUsuario = { Nombre: '', Email: '', PasswordHash: '', Telefono: '', ID_Sector: 0, ID_Rol: 0 };
+    this.formUsuario = { Nombre: '', Email: '', PasswordHash: '', Telefono: '', ID_Sector: null, ID_Rol: null };
     this.mensajeUsuarioExito = '';
     this.mensajeUsuarioError = '';
     this.mostrarModalUsuario = true;
@@ -139,7 +232,7 @@ export class ItDashComponent implements OnInit, OnChanges {
       Email: usuario.Email,
       PasswordHash: '',
       Telefono: usuario.Telefono || '',
-      ID_Sector: usuario.ID_Sector || 0,
+      ID_Sector: usuario.ID_Sector || null,
       ID_Rol: usuario.ID_Rol
     };
     this.mensajeUsuarioExito = '';
@@ -156,7 +249,6 @@ export class ItDashComponent implements OnInit, OnChanges {
       this.mensajeUsuarioError = 'Nombre, Email y Rol son obligatorios.';
       return;
     }
-
     if (this.modoModalUsuario === 'nuevo' && !this.formUsuario.PasswordHash) {
       this.mensajeUsuarioError = 'La contraseña es obligatoria para usuarios nuevos.';
       return;
@@ -197,11 +289,47 @@ export class ItDashComponent implements OnInit, OnChanges {
   toggleUsuario(usuario: any): void {
     const accion = usuario.Activo ? 'desactivar' : 'activar';
     if (!confirm(`¿${accion.charAt(0).toUpperCase() + accion.slice(1)} a ${usuario.Nombre}?`)) return;
-
     this.itService.toggleUsuario(usuario.ID_Usuario).subscribe({
       next: () => this.cargarUsuarios(),
       error: (err: any) => console.error('Error al cambiar estado del usuario:', err)
     });
+  }
+
+  // =====================================================
+  // ACTIVIDAD POR USUARIO
+  // =====================================================
+
+  verActividad(usuario: any): void {
+    this.usuarioActividad = usuario;
+    this.mostrarPanelActividad = true;
+    this.actividadData = null;
+    this.cargandoActividad = true;
+
+    this.itService.getActividadUsuario(usuario.ID_Usuario).subscribe({
+      next: (res: any) => {
+        this.actividadData = res;
+        this.cargandoActividad = false;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar actividad:', err);
+        this.cargandoActividad = false;
+      }
+    });
+  }
+
+  cerrarPanelActividad(): void {
+    this.mostrarPanelActividad = false;
+    this.usuarioActividad = null;
+    this.actividadData = null;
+  }
+
+  getCriticidadClass(criticidad: string): string {
+    switch (criticidad) {
+      case 'Crítico': return 'critica';
+      case 'Alta':    return 'alta';
+      case 'Baja':    return 'baja';
+      default:        return 'media';
+    }
   }
 
   // =====================================================
@@ -211,14 +339,8 @@ export class ItDashComponent implements OnInit, OnChanges {
   cargarStatus(): void {
     this.cargandoStatus = true;
     this.itService.getStatus().subscribe({
-      next: (res: any) => {
-        this.status = res;
-        this.cargandoStatus = false;
-      },
-      error: (err: any) => {
-        console.error('Error al cargar status:', err);
-        this.cargandoStatus = false;
-      }
+      next: (res: any) => { this.status = res; this.cargandoStatus = false; },
+      error: (err: any) => { console.error('Error al cargar status:', err); this.cargandoStatus = false; }
     });
   }
 
@@ -242,10 +364,7 @@ export class ItDashComponent implements OnInit, OnChanges {
         this.topDispositivos = res.topDispositivos || [];
         this.cargandoAuditoria = false;
       },
-      error: (err: any) => {
-        console.error('Error al cargar auditoría:', err);
-        this.cargandoAuditoria = false;
-      }
+      error: (err: any) => { console.error('Error al cargar auditoría:', err); this.cargandoAuditoria = false; }
     });
   }
 
@@ -256,33 +375,8 @@ export class ItDashComponent implements OnInit, OnChanges {
   cargarInfraestructura(): void {
     this.cargandoInfraestructura = true;
     this.itService.getInfraestructura().subscribe({
-      next: (res: any) => {
-        this.infraestructura = res;
-        this.cargandoInfraestructura = false;
-      },
-      error: (err: any) => {
-        console.error('Error al cargar infraestructura:', err);
-        this.cargandoInfraestructura = false;
-      }
-    });
-  }
-
-  // =====================================================
-  // PESTAÑA 5 — ROLES Y SECTORES
-  // =====================================================
-
-  cargarRolesSectores(): void {
-    this.cargandoRolesSectores = true;
-    this.itService.getRolesSectores().subscribe({
-      next: (res: any) => {
-        this.roles = res.roles || [];
-        this.sectores = res.sectores || [];
-        this.cargandoRolesSectores = false;
-      },
-      error: (err: any) => {
-        console.error('Error al cargar roles y sectores:', err);
-        this.cargandoRolesSectores = false;
-      }
+      next: (res: any) => { this.infraestructura = res; this.cargandoInfraestructura = false; },
+      error: (err: any) => { console.error('Error al cargar infraestructura:', err); this.cargandoInfraestructura = false; }
     });
   }
 }
