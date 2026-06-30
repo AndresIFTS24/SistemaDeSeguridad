@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { AbonadoService } from '../../services/abonado.service';
 import { DashboardService, DashboardKpis } from '../../services/dashboard.service';
+import { ItService } from '../../services/it.service';
 
 import { ItDashComponent } from './sections/it-admin/it-dash.component';
 import { DireccionDashComponent } from './sections/direccion/direccion.component';
@@ -56,6 +57,7 @@ export class DashboardComponent implements OnInit {
     private authService: AuthService,
     private abonadoService: AbonadoService,
     private dashboardService: DashboardService,
+    private itService: ItService,
     private router: Router
   ) {}
 
@@ -135,7 +137,7 @@ export class DashboardComponent implements OnInit {
   }
 
   cargarUsuarios(): void {
-    this.authService.getUsers().subscribe({
+    this.itService.getUsuarios().subscribe({
       next: (res: any) => {
         this.listaUsuarios = res.usuarios || res;
       },

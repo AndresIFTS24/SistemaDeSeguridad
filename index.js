@@ -14,7 +14,6 @@ const { checkDatabaseConnection, pool } = require('./src/config/db.config');
 
 // 1. IMPORTACIÓN DE RUTAS
 const authRoutes             = require('./src/routes/auth.routes');
-const userRoutes             = require('./src/routes/user.routes');
 const abonadoRoutes          = require('./src/routes/abonado.routes');
 const modeloDispositivoRoutes = require('./src/routes/modeloDispositivo.routes');
 const dispositivoRoutes      = require('./src/routes/dispositivo.routes');
@@ -70,7 +69,6 @@ app.get('/api/status', async (req, res) => {
 // 5. MONTAJE DE RUTAS
 app.use('/api',               authRoutes);
 app.use('/api/abonados',      abonadoRoutes);
-app.use('/api/usuarios',      userRoutes);
 app.use('/api/modelos',       modeloDispositivoRoutes);
 app.use('/api/dispositivos',  dispositivoRoutes);
 app.use('/api/asignaciones',  asignacionRoutes);
