@@ -4,6 +4,7 @@
  */
 const { pool } = require('../config/db.config');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 class AuthService {
@@ -32,8 +33,9 @@ class AuthService {
 
         const user = users[0];
 
-        // Validación de contraseña (Texto plano para compatibilidad con carga masiva)
-        if (user.PasswordHash !== password) {
+        // Validación de contraseña (hash bcrypt)
+        const passwordValida = await bcrypt.compare(password, user.PasswordHash);
+        if (!passwordValida) {
             const err = new Error('Contraseña incorrecta.');
             err.cause = 401;
             throw err;
