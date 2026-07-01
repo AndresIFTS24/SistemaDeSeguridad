@@ -76,7 +76,10 @@ export class ItDashComponent implements OnInit, OnChanges {
 
   constructor(private itService: ItService) {}
 
-  ngOnInit(): void {
+ ngOnInit(): void {
+    // Aseguramos que los filtros arranquen limpios para que muestre a todos
+    this.sectorFiltroActivo = '';
+    this.filtroTexto = '';
     setTimeout(() => this.cambiarVista('usuarios'), 800);
   }
 
@@ -183,14 +186,22 @@ export class ItDashComponent implements OnInit, OnChanges {
     this.aplicarFiltros();
   }
 
-  private aplicarFiltros(): void {
+private aplicarFiltros(): void {
+    // Si todavía no cargaron los usuarios, salimos para evitar romper el array
+    if (!this.usuarios || this.usuarios.length === 0) {
+      this.usuariosFiltrados = [];
+      return;
+    }
+
     let resultado = [...this.usuarios];
 
-    if (this.sectorFiltroActivo) {
+    // Filtrar por sector (solo si realmente hay un filtro activo)
+    if (this.sectorFiltroActivo && this.sectorFiltroActivo.trim() !== '') {
       resultado = resultado.filter(u => u.NombreSector === this.sectorFiltroActivo);
     }
 
-    const term = this.filtroTexto.toLowerCase().trim();
+    // Filtrar por texto de búsqueda
+    const term = this.filtroTexto ? this.filtroTexto.toLowerCase().trim() : '';
     if (term) {
       resultado = resultado.filter(u =>
         u.Nombre?.toLowerCase().includes(term) ||

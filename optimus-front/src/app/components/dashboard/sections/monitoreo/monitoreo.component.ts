@@ -73,6 +73,8 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
     this.iniciarWebSocket();
   }
 
+  
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['abonados'] && this.abonados) {
       this.actualizarVista();

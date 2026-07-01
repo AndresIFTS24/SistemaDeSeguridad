@@ -20,10 +20,12 @@ export class SocketService {
     this.socket.on('connect', () =>
       console.log('🔌 WebSocket conectado al servidor OPTIMUS:', this.socket.id)
     );
-    this.socket.on('disconnect', (reason) =>
+    // CORRECCIÓN: Se agrega ': any' al parámetro reason
+    this.socket.on('disconnect', (reason: any) =>
       console.log('🔌 WebSocket desconectado:', reason)
     );
-    this.socket.on('connect_error', (err) =>
+    // CORRECCIÓN: Se agrega ': any' al parámetro err
+    this.socket.on('connect_error', (err: any) =>
       console.error('❌ Error de conexión WebSocket:', err.message)
     );
   }
