@@ -1,22 +1,27 @@
-// src/services/ModeloDispositivoService.js (COMPLETO Y CORREGIDO)
+// src/services/ModeloDispositivoService.js
 
-const ModeloDispositivoModel = require('../models/ModeloDispositivoModel');
+const { pool } = require('../config/db.config');
+
+const SELECT_MODELO = 'SELECT ID_Modelo, NombreModelo, Fabricante, TipoDispositivo FROM MODELOS_DISPOSITIVOS';
 
 class ModeloDispositivoService {
-    
+
     /** Crea un nuevo modelo con validación. */
     static async createModelo(data) {
-        const { nombreModelo, tipoDispositivo } = data;
-        
+        const { nombreModelo, fabricante, tipoDispositivo } = data;
+
         if (!nombreModelo || !tipoDispositivo) {
             throw new Error('Faltan campos obligatorios: NombreModelo y TipoDispositivo.', { cause: 400 });
         }
-        
+
         try {
-            const newModelo = await ModeloDispositivoModel.create(data);
-            return newModelo;
+            const [result] = await pool.execute(
+                'INSERT INTO MODELOS_DISPOSITIVOS (NombreModelo, Fabricante, TipoDispositivo) VALUES (?, ?, ?)',
+                [nombreModelo, fabricante || null, tipoDispositivo]
+            );
+            return ModeloDispositivoService.getModeloById(result.insertId);
         } catch (error) {
-            if (error.message && error.message.includes('UNIQUE KEY constraint')) {
+            if (error.code === 'ER_DUP_ENTRY') {
                 throw new Error('El NombreModelo ya está registrado.', { cause: 409 });
             }
             throw error;
@@ -25,34 +30,33 @@ class ModeloDispositivoService {
 
     /** Obtiene todos los modelos. */
     static async getAllModelos() {
-        return ModeloDispositivoModel.findAll();
+        const [rows] = await pool.execute(`${SELECT_MODELO} ORDER BY NombreModelo`);
+        return rows;
     }
-    
+
     /** Busca un modelo por ID. */
     static async getModeloById(id) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de modelo debe ser un número válido.', { cause: 400 });
         }
-        
-        const modelo = await ModeloDispositivoModel.findById(id);
 
-        if (!modelo) {
+        const [rows] = await pool.execute(`${SELECT_MODELO} WHERE ID_Modelo = ?`, [id]);
+
+        if (rows.length === 0) {
             throw new Error('Modelo de dispositivo no encontrado.', { cause: 404 });
         }
-        return modelo; 
+        return rows[0];
     }
-    
+
     /** Actualiza los datos de un modelo. */
     static async updateModelo(id, data) {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de modelo debe ser un número válido.', { cause: 400 });
         }
-        
+
         const updates = [];
         const params = [];
-        
-        // La lista 'updates' usa '?' como placeholder, que será transformado
-        // a '@p1', '@p2', etc. por el Modelo antes de llamar a executeQuery.
+
         if (data.nombreModelo) { updates.push('NombreModelo = ?'); params.push(data.nombreModelo); }
         if (data.fabricante) { updates.push('Fabricante = ?'); params.push(data.fabricante); }
         if (data.tipoDispositivo) { updates.push('TipoDispositivo = ?'); params.push(data.tipoDispositivo); }
@@ -62,15 +66,17 @@ class ModeloDispositivoService {
         }
 
         try {
-            const updatedModelo = await ModeloDispositivoModel.update(id, updates, params);
-            
-            if (!updatedModelo) {
-                // Si la actualización no afectó a ninguna fila, el modelo devuelve undefined
+            const [result] = await pool.execute(
+                `UPDATE MODELOS_DISPOSITIVOS SET ${updates.join(', ')} WHERE ID_Modelo = ?`,
+                [...params, id]
+            );
+
+            if (result.affectedRows === 0) {
                 throw new Error('Modelo no encontrado para actualizar.', { cause: 404 });
             }
-            return updatedModelo;
+            return ModeloDispositivoService.getModeloById(id);
         } catch (error) {
-            if (error.message && error.message.includes('UNIQUE KEY constraint')) {
+            if (error.code === 'ER_DUP_ENTRY') {
                 throw new Error('El NombreModelo ya está siendo utilizado por otro dispositivo.', { cause: 409 });
             }
             throw error;
@@ -82,36 +88,21 @@ class ModeloDispositivoService {
         if (isNaN(parseInt(id))) {
             throw new Error('El ID de modelo debe ser un número válido.', { cause: 400 });
         }
-        
+
         try {
-            const deletedModelo = await ModeloDispositivoModel.delete(id);
-        
-            if (!deletedModelo) {
+            const modelo = await ModeloDispositivoService.getModeloById(id);
+            const [result] = await pool.execute('DELETE FROM MODELOS_DISPOSITIVOS WHERE ID_Modelo = ?', [id]);
+
+            if (result.affectedRows === 0) {
                 throw new Error('Modelo no encontrado o no pudo ser eliminado.', { cause: 404 });
             }
-            return deletedModelo;
+            return modelo;
         } catch (error) {
-             // Manejo de error si hay dependencias (Foreign Key violation)
-            if (error.message && error.message.includes('FOREIGN KEY constraint')) {
+            if (error.code === 'ER_ROW_IS_REFERENCED' || error.code === 'ER_ROW_IS_REFERENCED_2') {
                 throw new Error('No se puede eliminar el modelo porque está asociado a dispositivos existentes.', { cause: 409 });
             }
             throw error;
         }
-    }
-    
-    /** Realiza un borrado lógico (desactivación). */
-    static async deactivateModelo(id) {
-        // En un borrado lógico, actualizas un campo 'Activo'.
-        // Usamos '?' para que el Modelo pueda hacer la conversión a @p1.
-        const updates = ['Activo = ?']; 
-        const params = [false]; // Asume que 'false' es el valor para desactivar.
-        
-        const deactivatedModelo = await ModeloDispositivoModel.update(id, updates, params);
-
-        if (!deactivatedModelo) {
-            throw new Error('Modelo no encontrado o no se pudo desactivar.', { cause: 404 });
-        }
-        return deactivatedModelo;
     }
 }
 

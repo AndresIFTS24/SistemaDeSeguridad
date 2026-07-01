@@ -78,17 +78,15 @@ class ModeloDispositivoController {
         }
     }
 
-    /** DELETE /api/modelos/:id (Borrado Lógico) */
-    // Usamos 'deactivateModelo' en el servicio para un borrado LÓGICO como sugiere el routes.js (softDelete)
-    static async softDelete(req, res) { 
+    /** DELETE /api/modelos/:id (Borrado físico: la tabla no tiene columna Activo) */
+    static async delete(req, res) {
         try {
             const { id } = req.params;
-            const deactivatedModelo = await ModeloDispositivoService.deactivateModelo(id); 
-            
-            // Si el servicio lanza 404, se captura en el catch.
+            const deletedModelo = await ModeloDispositivoService.deleteModelo(id);
+
             res.status(200).json({
-                message: `✅ Modelo (ID: ${id}) ha sido desactivado (borrado lógico) exitosamente.`,
-                modelo: deactivatedModelo
+                message: `✅ Modelo (ID: ${id}) ha sido eliminado exitosamente.`,
+                modelo: deletedModelo
             });
         } catch (error) {
             const status = error.cause || 500;
