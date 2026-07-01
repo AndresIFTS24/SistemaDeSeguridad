@@ -45,7 +45,7 @@ export interface MenuItem {
   styles: [`
     .sidebar {
       width: 260px;
-      height: calc(100vh - 65px);
+      height: 100%;
       background: #0f172a;
       display: flex;
       flex-direction: column;
@@ -65,7 +65,7 @@ export interface MenuItem {
     .toggle-btn {
       position: absolute;
       top: 16px;
-      right: -12px;
+      right: 10px;
       width: 24px;
       height: 24px;
       background: #3b82f6;
@@ -143,6 +143,7 @@ export interface MenuItem {
     }
 
     .logout-btn {
+      box-sizing: border-box;
       width: 100%;
       padding: 10px 12px;
       background: transparent;

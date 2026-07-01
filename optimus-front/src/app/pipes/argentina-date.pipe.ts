@@ -5,11 +5,21 @@ import { Pipe, PipeTransform } from '@angular/core';
   standalone: true
 })
 export class ArgentinaDatePipe implements PipeTransform {
-  transform(value: string | Date, format: 'time' | 'date' | 'datetime' = 'datetime'): string {
+  transform(value: string | Date, format: 'time' | 'date' | 'datetime' | 'relative' = 'datetime'): string {
     if (!value) return '';
-    
+
     const date = new Date(value);
-    
+
+    if (format === 'relative') {
+      const diffMin = Math.floor((Date.now() - date.getTime()) / 60000);
+      if (diffMin < 1) return 'Recién';
+      if (diffMin < 60) return `Hace ${diffMin} min`;
+      const diffH = Math.floor(diffMin / 60);
+      if (diffH < 24) return `Hace ${diffH} h`;
+      const diffD = Math.floor(diffH / 24);
+      return `Hace ${diffD} d`;
+    }
+
     const options: Intl.DateTimeFormatOptions = {
       timeZone: 'America/Argentina/Buenos_Aires'
     };
