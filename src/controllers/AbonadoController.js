@@ -1,6 +1,7 @@
 // src/controllers/AbonadoController.js
 
 const AbonadoService = require('../services/AbonadoService');
+const handleError = require('../utils/errorHandler');
 
 class AbonadoController {
     
@@ -27,11 +28,7 @@ class AbonadoController {
                 abonados: abonados
             });
         } catch (error) {
-            console.error('ERROR en AbonadoController.getAll:', error.message);
-            return res.status(500).json({
-                message: 'Error interno del servidor al obtener la lista de abonados.',
-                error: error.message
-            });
+            handleError(res, error, 'Error interno del servidor al obtener la lista de abonados.');
         }
     }
 
@@ -61,15 +58,11 @@ class AbonadoController {
                 abonado: abonado
             });
         } catch (error) {
-            const status = error.cause || 500;
-            return res.status(status).json({
-                message: 'Error al buscar el abonado.',
-                error: error.message
-            });
+            handleError(res, error, 'Error al buscar el abonado.');
         }
     }
 
-    /** * POST /api/abonados 
+    /** * POST /api/abonados
      * Crea un nuevo abonado
      */
     static async create(req, res) {
@@ -81,11 +74,7 @@ class AbonadoController {
                 abonado: newAbonado
             });
         } catch (error) {
-            const status = error.cause === 409 ? 409 : (error.cause === 400 ? 400 : 500);
-            return res.status(status).json({
-                message: error.message || 'Error al crear el abonado.',
-                error: error.message
-            });
+            handleError(res, error, 'Error al crear el abonado.');
         }
     }
 
@@ -102,11 +91,7 @@ class AbonadoController {
                 abonado: updatedAbonado
             });
         } catch (error) {
-            const status = error.cause || 500;
-            return res.status(status).json({
-                message: status === 404 ? 'Abonado no encontrado para actualizar.' : 'Error al actualizar.',
-                error: error.message
-            });
+            handleError(res, error, 'Error al actualizar.');
         }
     }
 
@@ -123,11 +108,7 @@ class AbonadoController {
                 abonado: deactivatedAbonado
             });
         } catch (error) {
-            const status = error.cause || 500;
-            return res.status(status).json({
-                message: status === 404 ? 'Abonado no encontrado o ya estaba inactivo.' : 'Error al desactivar.',
-                error: error.message
-            });
+            handleError(res, error, 'Error al desactivar.');
         }
     }
 }

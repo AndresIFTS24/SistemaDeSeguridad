@@ -1,6 +1,7 @@
 // src/controllers/DispositivoController.js
 
 const DispositivoService = require('../services/DispositivoService');
+const handleError = require('../utils/errorHandler');
 
 class DispositivoController {
     
@@ -13,11 +14,7 @@ class DispositivoController {
                 dispositivo: newDispositivo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al crear el dispositivo.');
         }
     }
 
@@ -31,10 +28,7 @@ class DispositivoController {
                 dispositivos: dispositivos
             });
         } catch (error) {
-            res.status(500).json({
-                message: 'Error interno del servidor al obtener dispositivos.',
-                error: error.message
-            });
+            handleError(res, error, 'Error interno del servidor al obtener dispositivos.');
         }
     }
 
@@ -56,16 +50,7 @@ class DispositivoController {
                 dispositivo: dispositivo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            let message = error.message;
-
-            // Si el error viene del servicio (ej. ID inválido)
-            if (status === 400) message = 'ID de dispositivo inválido.';
-            
-            res.status(status).json({
-                message: message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al buscar el dispositivo.');
         }
     }
 
@@ -85,11 +70,7 @@ class DispositivoController {
                 dispositivo: updatedDispositivo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al actualizar el dispositivo.');
         }
     }
 
@@ -108,18 +89,10 @@ class DispositivoController {
                 dispositivo: deactivatedDispositivo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            let message = error.message;
-
-            if (status === 404) message = 'Dispositivo no encontrado o ya estaba inactivo.';
-            
-            res.status(status).json({
-                message: message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al desactivar el dispositivo.');
         }
     }
-    
+
     // Alias para softDelete, en caso de que las rutas usen 'softDelete'
     static softDelete = DispositivoController.deactivate; 
 }

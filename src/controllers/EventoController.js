@@ -1,6 +1,7 @@
 // src/controllers/EventoController.js
 
 const EventoService = require('../services/EventoService');
+const handleError = require('../utils/errorHandler');
 
 class EventoController {
 
@@ -24,11 +25,7 @@ class EventoController {
                 evento: eventoCompleto
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al registrar el evento.');
         }
     }
 
@@ -42,10 +39,7 @@ class EventoController {
                 eventos: eventos
             });
         } catch (error) {
-            res.status(500).json({
-                message: 'Error interno del servidor al obtener eventos.',
-                error: error.message
-            });
+            handleError(res, error, 'Error interno del servidor al obtener eventos.');
         }
     }
 
@@ -59,11 +53,7 @@ class EventoController {
                 evento: evento
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al obtener el evento.');
         }
     }
 
@@ -78,8 +68,7 @@ class EventoController {
                 eventos: eventos
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({ message: error.message, error: error.message });
+            handleError(res, error, 'Error al obtener los eventos del dispositivo.');
         }
     }
 
@@ -109,8 +98,7 @@ class EventoController {
                 evento: updatedEvento
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({ message: error.message, error: error.message });
+            handleError(res, error, 'Error al actualizar el estado del evento.');
         }
     }
 
@@ -131,8 +119,7 @@ class EventoController {
                 evento: deletedEvento
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({ message: error.message, error: error.message });
+            handleError(res, error, 'Error al eliminar el evento.');
         }
     }
 }

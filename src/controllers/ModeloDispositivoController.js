@@ -1,6 +1,7 @@
 // src/controllers/ModeloDispositivoController.js (COMPLETO Y CORREGIDO)
 
 const ModeloDispositivoService = require('../services/ModeloDispositivoService');
+const handleError = require('../utils/errorHandler');
 
 class ModeloDispositivoController {
     
@@ -13,11 +14,7 @@ class ModeloDispositivoController {
                 modelo: newModelo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al crear el modelo de dispositivo.');
         }
     }
 
@@ -31,10 +28,7 @@ class ModeloDispositivoController {
                 modelos: modelos
             });
         } catch (error) {
-            res.status(500).json({
-                message: 'Error interno del servidor al obtener modelos.',
-                error: error.message
-            });
+            handleError(res, error, 'Error interno del servidor al obtener modelos.');
         }
     }
 
@@ -50,11 +44,7 @@ class ModeloDispositivoController {
                 modelo: modelo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message, 
-                error: error.message
-            });
+            handleError(res, error, 'Error al buscar el modelo de dispositivo.');
         }
     }
 
@@ -70,11 +60,7 @@ class ModeloDispositivoController {
                 modelo: updatedModelo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al actualizar el modelo de dispositivo.');
         }
     }
 
@@ -89,11 +75,7 @@ class ModeloDispositivoController {
                 modelo: deletedModelo
             });
         } catch (error) {
-            const status = error.cause || 500;
-            res.status(status).json({
-                message: error.message,
-                error: error.message
-            });
+            handleError(res, error, 'Error al eliminar el modelo de dispositivo.');
         }
     }
 }
