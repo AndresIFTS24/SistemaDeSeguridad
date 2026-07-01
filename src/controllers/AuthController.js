@@ -1,4 +1,5 @@
 const AuthService = require('../services/AuthService');
+const handleError = require('../utils/errorHandler');
 
 class AuthController {
     static async login(req, res) {
@@ -9,8 +10,8 @@ class AuthController {
         }
 
         try {
-            const result = await AuthService.login({ email, password }); 
-            
+            const result = await AuthService.login({ email, password });
+
             return res.status(200).json({
                 message: '✅ Login exitoso',
                 token: result.token,
@@ -18,20 +19,7 @@ class AuthController {
             });
 
         } catch (error) {
-            // LOG PARA DEBUGGING (Mira tu consola de Node si falla)
-            console.error('--- ERROR LOGIN ---', error.message);
-
-            const status = error.cause || 500; 
-            let message = error.message;
-
-            if (status === 500) {
-                message = 'Error interno del servidor.';
-            }
-            
-            return res.status(status).json({ 
-                message: message,
-                error: error.message 
-            });
+            handleError(res, error, 'Error interno del servidor.');
         }
     }
 }
