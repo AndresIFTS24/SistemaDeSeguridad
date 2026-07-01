@@ -74,7 +74,11 @@ export class DashboardComponent implements OnInit {
     this.user.idSector = savedSector ? parseInt(savedSector, 10) : 0;
 
     this.setCurrentDate();
-    this.loadKpis();
+    if (this.user.idSector !== 1) {
+      // Dirección tiene su propio bloque de KPIs (/direccion/resumen);
+      // no hace falta pedir también las KPIs genéricas.
+      this.loadKpis();
+    }
     this.inicializarDatosSector();
   }
 

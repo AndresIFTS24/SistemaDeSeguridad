@@ -178,11 +178,17 @@ export class DireccionDashComponent implements OnInit {
           fill: true,
           tension: 0.35,
           pointRadius: 0,
-          pointHoverRadius: 4,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#0b0f19',
+          pointHoverBorderColor: '#38bdf8',
+          pointHoverBorderWidth: 2,
           borderWidth: 2
         }]
       },
-      options: this.opcionesChartBase()
+      options: this.opcionesChartBase({
+        label: (context: any) => `Acumulado: ${context.parsed.y}`,
+        afterLabel: (context: any) => `Nuevos este mes: ${this.serieEvolucion[context.dataIndex].nuevos}`
+      })
     });
   }
 
@@ -203,19 +209,42 @@ export class DireccionDashComponent implements OnInit {
           fill: true,
           tension: 0.35,
           pointRadius: 0,
-          pointHoverRadius: 4,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#0b0f19',
+          pointHoverBorderColor: '#a78bfa',
+          pointHoverBorderWidth: 2,
           borderWidth: 2
         }]
       },
-      options: this.opcionesChartBase()
+      options: this.opcionesChartBase({
+        label: (context: any) => `Eventos: ${context.parsed.y}`
+      })
     });
   }
 
-  private opcionesChartBase(): any {
+  private opcionesChartBase(tooltipCallbacks: any): any {
     return {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          titleColor: '#f1f5f9',
+          bodyColor: '#cbd5e1',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: true,
+          boxPadding: 4,
+          titleFont: { size: 12, weight: '600' },
+          bodyFont: { size: 12 },
+          callbacks: tooltipCallbacks
+        }
+      },
       scales: {
         x: {
           grid: { color: 'rgba(255,255,255,0.05)' },

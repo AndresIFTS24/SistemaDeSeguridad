@@ -25,7 +25,8 @@
         </div>
       </div>
 
-      <!-- KPI CARDS -->
+      <!-- KPI CARDS (genéricas — no se muestran en Dirección, que tiene su propio bloque de KPIs) -->
+      <ng-container *ngIf="user.idSector !== 1">
       <div class="kpi-grid" *ngIf="!loadingKpis; else loadingTpl">
         <div class="kpi-card abonados">
           <div class="kpi-icon">
@@ -111,6 +112,7 @@
           <span>Cargando datos del sistema...</span>
         </div>
       </ng-template>
+      </ng-container>
 
       <!-- CONTENIDO POR SECTOR -->
       <div class="sector-content" [ngSwitch]="user.idSector">
