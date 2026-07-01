@@ -12,6 +12,10 @@ require('dotenv').config();
 
 const { checkDatabaseConnection, pool } = require('./src/config/db.config');
 
+// Origen permitido para CORS (REST + Socket.io). En desarrollo apunta al
+// front local; en otros entornos se define via variable de entorno.
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:4200';
+
 // 1. IMPORTACIÓN DE RUTAS
 const authRoutes             = require('./src/routes/auth.routes');
 const abonadoRoutes          = require('./src/routes/abonado.routes');
@@ -30,7 +34,7 @@ const PORT   = process.env.PORT || 3000;
 // 2. SOCKET.IO
 const io = new Server(server, {
     cors: {
-        origin: 'http://localhost:4200',
+        origin: FRONTEND_URL,
         methods: ['GET', 'POST', 'PUT', 'DELETE']
     }
 });
@@ -45,7 +49,7 @@ io.on('connection', (socket) => {
 });
 
 // 3. MIDDLEWARES
-app.use(cors());
+app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 
 // 4. RUTAS DE DIAGNÓSTICO
