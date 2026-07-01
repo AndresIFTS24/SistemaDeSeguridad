@@ -1,9 +1,10 @@
 <div class="dashboard-wrapper">
   <app-navbar [user]="user"></app-navbar>
   <div class="main-layout">
-    <app-sidebar 
+    <app-sidebar
       [idSector]="user.idSector"
       [seccionActiva]="seccionActiva"
+      [badges]="badgesSidebar"
       (seccionSeleccionada)="onSeccionSeleccionada($event)"
       (logout)="logout()">
     </app-sidebar>
@@ -13,7 +14,7 @@
       <!-- HEADER DE BIENVENIDA -->
       <div class="page-header">
         <div class="header-left">
-          <span class="page-label">PANEL DE CONTROL</span>
+          <span class="page-label">{{ moduloActivoLabel || 'PANEL DE CONTROL' }}</span>
           <h1 class="page-title">Bienvenido, <span class="highlight">{{ user.nombre }}</span></h1>
           <p class="page-date">{{ currentDate }}</p>
         </div>

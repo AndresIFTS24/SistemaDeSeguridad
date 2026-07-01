@@ -12,6 +12,7 @@ import { DireccionDashComponent } from './sections/direccion/direccion.component
 import { MonitoreoDashComponent } from './sections/monitoreo/monitoreo.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { MENUS_POR_SECTOR } from '../../config/menus-sector';
 
 @Component({
   selector: 'app-dashboard',
@@ -41,6 +42,20 @@ export class DashboardComponent implements OnInit {
   public abonados: any[] = [];
   public listaUsuarios: any[] = [];
   public seccionActiva: string = 'dashboard';
+
+  // Contadores para los badges del sidebar (hoy solo se usan en Dirección).
+  get badgesSidebar(): Record<string, number> {
+    return this.user.idSector === 1
+      ? { usuarios: this.listaUsuarios.length, abonados: this.abonados.length }
+      : {};
+  }
+
+  // Nombre del módulo activo para mostrar en el encabezado (fuente única con SidebarComponent).
+  get moduloActivoLabel(): string {
+    const items = MENUS_POR_SECTOR[this.user.idSector] || [];
+    const activo = items.find(i => (i.seccion || i.id) === this.seccionActiva);
+    return activo?.label || '';
+  }
 
   kpis: DashboardKpis = {
     totalAbonados: 0,
@@ -107,20 +122,10 @@ export class DashboardComponent implements OnInit {
   }
 
   onSeccionSeleccionada(seccion: string): void {
-    if (seccion === 'dashboard') {
-      this.seccionActiva = 'dashboard';
-      if (this.contentArea) {
-        this.contentArea.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      return;
-    }
     this.seccionActiva = seccion;
-
-    // Scroll suave hacia el panel del sector
-    setTimeout(() => {
-      const el = document.querySelector('.sector-content');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    if (this.contentArea) {
+      this.contentArea.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   private inicializarDatosSector(): void {

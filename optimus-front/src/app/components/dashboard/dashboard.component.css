@@ -3,6 +3,7 @@
    ========================================= */
 
 :host {
+    display: block;
     --bg-dark: #0a0f18;
     --bg-card: #121926;
     --accent: #00d4ff;
@@ -313,9 +314,9 @@
 
 .page-label {
     display: block;
-    font-size: 0.7rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 1px;
     color: var(--accent);
     margin-bottom: 8px;
     text-transform: uppercase;
