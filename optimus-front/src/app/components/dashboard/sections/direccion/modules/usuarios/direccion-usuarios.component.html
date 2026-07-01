@@ -1,0 +1,50 @@
+<div class="fade-in">
+
+  <!-- BUSCADOR -->
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input
+      type="text"
+      [(ngModel)]="filtroBusqueda"
+      (keyup)="filtrar()"
+      placeholder="Buscar por nombre, email o rol..."
+    />
+  </div>
+
+  <!-- TABLA USUARIOS -->
+  <div class="tabla-container">
+    <table class="direccion-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Sector</th>
+          <th>Rol</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of usuariosFiltrados">
+          <td><span class="id-badge">#{{ u.ID_Usuario }}</span></td>
+          <td><span class="nombre-text">{{ u.Nombre }}</span></td>
+          <td><span class="email-text">{{ u.Email }}</span></td>
+          <td><span class="sector-tag">{{ u.NombreSector }}</span></td>
+          <td><span class="rol-tag">{{ u.NombreRol }}</span></td>
+          <td>
+            <span class="estado-pill activo">
+              <span class="dot"></span> Activo
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="usuariosFiltrados.length === 0">
+          <td colspan="6" class="empty-row">No se encontraron usuarios.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

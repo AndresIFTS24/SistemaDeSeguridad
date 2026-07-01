@@ -1,12 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-export interface MenuItem {
-  id: string;
-  label: string;
-  icon: string;
-  seccion?: string;
-}
+import { MenuItem, MENUS_POR_SECTOR } from '../../config/menus-sector';
 
 @Component({
   selector: 'app-sidebar',
@@ -30,6 +24,7 @@ export interface MenuItem {
             [title]="isCollapsed ? item.label : ''">
             <i class="fas {{ item.icon }}"></i>
             <span class="nav-label" *ngIf="!isCollapsed">{{ item.label }}</span>
+            <span class="nav-badge" *ngIf="!isCollapsed && badges[item.id] !== undefined">{{ badges[item.id] }}</span>
           </li>
         </ul>
       </div>
@@ -43,6 +38,14 @@ export interface MenuItem {
     </aside>
   `,
   styles: [`
+    :host {
+      /* <app-sidebar> es el flex item real de .main-layout, no .sidebar.
+         Mismo patrón que .content-area: altura explícita en el propio
+         flex item, no delegada a stretch ni a un <aside> interno. */
+      display: block;
+      height: 100%;
+    }
+
     .sidebar {
       width: 260px;
       height: 100%;
@@ -122,9 +125,29 @@ export interface MenuItem {
     }
 
     .nav-label {
+      flex: 1;
+      min-width: 0;
       overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       opacity: 1;
       transition: opacity 0.2s;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .nav-list li.active .nav-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
     }
 
     .collapsed .nav-label { opacity: 0; }
@@ -172,6 +195,7 @@ export interface MenuItem {
 export class SidebarComponent implements OnChanges {
   @Input() idSector: number = 0;
   @Input() seccionActiva: string = 'dashboard';
+  @Input() badges: Record<string, number> = {};
   @Output() logout = new EventEmitter<void>();
   @Output() seccionSeleccionada = new EventEmitter<string>();
 
@@ -179,26 +203,7 @@ export class SidebarComponent implements OnChanges {
   menuItems: MenuItem[] = [];
   isCollapsed: boolean = false;
 
-  private menusPorSector: Record<number, MenuItem[]> = {
-    1: [
-      { id: 'dashboard', label: 'Dashboard',              icon: 'fa-th-large',     seccion: 'dashboard' },
-      { id: 'usuarios',  label: 'Gestión de Usuarios',    icon: 'fa-users',        seccion: 'usuarios'  },
-      { id: 'abonados',  label: 'Directorio de Abonados', icon: 'fa-address-book', seccion: 'abonados'  },
-    ],
-    3: [
-      { id: 'dashboard',       label: 'Dashboard',          icon: 'fa-th-large',  seccion: 'dashboard'       },
-      { id: 'usuarios',        label: 'Usuarios',           icon: 'fa-users-cog', seccion: 'usuarios'        },
-      { id: 'sistema',         label: 'Estado del Sistema', icon: 'fa-server',    seccion: 'sistema'         },
-      { id: 'auditoria',       label: 'Auditoría',          icon: 'fa-history',   seccion: 'auditoria'       },
-      { id: 'infraestructura', label: 'Infraestructura',    icon: 'fa-chart-pie', seccion: 'infraestructura' },
-    ],
-    4: [
-      { id: 'dashboard', label: 'Dashboard',           icon: 'fa-th-large',        seccion: 'dashboard' },
-      { id: 'central',   label: 'Central de Abonados', icon: 'fa-broadcast-tower', seccion: 'central'   },
-      { id: 'alarmas',   label: 'Consola de Alarmas',  icon: 'fa-bell',            seccion: 'alarmas'   },
-      { id: 'eventos',   label: 'Registro de Eventos', icon: 'fa-list-alt',        seccion: 'eventos'   },
-    ]
-  };
+  private menusPorSector = MENUS_POR_SECTOR;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['idSector']) {
