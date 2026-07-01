@@ -182,7 +182,7 @@ export class SidebarComponent implements OnChanges {
   private menusPorSector: Record<number, MenuItem[]> = {
     1: [
       { id: 'dashboard', label: 'Dashboard',              icon: 'fa-th-large',     seccion: 'dashboard' },
-      { id: 'usuarios',  label: 'Directorio de Usuarios', icon: 'fa-users',        seccion: 'usuarios'  },
+      { id: 'usuarios',  label: 'Gestión de Usuarios',    icon: 'fa-users',        seccion: 'usuarios'  },
       { id: 'abonados',  label: 'Directorio de Abonados', icon: 'fa-address-book', seccion: 'abonados'  },
     ],
     3: [
