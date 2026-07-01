@@ -1,6 +1,10 @@
 @import '@fortawesome/fontawesome-free/css/all.css';
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
+html, body {
+    margin: 0;
+}
+
 body, p, span, div, h1, h2, h3, h4, h5, h6,
 input, button, label, a, td, th, li, select, textarea {
     font-family: 'Poppins', sans-serif;
