@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { DireccionInicioComponent } from './modules/inicio/direccion-inicio.component';
@@ -27,4 +27,8 @@ export class DireccionDashComponent {
   @Input() abonados: any[] = [];
   @Input() usuarios: any[] = [];
   @Input() seccionActiva: string = '';
+
+  // Relevo del evento de DireccionAbonadosComponent hasta DashboardComponent,
+  // que es el único que sabe recargar la lista real de abonados.
+  @Output() abonadoGuardado = new EventEmitter<void>();
 }

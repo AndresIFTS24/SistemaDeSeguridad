@@ -2,7 +2,7 @@
   <div [ngSwitch]="seccionActiva || 'dashboard'">
     <app-direccion-inicio *ngSwitchCase="'dashboard'"></app-direccion-inicio>
     <app-direccion-usuarios *ngSwitchCase="'usuarios'" [usuarios]="usuarios"></app-direccion-usuarios>
-    <app-direccion-abonados *ngSwitchCase="'abonados'" [abonados]="abonados"></app-direccion-abonados>
+    <app-direccion-abonados *ngSwitchCase="'abonados'" [abonados]="abonados" (abonadoGuardado)="abonadoGuardado.emit()"></app-direccion-abonados>
     <app-direccion-reportes *ngSwitchCase="'reportes'"></app-direccion-reportes>
     <app-direccion-mapa *ngSwitchCase="'mapa'"></app-direccion-mapa>
   </div>
