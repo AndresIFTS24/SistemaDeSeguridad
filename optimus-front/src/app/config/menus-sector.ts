@@ -7,6 +7,9 @@ export interface MenuItem {
   label: string;
   icon: string;
   seccion?: string;
+  // Si viene seteada, el ítem navega con Angular Router (sale de /dashboard)
+  // en vez de emitir seccionSeleccionada como el resto de los ítems internos.
+  ruta?: string;
 }
 
 export const MENUS_POR_SECTOR: Record<number, MenuItem[]> = {
@@ -14,6 +17,9 @@ export const MENUS_POR_SECTOR: Record<number, MenuItem[]> = {
     { id: 'dashboard', label: 'Dashboard',              icon: 'fa-th-large',         seccion: 'dashboard' },
     { id: 'usuarios',  label: 'Gestión de Usuarios',    icon: 'fa-users',            seccion: 'usuarios'  },
     { id: 'abonados',  label: 'Directorio de Abonados', icon: 'fa-address-book',     seccion: 'abonados'  },
+    // "Alta de Abonados" (ruta: '/abonados') se sacó del menú: el alta/edición
+    // ahora vive dentro de "Directorio de Abonados" vía AbonadoFormModalComponent.
+    // La ruta /abonados y AbonadosComponent quedan sin borrar por si se reusan.
     { id: 'reportes',  label: 'Reportes y Auditoría',   icon: 'fa-clipboard-list',   seccion: 'reportes'  },
     { id: 'mapa',      label: 'Mapa de Cobertura',      icon: 'fa-map-location-dot', seccion: 'mapa'      },
   ],

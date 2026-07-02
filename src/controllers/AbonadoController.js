@@ -68,9 +68,12 @@ class AbonadoController {
     static async create(req, res) {
         try {
             const newAbonado = await AbonadoService.createAbonado(req.body);
-            
+            const avisoGeo = newAbonado.geocodificado
+                ? ''
+                : ' (No se pudo geocodificar la dirección automáticamente; se puede completar más tarde desde el mapa de cobertura.)';
+
             return res.status(201).json({
-                message: '✅ Abonado creado exitosamente.',
+                message: `✅ Abonado creado exitosamente.${avisoGeo}`,
                 abonado: newAbonado
             });
         } catch (error) {
@@ -85,9 +88,12 @@ class AbonadoController {
         try {
             const { id } = req.params;
             const updatedAbonado = await AbonadoService.updateAbonado(id, req.body);
-            
+            const avisoGeo = updatedAbonado.geocodificado
+                ? ''
+                : ' (No se pudo geocodificar la dirección automáticamente; se puede completar más tarde desde el mapa de cobertura.)';
+
             return res.status(200).json({
-                message: `✅ Abonado (ID: ${id}) ha sido actualizado exitosamente.`,
+                message: `✅ Abonado (ID: ${id}) ha sido actualizado exitosamente.${avisoGeo}`,
                 abonado: updatedAbonado
             });
         } catch (error) {

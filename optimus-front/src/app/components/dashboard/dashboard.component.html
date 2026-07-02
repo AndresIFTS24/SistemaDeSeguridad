@@ -117,11 +117,12 @@
 
       <!-- CONTENIDO POR SECTOR -->
       <div class="sector-content" [ngSwitch]="user.idSector">
-        <app-direccion-dash 
-          *ngSwitchCase="1" 
-          [abonados]="abonados" 
+        <app-direccion-dash
+          *ngSwitchCase="1"
+          [abonados]="abonados"
           [usuarios]="listaUsuarios"
-          [seccionActiva]="seccionActiva">
+          [seccionActiva]="seccionActiva"
+          (abonadoGuardado)="cargarAbonados()">
         </app-direccion-dash>
         <app-it-dash 
           *ngSwitchCase="3"

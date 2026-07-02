@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { MenuItem, MENUS_POR_SECTOR } from '../../config/menus-sector';
 
 @Component({
@@ -205,6 +206,8 @@ export class SidebarComponent implements OnChanges {
 
   private menusPorSector = MENUS_POR_SECTOR;
 
+  constructor(private router: Router) {}
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['idSector']) {
       this.menuItems = this.menusPorSector[this.idSector] || [
@@ -232,6 +235,12 @@ export class SidebarComponent implements OnChanges {
   }
 
   seleccionar(item: MenuItem): void {
+    if (item.ruta) {
+      // Ítem con ruta real de Angular Router: sale de /dashboard, no emite
+      // seccionSeleccionada (no hay una "sección interna" que mostrar).
+      this.router.navigate([item.ruta]);
+      return;
+    }
     this.menuActivo = item.id;
     this.seccionSeleccionada.emit(item.seccion || item.id);
   }

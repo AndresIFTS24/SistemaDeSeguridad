@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AbonadoService } from '../../services/abonado.service';
+import { AbonadoFormModalComponent, ModoAbonadoModal } from '../shared/abonado-form-modal/abonado-form-modal.component';
 
 @Component({
   selector: 'app-abonados',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AbonadoFormModalComponent],
   templateUrl: './abonados.component.html',
   styleUrls: ['./abonados.component.css']
 })
@@ -18,22 +19,10 @@ export class AbonadosComponent implements OnInit {
   public filtroBusqueda: string = '';
   public loading: boolean = true;
   public error: boolean = false;
+
   public mostrarModal: boolean = false;
-  public modoModal: string = 'ver';
-  public guardando: boolean = false;
-  public mensajeExito: string = '';
-  public mensajeError: string = '';
-
+  public modoModal: ModoAbonadoModal = 'ver';
   public abonadoSeleccionado: any = null;
-
-  public formAbonado = {
-    NumeroDeAbonado: '',
-    RazonSocial: '',
-    RUT: '',
-    ContactoPrincipal: '',
-    TelefonoContacto: '',
-    EmailContacto: ''
-  };
 
   constructor(
     private abonadoService: AbonadoService,
@@ -84,89 +73,23 @@ export class AbonadosComponent implements OnInit {
     this.abonadoSeleccionado = { ...abonado };
     this.modoModal = 'ver';
     this.mostrarModal = true;
-    this.mensajeExito = '';
-    this.mensajeError = '';
   }
 
   abrirEditar(abonado: any): void {
     this.abonadoSeleccionado = { ...abonado };
-    this.formAbonado = {
-      NumeroDeAbonado: abonado.NumeroDeAbonado,
-      RazonSocial: abonado.RazonSocial,
-      RUT: abonado.RUT || '',
-      ContactoPrincipal: abonado.ContactoPrincipal || '',
-      TelefonoContacto: abonado.TelefonoContacto || '',
-      EmailContacto: abonado.EmailContacto || ''
-    };
     this.modoModal = 'editar';
     this.mostrarModal = true;
-    this.mensajeExito = '';
-    this.mensajeError = '';
   }
 
   abrirNuevo(): void {
     this.abonadoSeleccionado = null;
-    this.formAbonado = {
-      NumeroDeAbonado: '',
-      RazonSocial: '',
-      RUT: '',
-      ContactoPrincipal: '',
-      TelefonoContacto: '',
-      EmailContacto: ''
-    };
     this.modoModal = 'nuevo';
     this.mostrarModal = true;
-    this.mensajeExito = '';
-    this.mensajeError = '';
   }
 
   cerrarModal(): void {
     this.mostrarModal = false;
     this.abonadoSeleccionado = null;
-    this.mensajeExito = '';
-    this.mensajeError = '';
-  }
-
-  guardarNuevo(): void {
-    if (!this.formAbonado.NumeroDeAbonado || !this.formAbonado.RazonSocial) {
-      this.mensajeError = 'Número de abonado y Razón Social son obligatorios.';
-      return;
-    }
-    this.guardando = true;
-    this.mensajeError = '';
-    this.abonadoService.createAbonado(this.formAbonado).subscribe({
-      next: () => {
-        this.mensajeExito = '✅ Abonado creado exitosamente.';
-        this.guardando = false;
-        this.cargarAbonados();
-        setTimeout(() => this.cerrarModal(), 1500);
-      },
-      error: (err: any) => {
-        this.mensajeError = err.error?.message || 'Error al crear el abonado.';
-        this.guardando = false;
-      }
-    });
-  }
-
-  guardarEdicion(): void {
-    if (!this.formAbonado.NumeroDeAbonado || !this.formAbonado.RazonSocial) {
-      this.mensajeError = 'Número de abonado y Razón Social son obligatorios.';
-      return;
-    }
-    this.guardando = true;
-    this.mensajeError = '';
-    this.abonadoService.updateAbonado(this.abonadoSeleccionado.ID_Abonado, this.formAbonado).subscribe({
-      next: () => {
-        this.mensajeExito = '✅ Abonado actualizado exitosamente.';
-        this.guardando = false;
-        this.cargarAbonados();
-        setTimeout(() => this.cerrarModal(), 1500);
-      },
-      error: (err: any) => {
-        this.mensajeError = err.error?.message || 'Error al actualizar el abonado.';
-        this.guardando = false;
-      }
-    });
   }
 
   desactivarAbonado(abonado: any): void {
