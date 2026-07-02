@@ -1,0 +1,81 @@
+:host {
+    display: block;
+}
+
+.buscador-predictivo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px 20px;
+    transition: border-color 0.3s;
+}
+
+.buscador-predictivo:focus-within {
+    border-color: rgba(0, 212, 255, 0.4);
+}
+
+.buscador-predictivo svg {
+    width: 18px;
+    height: 18px;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.buscador-predictivo input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.buscador-predictivo input::placeholder {
+    color: #475569;
+}
+
+.sugerencias {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #161e2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    z-index: 20;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    list-style: none;
+    margin: 0;
+    padding: 4px;
+}
+
+.sugerencias li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.sugerencias li:hover {
+    background: rgba(0, 212, 255, 0.1);
+}
+
+.sugerencias .principal {
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
+.sugerencias .secundario {
+    color: #64748b;
+    font-size: 0.78rem;
+}

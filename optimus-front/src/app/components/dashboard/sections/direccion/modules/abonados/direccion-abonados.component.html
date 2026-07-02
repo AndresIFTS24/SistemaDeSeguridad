@@ -1,22 +1,66 @@
 <div class="fade-in">
 
+  <!-- RESUMEN -->
+  <div class="resumen-grid">
+    <div class="resumen-card">
+      <div class="resumen-icon total"><i class="fas fa-building"></i></div>
+      <div class="resumen-info">
+        <span class="resumen-label">Total Abonados</span>
+        <span class="resumen-valor">{{ totalAbonados }}</span>
+      </div>
+    </div>
+    <div class="resumen-card">
+      <div class="resumen-icon activos"><i class="fas fa-check-circle"></i></div>
+      <div class="resumen-info">
+        <span class="resumen-label">Activos</span>
+        <span class="resumen-valor">{{ totalActivos }}</span>
+      </div>
+    </div>
+    <div class="resumen-card">
+      <div class="resumen-icon inactivos"><i class="fas fa-times-circle"></i></div>
+      <div class="resumen-info">
+        <span class="resumen-label">Inactivos</span>
+        <span class="resumen-valor">{{ totalInactivos }}</span>
+      </div>
+    </div>
+    <div class="resumen-card" *ngIf="ciudadPrincipal">
+      <div class="resumen-icon ciudades"><i class="fas fa-map-marker-alt"></i></div>
+      <div class="resumen-info">
+        <span class="resumen-label">{{ ciudadesDisponibles.length }} ciudades cubiertas</span>
+        <span class="resumen-valor">{{ ciudadPrincipal.ciudad }} <small>({{ ciudadPrincipal.cantidad }})</small></span>
+      </div>
+    </div>
+  </div>
+
   <!-- BUSCADOR + ACCIONES -->
   <div class="toolbar">
-    <div class="search-bar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="11" cy="11" r="8"/>
-        <path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input
-        type="text"
-        [(ngModel)]="filtroBusqueda"
-        (keyup)="filtrar()"
-        placeholder="Buscar por razón social, número o email..."
-      />
-    </div>
+    <app-buscador-predictivo
+      class="buscador-toolbar"
+      [(termino)]="filtroBusqueda"
+      (terminoChange)="filtrar()"
+      [items]="abonados"
+      [camposBusqueda]="['RazonSocial', 'NumeroDeAbonado', 'EmailContacto']"
+      campoPrincipal="RazonSocial"
+      campoSecundario="NumeroDeAbonado"
+      placeholder="Buscar por razón social, número o email..."
+      (seleccionado)="verDetalle($event)">
+    </app-buscador-predictivo>
     <button class="btn-nuevo" (click)="abrirNuevo()">
       <i class="fas fa-plus"></i> Nuevo Abonado
     </button>
+  </div>
+
+  <!-- FILTROS ESTRUCTURADOS -->
+  <div class="filtros-bar">
+    <div class="estado-toggle">
+      <button [class.active]="estadoFiltro === 'todos'" (click)="estadoFiltro = 'todos'; filtrar()">Todos</button>
+      <button [class.active]="estadoFiltro === 'activo'" (click)="estadoFiltro = 'activo'; filtrar()">Activos</button>
+      <button [class.active]="estadoFiltro === 'inactivo'" (click)="estadoFiltro = 'inactivo'; filtrar()">Inactivos</button>
+    </div>
+    <select class="ciudad-select" [(ngModel)]="ciudadFiltro" (change)="filtrar()">
+      <option value="">Todas las ciudades</option>
+      <option *ngFor="let c of ciudadesDisponibles" [value]="c">{{ c }}</option>
+    </select>
   </div>
 
   <!-- TABLA ABONADOS -->
@@ -24,17 +68,29 @@
     <table class="direccion-table">
       <thead>
         <tr>
-          <th>Nro</th>
-          <th>Razón Social</th>
-          <th>Contacto</th>
-          <th>Teléfono</th>
-          <th>Email</th>
-          <th>Estado</th>
+          <th class="sortable" [class.active]="campoOrden === 'NumeroDeAbonado'" (click)="ordenarPor('NumeroDeAbonado')">
+            Nro <i class="fas" [ngClass]="campoOrden !== 'NumeroDeAbonado' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+          </th>
+          <th class="sortable" [class.active]="campoOrden === 'RazonSocial'" (click)="ordenarPor('RazonSocial')">
+            Razón Social <i class="fas" [ngClass]="campoOrden !== 'RazonSocial' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+          </th>
+          <th class="sortable" [class.active]="campoOrden === 'ContactoPrincipal'" (click)="ordenarPor('ContactoPrincipal')">
+            Contacto <i class="fas" [ngClass]="campoOrden !== 'ContactoPrincipal' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+          </th>
+          <th class="sortable" [class.active]="campoOrden === 'TelefonoContacto'" (click)="ordenarPor('TelefonoContacto')">
+            Teléfono <i class="fas" [ngClass]="campoOrden !== 'TelefonoContacto' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+          </th>
+          <th class="sortable" [class.active]="campoOrden === 'EmailContacto'" (click)="ordenarPor('EmailContacto')">
+            Email <i class="fas" [ngClass]="campoOrden !== 'EmailContacto' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+          </th>
+          <th class="sortable" [class.active]="campoOrden === 'Activo'" (click)="ordenarPor('Activo')">
+            Estado <i class="fas" [ngClass]="campoOrden !== 'Activo' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+          </th>
           <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let a of abonadosFiltrados">
+        <tr *ngFor="let a of abonadosPagina">
           <td><span class="id-badge">{{ a.NumeroDeAbonado }}</span></td>
           <td><span class="nombre-text">{{ a.RazonSocial }}</span></td>
           <td>{{ a.ContactoPrincipal }}</td>
@@ -74,6 +130,24 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  <div class="paginacion" *ngIf="totalPaginas > 1">
+    <button class="pag-btn" [disabled]="pagina === 1" (click)="irAPagina(pagina - 1)">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button
+      *ngFor="let p of paginasVisibles"
+      class="pag-btn"
+      [class.active]="p === pagina"
+      (click)="irAPagina(p)">
+      {{ p }}
+    </button>
+    <button class="pag-btn" [disabled]="pagina === totalPaginas" (click)="irAPagina(pagina + 1)">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+    <span class="pag-info">Página {{ pagina }} de {{ totalPaginas }}</span>
   </div>
 
 </div>
