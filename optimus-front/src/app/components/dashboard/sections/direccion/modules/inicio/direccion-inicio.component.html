@@ -50,14 +50,16 @@
       <div class="kpi-card-footer texto-tenue">de {{ resumen.tecnicos.total }} técnicos activos</div>
     </div>
 
-    <div class="kpi-card-direccion borde-rojo" [class.alerta-pulso]="resumen.alarmasCriticas.cantidad > 0">
+    <div class="kpi-card-direccion borde-rojo" [class.alerta-pulso]="resumen.alarmasCriticas.pendientes > 0">
       <div class="kpi-card-header">
         <span class="kpi-card-label texto-rojo">Alarmas Críticas</span>
         <span class="kpi-card-icon rojo"><i class="fas fa-radiation-alt"></i></span>
       </div>
       <div class="kpi-card-valor texto-rojo">{{ resumen.alarmasCriticas.cantidad }}</div>
-      <div class="kpi-card-footer texto-rojo" *ngIf="resumen.alarmasCriticas.cantidad > 0">
-        <strong>Requiere atención inmediata</strong>
+      <div class="kpi-card-footer" *ngIf="resumen.alarmasCriticas.cantidad > 0">
+        <span class="texto-rojo"><strong>{{ resumen.alarmasCriticas.pendientes }}</strong> sin atender</span>
+        <span class="texto-tenue">·</span>
+        <span class="texto-violeta">{{ resumen.alarmasCriticas.enProgreso }} en curso</span>
       </div>
       <div class="kpi-card-footer texto-tenue" *ngIf="resumen.alarmasCriticas.cantidad === 0">Sin alarmas críticas abiertas</div>
     </div>

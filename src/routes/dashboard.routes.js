@@ -13,6 +13,14 @@ const accesoDireccion = [
     '1', 1
 ];
 
+// Valida formato YYYY-MM-DD y que sea una fecha calendario real (rechaza
+// cosas como "2026-02-30" que pasan el regex pero no existen).
+function esFechaValida(str) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+    const d = new Date(`${str}T00:00:00Z`);
+    return !isNaN(d.getTime()) && d.toISOString().slice(0, 10) === str;
+}
+
 router.get('/kpis', verifyToken, async (req, res) => {
     try {
         const [[{ totalAbonados }]] = await pool.execute(
@@ -63,7 +71,7 @@ router.get('/direccion/resumen', verifyToken, checkRole(accesoDireccion), async 
             [[{ montoMesAnterior }]],
             [[{ total: totalTecnicos, activosEmpleo, inactivosEmpleo }]],
             [[{ enCampoAhora }]],
-            [[{ cantidad: alarmasCriticas }]],
+            [[{ cantidad: alarmasCriticas, pendientes: alarmasPendientes, enProgreso: alarmasEnProgreso }]],
             [[{ finalizadas, total: totalOT }]],
         ] = await Promise.all([
             pool.execute(`SELECT COUNT(*) AS activos FROM ABONADOS WHERE Activo = 1`),
@@ -84,7 +92,11 @@ router.get('/direccion/resumen', verifyToken, checkRole(accesoDireccion), async 
             ),
             pool.execute(`SELECT COUNT(DISTINCT ID_Tecnico) AS enCampoAhora FROM ASIGNACIONES WHERE Estado = 'En Curso'`),
             pool.execute(
-                `SELECT COUNT(*) AS cantidad FROM EVENTOS e
+                `SELECT
+                    COUNT(*) AS cantidad,
+                    SUM(e.Estado = 'Pendiente') AS pendientes,
+                    SUM(e.Estado = 'En Progreso') AS enProgreso
+                 FROM EVENTOS e
                  JOIN CODIGOS_EVENTOS c ON e.ID_CodigoEvento = c.ID_CodigoEvento
                  WHERE c.Prioridad = 'Crítico' AND e.Estado IN ('Pendiente', 'En Progreso')`
             ),
@@ -121,6 +133,8 @@ router.get('/direccion/resumen', verifyToken, checkRole(accesoDireccion), async 
             },
             alarmasCriticas: {
                 cantidad: alarmasCriticas,
+                pendientes: Number(alarmasPendientes) || 0,
+                enProgreso: Number(alarmasEnProgreso) || 0,
                 criterioPrioridad: ['Crítico']
             },
             otCompletadas: {
@@ -249,6 +263,122 @@ router.get('/direccion/eventos-recientes', verifyToken, checkRole(accesoDireccio
     } catch (error) {
         console.error('Error al obtener eventos recientes:', error);
         res.status(500).json({ message: 'Error al obtener los eventos recientes.' });
+    }
+});
+
+/**
+ * GET /api/dashboard/direccion/auditoria/eventos
+ * Bitácora paginada y filtrable de EVENTOS, para el módulo "Reportes y Auditoría".
+ * Query params: page, limit, fechaDesde, fechaHasta, idAbonado, prioridad (csv), estado (csv).
+ */
+router.get('/direccion/auditoria/eventos', verifyToken, checkRole(accesoDireccion), async (req, res) => {
+    try {
+        const pagina = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limite = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 25));
+        const offset = (pagina - 1) * limite;
+
+        const condiciones = [];
+        const parametros = [];
+
+        if (req.query.fechaDesde) {
+            if (!esFechaValida(req.query.fechaDesde)) {
+                return res.status(400).json({
+                    message: `fechaDesde inválida: "${req.query.fechaDesde}". Formato esperado: YYYY-MM-DD.`
+                });
+            }
+            condiciones.push('e.FechaHoraRecepcion >= ?');
+            parametros.push(`${req.query.fechaDesde} 00:00:00`);
+        }
+        if (req.query.fechaHasta) {
+            if (!esFechaValida(req.query.fechaHasta)) {
+                return res.status(400).json({
+                    message: `fechaHasta inválida: "${req.query.fechaHasta}". Formato esperado: YYYY-MM-DD.`
+                });
+            }
+            condiciones.push('e.FechaHoraRecepcion < DATE_ADD(?, INTERVAL 1 DAY)');
+            parametros.push(req.query.fechaHasta);
+        }
+        if (req.query.idAbonado) {
+            condiciones.push('a.ID_Abonado = ?');
+            parametros.push(Number(req.query.idAbonado));
+        }
+        if (req.query.prioridad) {
+            const prioridades = String(req.query.prioridad).split(',').map(p => p.trim()).filter(Boolean);
+            if (prioridades.length > 0) {
+                condiciones.push(`c.Prioridad IN (${prioridades.map(() => '?').join(',')})`);
+                parametros.push(...prioridades);
+            }
+        }
+        if (req.query.estado) {
+            const estados = String(req.query.estado).split(',').map(e => e.trim()).filter(Boolean);
+            if (estados.length > 0) {
+                condiciones.push(`e.Estado IN (${estados.map(() => '?').join(',')})`);
+                parametros.push(...estados);
+            }
+        }
+
+        const whereSql = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+        const joinsSql = `
+            FROM EVENTOS e
+            JOIN CODIGOS_EVENTOS c ON e.ID_CodigoEvento = c.ID_CodigoEvento
+            JOIN DISPOSITIVOS d ON e.ID_Dispositivo = d.ID_Dispositivo
+            JOIN DIRECCIONES dir ON d.ID_Direccion = dir.ID_Direccion
+            JOIN ABONADOS a ON dir.ID_Abonado = a.ID_Abonado
+        `;
+
+        const joinsConSeguimiento = `${joinsSql}
+            LEFT JOIN (
+                SELECT s1.ID_Evento, s1.AccionRealizada, s1.FechaHoraAccion, u.Nombre AS NombreOperador
+                FROM SEGUIMIENTOS_EVENTOS s1
+                JOIN USUARIOS u ON s1.ID_Operador = u.ID_Usuario
+                WHERE s1.FechaHoraAccion = (
+                    SELECT MAX(s2.FechaHoraAccion) FROM SEGUIMIENTOS_EVENTOS s2 WHERE s2.ID_Evento = s1.ID_Evento
+                )
+            ) seg ON seg.ID_Evento = e.ID_Evento
+        `;
+
+        const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total ${joinsSql} ${whereSql}`, parametros);
+
+        const [filas] = await pool.query(
+            `SELECT
+                e.ID_Evento, e.FechaHoraRecepcion, e.Estado,
+                c.Codigo, c.DescripcionAlarma, c.Prioridad,
+                a.ID_Abonado, a.RazonSocial, a.NumeroDeAbonado,
+                dir.Calle, dir.Ciudad,
+                d.NombreDispositivo, d.Zona_Ubicacion,
+                seg.NombreOperador, seg.AccionRealizada, seg.FechaHoraAccion
+             ${joinsConSeguimiento} ${whereSql}
+             ORDER BY e.FechaHoraRecepcion DESC
+             LIMIT ${limite} OFFSET ${offset}`,
+            parametros
+        );
+
+        const eventos = filas.map(f => ({
+            idEvento: f.ID_Evento,
+            fechaHoraRecepcion: f.FechaHoraRecepcion,
+            codigo: f.Codigo,
+            descripcionAlarma: f.DescripcionAlarma,
+            prioridad: f.Prioridad,
+            estado: f.Estado,
+            abonado: { id: f.ID_Abonado, razonSocial: f.RazonSocial, numeroDeAbonado: f.NumeroDeAbonado },
+            direccion: { calle: f.Calle, ciudad: f.Ciudad },
+            dispositivo: { nombre: f.NombreDispositivo, zona: f.Zona_Ubicacion },
+            atendidoPor: f.NombreOperador
+                ? { nombreOperador: f.NombreOperador, accionRealizada: f.AccionRealizada, fechaHoraAccion: f.FechaHoraAccion }
+                : null
+        }));
+
+        res.status(200).json({
+            pagina,
+            limite,
+            total,
+            totalPaginas: Math.max(1, Math.ceil(total / limite)),
+            eventos
+        });
+    } catch (error) {
+        console.error('Error al obtener la bitácora de eventos:', error);
+        res.status(500).json({ message: 'Error al obtener la bitácora de eventos.' });
     }
 });
 

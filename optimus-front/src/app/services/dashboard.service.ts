@@ -21,7 +21,7 @@ export interface ResumenDireccion {
     nota: string;
   };
   tecnicos: { total: number; activosEmpleo: number; inactivosEmpleo: number; enCampoAhora: number };
-  alarmasCriticas: { cantidad: number; criterioPrioridad: string[] };
+  alarmasCriticas: { cantidad: number; pendientes: number; enProgreso: number; criterioPrioridad: string[] };
   otCompletadas: { cantidad: number; total: number; porcentaje: number };
 }
 
@@ -60,6 +60,37 @@ export interface EventosRecientesResponse {
   eventos: EventoReciente[];
 }
 
+export interface AuditoriaEventosFiltros {
+  page?: number;
+  limit?: number;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  idAbonado?: number;
+  prioridad?: string[];
+  estado?: string[];
+}
+
+export interface EventoAuditoria {
+  idEvento: number;
+  fechaHoraRecepcion: string;
+  codigo: string;
+  descripcionAlarma: string;
+  prioridad: string;
+  estado: string;
+  abonado: { id: number; razonSocial: string; numeroDeAbonado: string };
+  direccion: { calle: string; ciudad: string };
+  dispositivo: { nombre: string; zona: string | null };
+  atendidoPor: { nombreOperador: string; accionRealizada: string; fechaHoraAccion: string } | null;
+}
+
+export interface AuditoriaEventosResponse {
+  pagina: number;
+  limite: number;
+  total: number;
+  totalPaginas: number;
+  eventos: EventoAuditoria[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -96,6 +127,22 @@ export class DashboardService {
   getEventosRecientes(limit: number = 6): Observable<EventosRecientesResponse> {
     return this.http.get<EventosRecientesResponse>(
       `${this.apiUrl}/direccion/eventos-recientes?limit=${limit}`,
+      { headers: this.authHeaders() }
+    );
+  }
+
+  getAuditoriaEventos(filtros: AuditoriaEventosFiltros): Observable<AuditoriaEventosResponse> {
+    const params = new URLSearchParams();
+    params.set('page', String(filtros.page ?? 1));
+    params.set('limit', String(filtros.limit ?? 25));
+    if (filtros.fechaDesde) params.set('fechaDesde', filtros.fechaDesde);
+    if (filtros.fechaHasta) params.set('fechaHasta', filtros.fechaHasta);
+    if (filtros.idAbonado) params.set('idAbonado', String(filtros.idAbonado));
+    if (filtros.prioridad?.length) params.set('prioridad', filtros.prioridad.join(','));
+    if (filtros.estado?.length) params.set('estado', filtros.estado.join(','));
+
+    return this.http.get<AuditoriaEventosResponse>(
+      `${this.apiUrl}/direccion/auditoria/eventos?${params.toString()}`,
       { headers: this.authHeaders() }
     );
   }

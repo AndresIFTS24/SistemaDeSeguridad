@@ -119,9 +119,10 @@
     font-size: 0.78rem;
 }
 
-.texto-verde  { color: #10b981; }
-.texto-rojo   { color: #ef4444; }
-.texto-tenue  { color: #64748b; }
+.texto-verde   { color: #10b981; }
+.texto-rojo    { color: #ef4444; }
+.texto-tenue   { color: #64748b; }
+.texto-violeta { color: #a78bfa; }
 
 .barra-progreso {
     flex: 1;
