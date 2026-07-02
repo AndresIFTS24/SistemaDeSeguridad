@@ -1,0 +1,19 @@
+<div class="mapa-container fade-in">
+
+  <div class="mapa-header">
+    <h3>Mapa de Cobertura</h3>
+    <span class="contador" *ngIf="!cargando">
+      {{ totalGeocodificados }} de {{ totalAbonados }} abonados con ubicación geocodificada
+    </span>
+  </div>
+
+  <div class="direccion-loading" *ngIf="cargando">
+    <div class="spinner"></div>
+    <span>Cargando mapa...</span>
+  </div>
+
+  <div class="mapa-wrapper" [class.oculto]="cargando">
+    <div #mapaEl class="mapa-leaflet"></div>
+  </div>
+
+</div>
