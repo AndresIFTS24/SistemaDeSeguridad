@@ -1,0 +1,19 @@
+<div class="reportes-container">
+
+  <nav class="reportes-tabs">
+    <button (click)="cambiarVista('bitacora')" [class.active]="vistaActual === 'bitacora'">
+      <i class="fas fa-list-check"></i> Bitácora de Eventos
+    </button>
+    <button class="proximamente" disabled title="Se habilita cuando existan órdenes técnicas con check-in GPS">
+      <i class="fas fa-route"></i> Órdenes Técnicas <span class="tag-proximamente">Próximamente</span>
+    </button>
+    <button class="proximamente" disabled title="Se habilita cuando existan remitos digitales e inventario">
+      <i class="fas fa-boxes-stacked"></i> Remitos e Inventario <span class="tag-proximamente">Próximamente</span>
+    </button>
+  </nav>
+
+  <div [ngSwitch]="vistaActual">
+    <app-direccion-bitacora *ngSwitchCase="'bitacora'"></app-direccion-bitacora>
+  </div>
+
+</div>

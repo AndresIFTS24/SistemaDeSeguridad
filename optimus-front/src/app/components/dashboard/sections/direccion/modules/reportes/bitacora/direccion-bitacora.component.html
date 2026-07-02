@@ -1,0 +1,133 @@
+<div class="bitacora-container fade-in">
+
+  <!-- FILTROS -->
+  <div class="filtros-panel">
+    <div class="filtros-fila">
+      <div class="filtro-fecha">
+        <label>Desde</label>
+        <input type="date" [(ngModel)]="fechaDesde" (change)="aplicarFechas()" />
+      </div>
+      <div class="filtro-fecha">
+        <label>Hasta</label>
+        <input type="date" [(ngModel)]="fechaHasta" (change)="aplicarFechas()" />
+      </div>
+
+      <div class="filtro-abonado">
+        <label>Abonado</label>
+        <div class="abonado-buscador">
+          <input
+            type="text"
+            [(ngModel)]="busquedaAbonado"
+            (input)="buscarAbonado()"
+            (focus)="buscarAbonado()"
+            placeholder="Buscar por razón social o número..."
+            [disabled]="!!abonadoSeleccionado"
+          />
+          <button *ngIf="abonadoSeleccionado" class="btn-quitar-abonado" (click)="quitarAbonado()" title="Quitar filtro de abonado">
+            <i class="fas fa-times"></i>
+          </button>
+          <ul class="sugerencias" *ngIf="mostrarSugerencias && sugerenciasAbonado.length > 0">
+            <li *ngFor="let a of sugerenciasAbonado" (click)="seleccionarAbonado(a)">
+              <span class="nombre">{{ a.RazonSocial }}</span>
+              <span class="numero">#{{ a.NumeroDeAbonado }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="filtros-fila">
+      <div class="filtro-chips">
+        <span class="filtro-chips-label">Prioridad</span>
+        <button
+          *ngFor="let p of prioridadesDisponibles"
+          class="chip"
+          [class.active]="prioridadesSeleccionadas.includes(p)"
+          (click)="togglePrioridad(p)">
+          {{ p }}
+        </button>
+      </div>
+
+      <div class="filtro-chips">
+        <span class="filtro-chips-label">Estado</span>
+        <button
+          *ngFor="let e of estadosDisponibles"
+          class="chip"
+          [class.active]="estadosSeleccionados.includes(e)"
+          (click)="toggleEstado(e)">
+          {{ e }}
+        </button>
+      </div>
+
+      <button class="btn-limpiar" *ngIf="hayFiltrosActivos" (click)="limpiarFiltros()">
+        <i class="fas fa-eraser"></i> Limpiar filtros
+      </button>
+    </div>
+  </div>
+
+  <div class="resultados-contador">
+    {{ total }} evento{{ total === 1 ? '' : 's' }} encontrado{{ total === 1 ? '' : 's' }}
+  </div>
+
+  <!-- TABLA -->
+  <div class="direccion-loading" *ngIf="cargando">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="tabla-container" *ngIf="!cargando">
+    <table class="direccion-table">
+      <thead>
+        <tr>
+          <th>Fecha/Hora</th>
+          <th>Abonado</th>
+          <th>Zona / Ciudad</th>
+          <th>Alarma</th>
+          <th>Prioridad</th>
+          <th>Estado</th>
+          <th>Atendido por</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ev of eventos">
+          <td class="celda-fecha">{{ ev.fechaHoraRecepcion | argentinaDate:'datetime' }}</td>
+          <td><span class="nombre-text">{{ ev.abonado.razonSocial }}</span></td>
+          <td class="celda-tenue">{{ ev.dispositivo.zona || ev.direccion.ciudad }}</td>
+          <td>
+            <span class="nombre-text">{{ ev.descripcionAlarma }}</span>
+            <span class="celda-tenue codigo-alarma">{{ ev.codigo }}</span>
+          </td>
+          <td><span class="badge" [ngClass]="claseBadgePrioridad(ev.prioridad)">{{ ev.prioridad }}</span></td>
+          <td><span class="badge" [ngClass]="claseBadgeEstado(ev.estado)">{{ ev.estado }}</span></td>
+          <td class="celda-tenue">
+            <ng-container *ngIf="ev.atendidoPor; else sinSeguimiento">
+              {{ ev.atendidoPor.nombreOperador }}
+            </ng-container>
+            <ng-template #sinSeguimiento>Sin seguimiento registrado</ng-template>
+          </td>
+        </tr>
+        <tr *ngIf="eventos.length === 0">
+          <td colspan="7" class="empty-row">No se encontraron eventos con estos filtros.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  <div class="paginacion" *ngIf="!cargando && totalPaginas > 1">
+    <button class="pag-btn" [disabled]="pagina === 1" (click)="irAPagina(pagina - 1)">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    <button
+      *ngFor="let p of paginasVisibles"
+      class="pag-btn"
+      [class.active]="p === pagina"
+      (click)="irAPagina(p)">
+      {{ p }}
+    </button>
+    <button class="pag-btn" [disabled]="pagina === totalPaginas" (click)="irAPagina(pagina + 1)">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+    <span class="pag-info">Página {{ pagina }} de {{ totalPaginas }}</span>
+  </div>
+
+</div>

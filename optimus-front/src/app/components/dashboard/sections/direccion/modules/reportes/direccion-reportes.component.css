@@ -1,0 +1,66 @@
+:host {
+    display: block;
+}
+
+.reportes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.reportes-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.reportes-tabs button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.reportes-tabs button:not(:disabled):hover {
+    color: #f8fafc;
+}
+
+.reportes-tabs button.active {
+    color: #00d4ff;
+}
+
+.reportes-tabs button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #00d4ff;
+    box-shadow: 0 0 10px #00d4ff;
+}
+
+.reportes-tabs button.proximamente {
+    cursor: default;
+    color: #475569;
+}
+
+.tag-proximamente {
+    background: rgba(255, 255, 255, 0.06);
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 20px;
+}
