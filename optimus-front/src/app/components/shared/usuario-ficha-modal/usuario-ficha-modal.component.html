@@ -1,0 +1,43 @@
+<div class="modal-overlay" *ngIf="visible" (click)="cerrar()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+
+    <ng-container *ngIf="usuario">
+      <div class="modal-header">
+        <h3>Ficha del Usuario</h3>
+        <button class="btn-close" (click)="cerrar()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="ficha-grid">
+          <div class="ficha-item">
+            <span class="ficha-label">Nombre</span>
+            <span class="ficha-valor highlight">{{ usuario.Nombre }}</span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-label">Email</span>
+            <span class="ficha-valor">{{ usuario.Email }}</span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-label">Teléfono</span>
+            <span class="ficha-valor">{{ usuario.Telefono || 'No registrado' }}</span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-label">Sector</span>
+            <span class="ficha-valor">{{ usuario.NombreSector }}</span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-label">Rol</span>
+            <span class="ficha-valor">{{ usuario.NombreRol }}</span>
+          </div>
+          <div class="ficha-item">
+            <span class="ficha-label">Estado</span>
+            <span class="estado-pill" [ngClass]="usuario.Activo ? 'activo' : 'inactivo'">
+              <span class="dot"></span>
+              {{ usuario.Activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+  </div>
+</div>

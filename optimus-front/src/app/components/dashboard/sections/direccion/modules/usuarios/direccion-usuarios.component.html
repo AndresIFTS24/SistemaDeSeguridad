@@ -1,50 +1,134 @@
 <div class="fade-in">
 
-  <!-- BUSCADOR -->
-  <div class="search-bar">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <circle cx="11" cy="11" r="8"/>
-      <path d="m21 21-4.35-4.35"/>
-    </svg>
-    <input
-      type="text"
-      [(ngModel)]="filtroBusqueda"
-      (keyup)="filtrar()"
-      placeholder="Buscar por nombre, email o rol..."
-    />
+  <!-- NIVEL 1: SECTORES -->
+  <div *ngIf="vista === 'sectores'">
+    <div class="org-header">
+      <h3>Usuarios por sector <span class="org-total">{{ usuarios.length }} personas</span></h3>
+      <p class="org-sub">Hacé clic en un sector para ver su lista de empleados</p>
+    </div>
+
+    <div class="sectores-grid">
+      <div
+        *ngFor="let sector of sectoresStats"
+        class="sector-card"
+        (click)="abrirSector(sector.nombre)"
+        [style.--sector-color]="sector.color">
+
+        <div class="sector-card-header">
+          <div class="sector-dot" [style.background]="sector.color"></div>
+          <span class="sector-nombre">{{ sector.nombre }}</span>
+          <span class="sector-pct">{{ sector.porcentaje }}%</span>
+        </div>
+
+        <div class="sector-bar-wrap">
+          <div class="sector-bar-fill" [style.width.%]="sector.porcentaje" [style.background]="sector.color"></div>
+        </div>
+
+        <div class="sector-stats">
+          <div class="sector-stat">
+            <span class="stat-num" [style.color]="sector.color">{{ sector.total }}</span>
+            <span class="stat-label">total</span>
+          </div>
+          <div class="sector-stat">
+            <span class="stat-num verde">{{ sector.activos }}</span>
+            <span class="stat-label">activos</span>
+          </div>
+          <div class="sector-stat" *ngIf="sector.inactivos > 0">
+            <span class="stat-num rojo">{{ sector.inactivos }}</span>
+            <span class="stat-label">inactivos</span>
+          </div>
+        </div>
+
+        <div class="sector-cta">
+          <i class="fas fa-arrow-right"></i> Ver usuarios
+        </div>
+
+      </div>
+
+      <div class="empty-row" *ngIf="sectoresStats.length === 0">No hay usuarios cargados.</div>
+    </div>
   </div>
 
-  <!-- TABLA USUARIOS -->
-  <div class="tabla-container">
-    <table class="direccion-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Sector</th>
-          <th>Rol</th>
-          <th>Estado</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let u of usuariosFiltrados">
-          <td><span class="id-badge">#{{ u.ID_Usuario }}</span></td>
-          <td><span class="nombre-text">{{ u.Nombre }}</span></td>
-          <td><span class="email-text">{{ u.Email }}</span></td>
-          <td><span class="sector-tag">{{ u.NombreSector }}</span></td>
-          <td><span class="rol-tag">{{ u.NombreRol }}</span></td>
-          <td>
-            <span class="estado-pill activo">
-              <span class="dot"></span> Activo
-            </span>
-          </td>
-        </tr>
-        <tr *ngIf="usuariosFiltrados.length === 0">
-          <td colspan="6" class="empty-row">No se encontraron usuarios.</td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- NIVEL 2: LISTA DEL SECTOR -->
+  <div *ngIf="vista === 'lista'">
+    <button class="btn-volver" (click)="volverASectores()">
+      <i class="fas fa-arrow-left"></i> Volver a sectores
+    </button>
+
+    <div class="toolbar">
+      <app-buscador-predictivo
+        class="buscador-toolbar"
+        [(termino)]="filtroBusqueda"
+        (terminoChange)="filtrar()"
+        [items]="usuariosDelSector"
+        [camposBusqueda]="['Nombre', 'Email', 'NombreRol']"
+        campoPrincipal="Nombre"
+        campoSecundario="Email"
+        placeholder="Buscar por nombre, email o rol..."
+        (seleccionado)="verDetalle($event)">
+      </app-buscador-predictivo>
+      <span class="sector-actual">{{ sectorActivo }} — {{ usuariosFiltrados.length }} persona{{ usuariosFiltrados.length === 1 ? '' : 's' }}</span>
+    </div>
+
+    <div class="tabla-container">
+      <table class="direccion-table">
+        <thead>
+          <tr>
+            <th class="sortable" [class.active]="campoOrden === 'Nombre'" (click)="ordenarPor('Nombre')">
+              Nombre <i class="fas" [ngClass]="campoOrden !== 'Nombre' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+            </th>
+            <th class="sortable" [class.active]="campoOrden === 'Email'" (click)="ordenarPor('Email')">
+              Email <i class="fas" [ngClass]="campoOrden !== 'Email' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+            </th>
+            <th class="sortable" [class.active]="campoOrden === 'NombreRol'" (click)="ordenarPor('NombreRol')">
+              Rol <i class="fas" [ngClass]="campoOrden !== 'NombreRol' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+            </th>
+            <th class="sortable" [class.active]="campoOrden === 'Activo'" (click)="ordenarPor('Activo')">
+              Estado <i class="fas" [ngClass]="campoOrden !== 'Activo' ? 'fa-sort' : (direccionOrden === 'asc' ? 'fa-sort-up' : 'fa-sort-down')"></i>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of usuariosPagina" (click)="verDetalle(u)">
+            <td><span class="nombre-text">{{ u.Nombre }}</span></td>
+            <td><span class="email-text">{{ u.Email }}</span></td>
+            <td><span class="rol-tag">{{ u.NombreRol }}</span></td>
+            <td>
+              <span class="estado-pill" [ngClass]="u.Activo ? 'activo' : 'inactivo'">
+                <span class="dot"></span> {{ u.Activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="usuariosFiltrados.length === 0">
+            <td colspan="4" class="empty-row">No se encontraron usuarios.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINACIÓN -->
+    <div class="paginacion" *ngIf="totalPaginas > 1">
+      <button class="pag-btn" [disabled]="pagina === 1" (click)="irAPagina(pagina - 1)">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+      <button
+        *ngFor="let p of paginasVisibles"
+        class="pag-btn"
+        [class.active]="p === pagina"
+        (click)="irAPagina(p)">
+        {{ p }}
+      </button>
+      <button class="pag-btn" [disabled]="pagina === totalPaginas" (click)="irAPagina(pagina + 1)">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+      <span class="pag-info">Página {{ pagina }} de {{ totalPaginas }}</span>
+    </div>
   </div>
 
 </div>
+
+<app-usuario-ficha-modal
+  [visible]="mostrarModal"
+  [usuario]="usuarioSeleccionado"
+  (cerrado)="cerrarModal()">
+</app-usuario-ficha-modal>
