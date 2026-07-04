@@ -200,7 +200,7 @@
 }
 
 .optimus-table th {
-    background: rgba(0,0,0,0.2);
+    background: var(--bg-card); /* 🎯 Cambiado de transparente/rgba a fondo sólido corporativo */
     padding: 18px 35px;
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -208,6 +208,8 @@
     color: var(--text-dim);
     position: sticky;
     top: 0;
+    z-index: 10; /* 🎯 Evita que los datos de las filas se superpongan al scrollear */
+    border-bottom: 2px solid var(--border); /* 🎯 Mantiene la línea divisoria visible */
 }
 
 .optimus-table td {
@@ -235,20 +237,25 @@
 .tech-tel { color: var(--text-dim); font-size: 0.85rem; }
 
 .status-indicator {
-    display: flex;
+display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.75rem;
+    gap: 10px;               /* Un poquito más de separación */
+    font-size: 0.8rem;       /* Estilizado sutil */
     font-weight: 700;
+    color: #ffffff !important; /* 🎯 Letras completamente en blanco */
+    letter-spacing: 0.5px;
 }
 
 .dot {
-    width: 6px;
-    height: 6px;
+width: 9px;              /* 🎯 Aumentado de 6px a 9px */
+    height: 9px;             /* 🎯 Aumentado de 6px a 9px */
     border-radius: 50%;
+    display: inline-block;
 }
 
-.dot.online { background: var(--success); box-shadow: 0 0 10px var(--success); }
+.dot.online { background: #00ffa3;     /* Verde neón puro más brillante */
+    box-shadow: 0 0 12px #00ffa3,  /* 🎯 Brillo expansivo primario */
+                0 0 4px rgba(0, 255, 163, 0.6); /* Destello de núcleo */ }
 .dot.offline { background: var(--text-dim); }
 
 /* BOTONES DE ACCIÓN */
@@ -535,4 +542,93 @@
 
 .sector-content {
     margin-top: 8px;
+}
+
+/* =========================================
+   ESTILOS ADICIONALES PARA SECCIÓN ABONADOS
+   ========================================= */
+
+.abonados-section {
+    margin-top: 10px;
+    margin-bottom: 30px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.abonados-section h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.btn-retry {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.btn-retry:hover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+.dot.online-status {
+    background: var(--success);
+    box-shadow: 0 0 10px var(--success);
+}
+
+.dot.offline-status {
+    background: var(--text-dim);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   COMPORTAMIENTO DE TARJETAS KPI ACTIVAS
+   ========================================= */
+
+/* Si el panel tiene una sección activa que no es el dashboard principal, atenuamos las tarjetas por defecto */
+.kpi-grid:has(.kpi-card.active) .kpi-card:not(.active) {
+    opacity: 0.4;
+}
+.kpi-grid:has(.kpi-card.active) .kpi-card:not(.active)::before {
+    background: #475569 !important; /* Gris neutro apagado para las inactivas */
+}
+
+/* Tarjeta Activa: Fuerza su visibilidad completa y añade iluminación inferior */
+.kpi-card.active {
+    opacity: 1 !important;
+    transform: translateY(-4px);
+    background: linear-gradient(180deg, var(--bg-card) 0%, rgba(255, 255, 255, 0.01) 100%);
+}
+
+/* Brillos de fondo específicos para cada tarjeta seleccionada */
+.kpi-card.abonados.active { 
+    border-color: rgba(0, 212, 255, 0.4);
+    box-shadow: 0 12px 40px rgba(0, 212, 255, 0.15);
+}
+.kpi-card.eventos.active { 
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 12px 40px rgba(239, 68, 68, 0.15);
+}
+.kpi-card.tickets.active { 
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: 0 12px 40px rgba(245, 158, 11, 0.15);
+}
+.kpi-card.tecnicos.active { 
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 12px 40px rgba(16, 185, 129, 0.15);
+}
+.kpi-card.asignaciones.active { 
+    border-color: rgba(139, 92, 246, 0.4);
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
 }

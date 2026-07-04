@@ -44,12 +44,7 @@ export class LoginComponent {
           console.log('✅ Login Exitoso. Redirigiendo al Dashboard...');
           console.log('Datos del usuario:', res.user);
 
-          /**
-           * 3. REDIRECCIÓN UNIFICADA
-           * Ya no navegamos a sub-rutas porque tu Dashboard usa [ngSwitch].
-           * Al ir a /dashboard, el componente leerá el ID que guardamos arriba
-           * y mostrará el sector correspondiente automáticamente.
-           */
+
           this.router.navigate(['/dashboard']);
         },
         error: (err: any) => {

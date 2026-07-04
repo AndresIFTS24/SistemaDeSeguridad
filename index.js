@@ -24,6 +24,7 @@ const dashboardRoutes        = require('./src/routes/dashboard.routes');
 const codigosEventosRoutes   = require('./src/routes/codigos-eventos.routes');
 const itRoutes                = require('./src/routes/it.routes');
 
+
 const app    = express();
 const server = http.createServer(app);
 const PORT   = process.env.PORT || 3000;
@@ -78,6 +79,7 @@ app.use('/api/eventos',       eventoRoutes);
 app.use('/api/dashboard',     dashboardRoutes);
 app.use('/api/codigos-eventos', codigosEventosRoutes);
 app.use('/api/it', itRoutes);
+app.use('/api/tecnica', require('./src/routes/tecnica.routes'));
 
 // 6. INICIO DEL SERVIDOR
 async function startServer() {
