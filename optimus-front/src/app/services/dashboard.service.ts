@@ -27,4 +27,14 @@ export class DashboardService {
     });
     return this.http.get<DashboardKpis>(`${this.apiUrl}/kpis`, { headers });
   }
+
+  // 🎯 NUEVO: Agregamos el método que le faltaba a TypeScript para consultar la BD
+  getPresupuestosComerciales(): Observable<any[]> {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    // Apuntamos a la ruta de presupuestos/cotizaciones en tu backend
+    return this.http.get<any[]>(`${this.apiUrl}/presupuestos`, { headers });
+  }
 }

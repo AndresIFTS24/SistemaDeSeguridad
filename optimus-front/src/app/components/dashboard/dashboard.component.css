@@ -497,22 +497,7 @@
     padding: 8px 16px;
 }
 
-/* 🎯 NUEVAS CLASES PARA LA COLUMNA CIUDAD (LETRA MAYÚSCULA ULTRA VISIBLE) */
-.pds-city-badge {
-    background: rgba(0, 212, 255, 0.08); 
-    color: #00d4ff; 
-    border: 1px solid rgba(0, 212, 255, 0.25); 
-    font-weight: 800; 
-    font-size: 0.8rem; 
-    letter-spacing: 0.07em; 
-    text-transform: uppercase; /* Fuerza las mayúsculas */
-    padding: 5px 12px; 
-    border-radius: 6px; 
-    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.05);
-    display: inline-block;
-}
-
-/* Mapeos de Clases de Apoyo para PDS */
+/* MAPEOS DE CLASES DE APOYO PARA TABLAS INTERNAS */
 .pds-account-color {
     color: #ef4444;
 }
@@ -529,6 +514,27 @@
 .pds-address-cell {
     color: #e2e8f0; 
     font-size: 0.85rem;
+}
+
+/* 🎯 NUEVA CLASE: FUERZA EL NÚMERO DE PRESUPUESTO A COLOR BLANCO ULTRA VISIBLE */
+.pds-budget-cell {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+/* COLUMNA CIUDAD (LETRA MAYÚSCULA ULTRA VISIBLE) */
+.pds-city-badge {
+    background: rgba(0, 212, 255, 0.08); 
+    color: #00d4ff; 
+    border: 1px solid rgba(0, 212, 255, 0.25); 
+    font-weight: 800; 
+    font-size: 0.8rem; 
+    letter-spacing: 0.07em; 
+    text-transform: uppercase; 
+    padding: 5px 12px; 
+    border-radius: 6px; 
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.05);
+    display: inline-block;
 }
 
 /* Clases de Prioridad Modernas en CSS */

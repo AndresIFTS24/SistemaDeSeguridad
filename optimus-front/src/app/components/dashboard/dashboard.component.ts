@@ -22,7 +22,6 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     MonitoreoDashComponent,
     ItDashComponent,
     DireccionDashComponent,
-
     NavbarComponent,
     SidebarComponent
   ],
@@ -41,6 +40,7 @@ export class DashboardComponent implements OnInit {
 
   public abonados: any[] = [];
   public pdsPendientes: any[] = []; // 🎯 Lista para los Pedidos de Servicio técnicos acumulativos
+  public presupuestos: any[] = [];  // 🎯 Nueva lista para los presupuestos del Área Comercial
   public listaUsuarios: any[] = [];
   public seccionActiva: string = 'dashboard';
 
@@ -122,6 +122,11 @@ export class DashboardComponent implements OnInit {
       this.cargarPdsPendientes();
     }
 
+    // 🎯 Si seleccionan la tarjeta de tickets (Presupuestos), inicializamos los datos de preventa comercial
+    if (seccion === 'tickets') {
+      this.cargarPresupuestosComerciales();
+    }
+
     setTimeout(() => {
       const el = document.querySelector('.sector-content');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -161,9 +166,8 @@ export class DashboardComponent implements OnInit {
     });
   }
 
- // 🎯 Generador Dinámico de PDS optimizado para capturar DIRECCIONES y CIUDADES de la base de datos
+  // 🎯 Generador Dinámico de PDS optimizado para capturar DIRECCIONES y CIUDADES de la base de datos
   cargarPdsPendientes(): void {
-    // Catálogo exacto mapeado de tu tabla CODIGOS_EVENTOS de la base de datos
     const catalogoAlarmas = [
       { evento: 'Pérdida de Conexión: Dispositivo offline', prioridad: 'Crítico' },
       { evento: 'Manipulación Detectada: Apertura de chasis', prioridad: 'Alta' },
@@ -175,7 +179,6 @@ export class DashboardComponent implements OnInit {
       { evento: 'Falla de Comunicación: Línea telefónica/GPRS cortada', prioridad: 'Crítico' }
     ];
 
-    // Datos hardcodeados basados en las filas de tu BD real por si hay retrasos en la red o base vacía
     const listaClientes = this.abonados && this.abonados.length > 0 ? this.abonados : [
       { NumeroDeAbonado: '1076', RazonSocial: 'YPF Central', TelefonoContacto: '11-6679-8757', Calle: 'Av. Corrientes', Numero: '1234', Ciudad: 'Buenos Aires' },
       { NumeroDeAbonado: '1091', RazonSocial: 'Personal Flow', TelefonoContacto: '11-4455-6677', Calle: 'Av. Santa Fe', Numero: '5678', Ciudad: 'Buenos Aires' },
@@ -196,7 +199,6 @@ export class DashboardComponent implements OnInit {
       fechaRandom.setHours(fechaRandom.getHours() - horasAleatorias);
       fechaRandom.setMinutes(fechaRandom.getMinutes() - minutosAleatorios);
 
-      // 🛡️ CONTROL ABSOLUTO DE PROPIEDADES (Validamos mayúsculas, minúsculas y campos combinados del JSON):
       const calle = clienteRandom.Calle || clienteRandom.calle || clienteRandom.CALLE || '';
       const numero = clienteRandom.Numero || clienteRandom.numero || clienteRandom.NUMERO || '';
       
@@ -208,7 +210,6 @@ export class DashboardComponent implements OnInit {
         direccionFinal = clienteRandom.Direccion || clienteRandom.direccion || clienteRandom.DIRECCION;
       }
 
-      // Validamos ciudad bajo cualquier formato de respuesta de la Query
       const ciudadFinal = clienteRandom.Ciudad || clienteRandom.ciudad || clienteRandom.CIUDAD || 'Desconocida';
 
       return {
@@ -219,7 +220,7 @@ export class DashboardComponent implements OnInit {
         prioridad: alarmaRandom.prioridad,
         fecha: fechaRandom,
         direccion: direccionFinal, 
-        ciudad: ciudadFinal       
+        ciudad: ciudadFinal      
       };
     });
 
@@ -229,6 +230,28 @@ export class DashboardComponent implements OnInit {
       this.kpis.eventosHoy = this.pdsPendientes.length;
     }
   }
+
+  // 🎯 Cargador dinámico real desde la Base de Datos
+// 🎯 Cargador dinámico real desde la Base de Datos
+cargarPresupuestosComerciales(): void {
+  // Llamamos al servicio en lugar de usar el array estático
+  this.dashboardService.getPresupuestosComerciales().subscribe({
+    next: (data: any[]) => {
+      // Mapeamos o asignamos directamente los presupuestos de la BD
+      this.presupuestos = data || [];
+
+      // Sincronizamos el KPI del Dashboard con la cantidad real de la BD
+      if (this.kpis) {
+        this.kpis.ticketsAbiertos = this.presupuestos.length;
+      }
+    },
+    error: (err) => {
+      console.error('Error al cargar presupuestos reales desde la BD:', err);
+      this.presupuestos = [];
+      if (this.kpis) this.kpis.ticketsAbiertos = 0;
+    }
+  });
+}
   // 🎯 Canal Directo de Chat con plantilla prearmada para coordinación técnica rápida
   iniciarChatCliente(pds: any): void {
     console.log(`Abriendo canal de coordinación con: ${pds.razonSocial}`);
@@ -236,6 +259,23 @@ export class DashboardComponent implements OnInit {
       `Hola ${pds.razonSocial}, nos comunicamos de Optimus Systems. Detectamos una señal de "${pds.evento}" en tu cuenta Nro ${pds.nroCuenta}. ¿Te queda bien que coordinemos una visita técnica para revisarlo?`
     );
     const telefonoLimpio = pds.telefono.replace(/[^0-9]/g, '');
+    const urlWhatsApp = `https://web.whatsapp.com/send?phone=${telefonoLimpio}&text=${mensaje}`;
+    window.open(urlWhatsApp, '_blank');
+  }
+
+  // 🎯 Coordinación por WhatsApp automatizada de Presupuestos Comerciales pasados a Técnica
+  coordinarPresupuesto(presupuesto: any): void {
+    console.log(`Coordinando instalación del Presupuesto: ${presupuesto.NroPresupuesto}`);
+    
+    const identificadorCliente = presupuesto.ID_Abonado 
+      ? `Abonado Nro ${presupuesto.ID_Abonado} (${presupuesto.RazonSocial})` 
+      : `la nueva instalación solicitada por ${presupuesto.RazonSocial} en ${presupuesto.Direccion}`;
+
+    const mensaje = encodeURIComponent(
+      `Hola, nos comunicamos del área técnica de Optimus Systems para coordinar el armado del equipamiento aprobado bajo el Presupuesto ${presupuesto.NroPresupuesto} correspondiente a ${identificadorCliente}. ¿Qué día de la semana te quedaría cómodo para que asistan los técnicos?`
+    );
+
+    const telefonoLimpio = presupuesto.TelefonoContacto.replace(/[^0-9]/g, '');
     const urlWhatsApp = `https://web.whatsapp.com/send?phone=${telefonoLimpio}&text=${mensaje}`;
     window.open(urlWhatsApp, '_blank');
   }
