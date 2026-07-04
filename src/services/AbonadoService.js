@@ -45,18 +45,32 @@ class AbonadoService {
     }
 
     /**
-     * Obtener todos los abonados (Ordenados por fecha de alta reciente)
+     * 🎯 OPTIMIZADO CON LEFT JOIN:
+     * Obtener todos los abonados trayendo dinámicamente sus locaciones reales desde la tabla DIRECCIONES
      */
     static async getAllAbonados() {
-        const [rows] = await pool.execute('SELECT * FROM ABONADOS ORDER BY FechaAlta DESC');
+        const query = `
+            SELECT a.*, d.Calle, d.Numero, d.Ciudad 
+            FROM ABONADOS a
+            LEFT JOIN DIRECCIONES d ON a.ID_Abonado = d.ID_Abonado
+            ORDER BY a.FechaAlta DESC
+        `;
+        const [rows] = await pool.execute(query);
         return rows;
     }
 
     /**
-     * Obtener un abonado por ID
+     * 🎯 OPTIMIZADO CON LEFT JOIN:
+     * Obtener un abonado por ID cruzando su dirección real
      */
     static async getAbonadoById(id) {
-        const [rows] = await pool.execute('SELECT * FROM ABONADOS WHERE ID_Abonado = ?', [id]);
+        const query = `
+            SELECT a.*, d.Calle, d.Numero, d.Ciudad 
+            FROM ABONADOS a
+            LEFT JOIN DIRECCIONES d ON a.ID_Abonado = d.ID_Abonado
+            WHERE a.ID_Abonado = ?
+        `;
+        const [rows] = await pool.execute(query, [id]);
         
         if (rows.length === 0) {
             const error = new Error('Abonado no encontrado.');
@@ -67,10 +81,17 @@ class AbonadoService {
     }
 
     /**
-     * Obtener un abonado por su número de cuenta (Muy usado en Monitoreo)
+     * 🎯 OPTIMIZADO CON LEFT JOIN:
+     * Obtener un abonado por su número de cuenta integrando su dirección real
      */
     static async getAbonadoByAccountNumber(nro) {
-        const [rows] = await pool.execute('SELECT * FROM ABONADOS WHERE NumeroDeAbonado = ?', [nro]);
+        const query = `
+            SELECT a.*, d.Calle, d.Numero, d.Ciudad 
+            FROM ABONADOS a
+            LEFT JOIN DIRECCIONES d ON a.ID_Abonado = d.ID_Abonado
+            WHERE a.NumeroDeAbonado = ?
+        `;
+        const [rows] = await pool.execute(query, [nro]);
         if (rows.length === 0) return null;
         return rows[0];
     }
@@ -121,26 +142,29 @@ class AbonadoService {
     }
 
     static async deactivateAbonado(id) {
-    const abonado = await this.getAbonadoById(id);
-    
-    if (abonado.Activo === 0) {
-        const error = new Error('El abonado ya está inactivo.');
-        error.cause = 400;
-        throw error;
+        const abonado = await this.getAbonadoById(id);
+        
+        if (abonado.Activo === 0) {
+            const error = new Error('El abonado ya está inactivo.');
+            error.cause = 400;
+            throw error;
+        }
+
+        await pool.execute('UPDATE ABONADOS SET Activo = 0 WHERE ID_Abonado = ?', [id]);
+        
+        return { id, activo: 0, message: 'Abonado desactivado exitosamente.' };
     }
 
-    await pool.execute('UPDATE ABONADOS SET Activo = 0 WHERE ID_Abonado = ?', [id]);
-    
-    return { id, activo: 0, message: 'Abonado desactivado exitosamente.' };
-}
-
     /**
-     * Buscar abonados (Para buscadores en el frontend)
+     * 🎯 OPTIMIZADO CON LEFT JOIN:
+     * Buscar abonados cruzando direcciones
      */
     static async searchAbonados(termino) {
         const query = `
-            SELECT * FROM ABONADOS 
-            WHERE RazonSocial LIKE ? OR NumeroDeAbonado LIKE ? OR RUT LIKE ?
+            SELECT a.*, d.Calle, d.Numero, d.Ciudad 
+            FROM ABONADOS a
+            LEFT JOIN DIRECCIONES d ON a.ID_Abonado = d.ID_Abonado
+            WHERE a.RazonSocial LIKE ? OR a.NumeroDeAbonado LIKE ? OR a.RUT LIKE ?
             LIMIT 20
         `;
         const t = `%${termino}%`;

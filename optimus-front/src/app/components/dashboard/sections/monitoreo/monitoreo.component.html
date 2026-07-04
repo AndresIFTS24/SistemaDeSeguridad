@@ -247,22 +247,22 @@
 
       <div class="form-evento-group">
         <label>Dispositivo *</label>
-        <select [(ngModel)]="nuevoEvento.ID_Dispositivo">
-          <option value="0" disabled>Seleccioná un dispositivo...</option>
-          <option *ngFor="let d of dispositivos" [value]="d.ID_Dispositivo">
-            {{ d.NombreDispositivo }} — {{ d.NombreModelo }}
-          </option>
-        </select>
+<select [(ngModel)]="nuevoEvento.ID_Dispositivo" aria-label="Seleccionar dispositivo" title="Seleccionar dispositivo">
+  <option value="0" disabled>Seleccioná un dispositivo...</option>
+  <option *ngFor="let d of dispositivos" [value]="d.ID_Dispositivo">
+    {{ d.NombreDispositivo }} — {{ d.NombreModelo }}
+  </option>
+</select>
       </div>
 
       <div class="form-evento-group">
         <label>Tipo de Evento *</label>
-        <select [(ngModel)]="nuevoEvento.ID_CodigoEvento">
-          <option value="0" disabled>Seleccioná un tipo de evento...</option>
-          <option *ngFor="let c of codigosEvento" [value]="c.ID_CodigoEvento">
-            {{ c.Codigo }} — {{ c.DescripcionAlarma }} ({{ c.Prioridad }})
-          </option>
-        </select>
+<select [(ngModel)]="nuevoEvento.ID_CodigoEvento" aria-label="Seleccionar tipo de evento" title="Seleccionar tipo de evento">
+  <option value="0" disabled>Seleccioná un tipo de evento...</option>
+  <option *ngFor="let c of codigosEvento" [value]="c.ID_CodigoEvento">
+    {{ c.Codigo }} — {{ c.DescripcionAlarma }} ({{ c.Prioridad }})
+  </option>
+</select>
       </div>
 
       <div class="accion-tecnica">

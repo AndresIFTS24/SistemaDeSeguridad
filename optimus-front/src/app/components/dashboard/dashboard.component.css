@@ -25,10 +25,7 @@
 .top-nav {
     height: 70px;
     background: rgba(18, 25, 38, 0.8);
-    
-    /* Agregá esta línea para soporte de Safari: */
     -webkit-backdrop-filter: blur(12px); 
-    
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -39,7 +36,6 @@
     top: 0;
     z-index: 1000;
 }
-
 
 .logo {
     font-size: 1.4rem;
@@ -102,14 +98,27 @@
     color: var(--alert);
 }
 
-/* MAIN CONTENT */
+/* MAIN CONTENT LAYOUT */
+.main-layout {
+    display: flex;
+    overflow: hidden;
+}
+
+.content-area {
+    flex: 1;
+    padding: 20px;
+    background: #0b0f19;
+    overflow-y: auto;
+    height: calc(100vh - 65px);
+}
+
 .main-content {
     padding: 40px;
     max-width: 1600px;
     margin: 0 auto;
 }
 
-/* STATS GRID */
+/* STATS & KPI GRID */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -147,159 +156,7 @@
 .color-online { color: var(--success); }
 .color-alert { color: var(--alert); }
 
-/* CONSOLE / TABLE CONTAINER */
-.console-container {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-
-.console-header {
-    padding: 25px 35px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255,255,255, 0.02);
-}
-
-.console-header h3 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.search-box input {
-    background: var(--bg-dark);
-    border: 1px solid var(--border);
-    padding: 10px 20px;
-    border-radius: 10px;
-    color: white;
-    width: 300px;
-    outline: none;
-    transition: border-color 0.3s;
-}
-
-.search-box input:focus {
-    border-color: var(--accent);
-}
-
-/* TABLA ESTILO CORPORATIVO */
-.table-wrapper {
-    max-height: 600px;
-    overflow-y: auto;
-}
-
-.optimus-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-}
-
-.optimus-table th {
-    background: var(--bg-card); /* 🎯 Cambiado de transparente/rgba a fondo sólido corporativo */
-    padding: 18px 35px;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-dim);
-    position: sticky;
-    top: 0;
-    z-index: 10; /* 🎯 Evita que los datos de las filas se superpongan al scrollear */
-    border-bottom: 2px solid var(--border); /* 🎯 Mantiene la línea divisoria visible */
-}
-
-.optimus-table td {
-    padding: 20px 35px;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
-}
-
-.optimus-table tr:hover {
-    background: rgba(255,255,255,0.02);
-}
-
-/* ELEMENTOS DE LA TABLA */
-.tech-id { font-family: 'Courier New', monospace; color: var(--accent); font-weight: bold; }
-.user-name { font-weight: 600; color: #fff; }
-
-.tag-sector {
-    background: rgba(255,255,255, 0.05);
-    padding: 5px 12px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    color: var(--text-main);
-}
-
-.tech-tel { color: var(--text-dim); font-size: 0.85rem; }
-
-.status-indicator {
-display: flex;
-    align-items: center;
-    gap: 10px;               /* Un poquito más de separación */
-    font-size: 0.8rem;       /* Estilizado sutil */
-    font-weight: 700;
-    color: #ffffff !important; /* 🎯 Letras completamente en blanco */
-    letter-spacing: 0.5px;
-}
-
-.dot {
-width: 9px;              /* 🎯 Aumentado de 6px a 9px */
-    height: 9px;             /* 🎯 Aumentado de 6px a 9px */
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.dot.online { background: #00ffa3;     /* Verde neón puro más brillante */
-    box-shadow: 0 0 12px #00ffa3,  /* 🎯 Brillo expansivo primario */
-                0 0 4px rgba(0, 255, 163, 0.6); /* Destello de núcleo */ }
-.dot.offline { background: var(--text-dim); }
-
-/* BOTONES DE ACCIÓN */
-.btn-action {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 8px;
-    border-radius: 8px;
-    margin-right: 8px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-action:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-dim);
-}
-
-.main-layout {
-    display: flex;
-    overflow: hidden;
-}
-
-.content-area {
-    flex: 1;
-    padding: 20px;
-    background: #0b0f19;
-    overflow-y: auto;
-    height: calc(100vh - 65px);
-}
-
-/* SCROLLBAR PERSONALIZADO */
-.table-wrapper::-webkit-scrollbar { width: 6px; }
-.table-wrapper::-webkit-scrollbar-track { background: var(--bg-dark); }
-.table-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-.table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
-
-
-/* =========================================
-   KPI SECTION - DASHBOARD PRINCIPAL
-   ========================================= */
-
+/* KPI SECTION CONFIGURATION */
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -366,67 +223,7 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     margin-bottom: 36px;
 }
 
-.kpi-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 12px;
-    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-    position: relative;
-    overflow: hidden;
-}
-
-.kpi-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    width: 100%;
-}
-
-.kpi-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--text-dim);
-    text-align: center;
-    line-height: 1.3;
-    word-break: break-word;
-}
-
-.kpi-value {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--text-main);
-    line-height: 1;
-    text-align: center;
-}
-
-.kpi-sub {
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    text-align: center;
-    line-height: 1.3;
-}
-
-@media (max-width: 1200px) {
-    .kpi-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
+/* UNIFICACIÓN DE LA TARJETA KPI */
 .kpi-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -435,7 +232,8 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     display: flex;
     align-items: center;
     gap: 18px;
-    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s, opacity 0.3s;
     position: relative;
     overflow: hidden;
 }
@@ -455,6 +253,7 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
+/* Colores Dinámicos Bordes Superiores KPI */
 .kpi-card.abonados::before { background: #00d4ff; }
 .kpi-card.abonados:hover { border-color: rgba(0, 212, 255, 0.4); }
 
@@ -470,6 +269,7 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
 .kpi-card.asignaciones::before { background: #8b5cf6; }
 .kpi-card.asignaciones:hover { border-color: rgba(139, 92, 246, 0.4); }
 
+/* Iconos de los KPIs */
 .kpi-icon {
     width: 48px;
     height: 48px;
@@ -496,6 +296,7 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     display: flex;
     flex-direction: column;
     gap: 2px;
+    width: 100%;
 }
 
 .kpi-label {
@@ -518,40 +319,153 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     color: var(--text-dim);
 }
 
-.loading-kpis {
+/* CONSOLE / TABLE CONTAINER */
+.console-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+.console-header {
+    padding: 25px 35px;
+    border-bottom: 1px solid var(--border);
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 16px;
-    padding: 40px;
+    background: rgba(255,255,255, 0.02);
+}
+
+.console-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.search-box input {
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 10px;
+    color: white;
+    width: 300px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.search-box input:focus {
+    border-color: var(--accent);
+}
+
+/* TABLA ESTILO CORPORATIVO */
+.table-wrapper {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.optimus-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.optimus-table th {
+    background: var(--bg-card); 
+    padding: 18px 35px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
     color: var(--text-dim);
+    position: sticky;
+    top: 0;
+    z-index: 10; 
+    border-bottom: 2px solid var(--border); 
+}
+
+.optimus-table td {
+    padding: 20px 35px;
+    border-bottom: 1px solid var(--border);
     font-size: 0.9rem;
 }
 
-.spinner {
-    width: 24px;
-    height: 24px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
+.optimus-table tr:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+/* ELEMENTOS INTERNOS DE TABLAS */
+.tech-id { font-family: 'Courier New', monospace; color: var(--accent); font-weight: bold; }
+.user-name { font-weight: 600; color: #fff; }
+.tech-tel { color: var(--text-dim); font-size: 0.85rem; }
+.text-center { text-align: center; }
+.table-empty-row { text-align: center; padding: 35px; color: var(--text-dim); }
+
+.tag-sector {
+    background: rgba(255,255,255, 0.05);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: var(--text-main);
+}
+
+/* INDICADORES DE CONEXIÓN */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;              
+    font-size: 0.8rem;       
+    font-weight: 700;
+    color: #ffffff !important; 
+    letter-spacing: 0.5px;
+}
+
+.dot {
+    width: 9px;              
+    height: 9px;             
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    display: inline-block;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+.dot.online-status {
+    background: #00ffa3;     
+    box-shadow: 0 0 12px #00ffa3, 0 0 4px rgba(0, 255, 163, 0.6); 
 }
 
-.sector-content {
-    margin-top: 8px;
+.dot.offline-status {
+    background: var(--text-dim);
 }
 
-/* =========================================
-   ESTILOS ADICIONALES PARA SECCIÓN ABONADOS
-   ========================================= */
+/* BOTONES DE ACCIÓN */
+.btn-action {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 8px;
+    border-radius: 8px;
+    margin-right: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
 
+.btn-action:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+}
+
+/* ELEMENTOS ESPECÍFICOS DE SECCIONES INTERNAS */
 .abonados-section {
     margin-top: 10px;
     margin-bottom: 30px;
     animation: fadeIn 0.4s ease-out;
+}
+
+.section-header-container {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px;
 }
 
 .abonados-section h2 {
@@ -578,13 +492,119 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     color: var(--accent);
 }
 
-.dot.online-status {
-    background: var(--success);
-    box-shadow: 0 0 10px var(--success);
+.back-panel-btn {
+    margin: 0; 
+    padding: 8px 16px;
 }
 
-.dot.offline-status {
-    background: var(--text-dim);
+/* 🎯 NUEVAS CLASES PARA LA COLUMNA CIUDAD (LETRA MAYÚSCULA ULTRA VISIBLE) */
+.pds-city-badge {
+    background: rgba(0, 212, 255, 0.08); 
+    color: #00d4ff; 
+    border: 1px solid rgba(0, 212, 255, 0.25); 
+    font-weight: 800; 
+    font-size: 0.8rem; 
+    letter-spacing: 0.07em; 
+    text-transform: uppercase; /* Fuerza las mayúsculas */
+    padding: 5px 12px; 
+    border-radius: 6px; 
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.05);
+    display: inline-block;
+}
+
+/* Mapeos de Clases de Apoyo para PDS */
+.pds-account-color {
+    color: #ef4444;
+}
+
+.pds-event-cell {
+    color: #f8fafc; 
+    font-weight: 500;
+}
+
+.pds-date-cell {
+    color: var(--text-dim);
+}
+
+.pds-address-cell {
+    color: #e2e8f0; 
+    font-size: 0.85rem;
+}
+
+/* Clases de Prioridad Modernas en CSS */
+.tag-priority {
+    font-weight: 700; 
+    padding: 4px 10px; 
+    border-radius: 6px; 
+    font-size: 0.75rem;
+}
+
+.priority-critico {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.priority-alta {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.priority-normal {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+/* Botón Coordinar Automatizado */
+.btn-coordinate {
+    margin: 0; 
+    padding: 6px 14px; 
+    background: rgba(0, 212, 255, 0.1); 
+    color: #00d4ff; 
+    border: 1px solid rgba(0, 212, 255, 0.3); 
+    font-weight: 600; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
+    justify-content: center; 
+    width: 130px;
+}
+
+.wsp-icon {
+    width: 15px; 
+    height: 15px; 
+    fill: #25D366; 
+    flex-shrink: 0;
+}
+
+/* SECTOR VIEWS & UTILITIES */
+.sector-content {
+    margin-top: 8px;
+}
+
+.error-view-container {
+    margin-top: 30px;
+}
+
+.loading-kpis {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 40px;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 @keyframes fadeIn {
@@ -592,26 +612,31 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* RESPONSIVE DESIGN */
+@media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* =========================================
    COMPORTAMIENTO DE TARJETAS KPI ACTIVAS
    ========================================= */
-
-/* Si el panel tiene una sección activa que no es el dashboard principal, atenuamos las tarjetas por defecto */
 .kpi-grid:has(.kpi-card.active) .kpi-card:not(.active) {
     opacity: 0.4;
 }
 .kpi-grid:has(.kpi-card.active) .kpi-card:not(.active)::before {
-    background: #475569 !important; /* Gris neutro apagado para las inactivas */
+    background: #475569 !important; 
 }
 
-/* Tarjeta Activa: Fuerza su visibilidad completa y añade iluminación inferior */
 .kpi-card.active {
     opacity: 1 !important;
     transform: translateY(-4px);
     background: linear-gradient(180deg, var(--bg-card) 0%, rgba(255, 255, 255, 0.01) 100%);
 }
 
-/* Brillos de fondo específicos para cada tarjeta seleccionada */
 .kpi-card.abonados.active { 
     border-color: rgba(0, 212, 255, 0.4);
     box-shadow: 0 12px 40px rgba(0, 212, 255, 0.15);
@@ -632,3 +657,9 @@ width: 9px;              /* 🎯 Aumentado de 6px a 9px */
     border-color: rgba(139, 92, 246, 0.4);
     box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
 }
+
+/* SCROLLBAR PERSONALIZADO */
+.table-wrapper::-webkit-scrollbar { width: 6px; }
+.table-wrapper::-webkit-scrollbar-track { background: var(--bg-dark); }
+.table-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+.table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }

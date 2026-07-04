@@ -9,7 +9,7 @@ import { DashboardService, DashboardKpis } from '../../services/dashboard.servic
 import { ItDashComponent } from './sections/it-admin/it-dash.component';
 import { DireccionDashComponent } from './sections/direccion/direccion.component';
 import { MonitoreoDashComponent } from './sections/monitoreo/monitoreo.component';
-import { TecnicaComponent } from './sections/tecnica/tecnica.component'; 
+
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 
@@ -22,7 +22,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     MonitoreoDashComponent,
     ItDashComponent,
     DireccionDashComponent,
-    TecnicaComponent, 
+
     NavbarComponent,
     SidebarComponent
   ],
@@ -40,7 +40,7 @@ export class DashboardComponent implements OnInit {
   };
 
   public abonados: any[] = [];
-  public pdsPendientes: any[] = []; // 🎯 Lista para los Pedidos de Servicio técnicos
+  public pdsPendientes: any[] = []; // 🎯 Lista para los Pedidos de Servicio técnicos acumulativos
   public listaUsuarios: any[] = [];
   public seccionActiva: string = 'dashboard';
 
@@ -117,7 +117,7 @@ export class DashboardComponent implements OnInit {
     
     this.seccionActiva = seccion;
 
-    // Si seleccionan la tarjeta de eventos (PDS Pendientes), generamos la lista aleatoria
+    // Si seleccionan la tarjeta de eventos (PDS Pendientes), generamos la lista aleatoria sin pisar lo viejo
     if (seccion === 'eventos') {
       this.cargarPdsPendientes();
     }
@@ -161,29 +161,32 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // 🎯 Generador Dinámico de PDS cruzando datos de alarmas y abonados reales
+ // 🎯 Generador Dinámico de PDS optimizado para capturar DIRECCIONES y CIUDADES de la base de datos
   cargarPdsPendientes(): void {
-    // Catálogo tomado directamente de las descripciones de tu tabla CODIGOS_EVENTOS
+    // Catálogo exacto mapeado de tu tabla CODIGOS_EVENTOS de la base de datos
     const catalogoAlarmas = [
       { evento: 'Pérdida de Conexión: Dispositivo offline', prioridad: 'Crítico' },
       { evento: 'Manipulación Detectada: Apertura de chasis', prioridad: 'Alta' },
       { evento: 'Batería Baja: Nivel inferior al 20%', prioridad: 'Baja' },
       { evento: 'Disparo de Alarma: Zona 02 Intrusión / Perimetral', prioridad: 'Crítico' },
-      { evento: 'Falla de Sirena: Cortocircuito o cable cortado', prioridad: 'Alta' },
+      { evento: 'Falla de Sirena: Cortocorticuito o cable cortado', prioridad: 'Alta' },
       { evento: 'Falla de Energía: Corte de red eléctrica 220V', prioridad: 'Baja' },
-      { evento: 'Alarma de Inendio: Sensor de humo / calor activado', prioridad: 'Crítico' },
+      { evento: 'Alarma de Incendio: Sensor de humo / calor activado', prioridad: 'Crítico' },
       { evento: 'Falla de Comunicación: Línea telefónica/GPRS cortada', prioridad: 'Crítico' }
     ];
 
-    // Si por timing de red los abonados de la base de datos no bajaron, usamos un fallback preventivo
+    // Datos hardcodeados basados en las filas de tu BD real por si hay retrasos en la red o base vacía
     const listaClientes = this.abonados && this.abonados.length > 0 ? this.abonados : [
-      { NumeroDeAbonado: '1110', RazonSocial: 'Pepito Perez', TelefonoContacto: '11-6679-8757' },
-      { NumeroDeAbonado: '1112', RazonSocial: 'Elixir S.A', TelefonoContacto: '11-4455-6677' },
-      { NumeroDeAbonado: '1109', RazonSocial: 'Perozii Fiambreria', TelefonoContacto: '11-2383-7645' }
+      { NumeroDeAbonado: '1076', RazonSocial: 'YPF Central', TelefonoContacto: '11-6679-8757', Calle: 'Av. Corrientes', Numero: '1234', Ciudad: 'Buenos Aires' },
+      { NumeroDeAbonado: '1091', RazonSocial: 'Personal Flow', TelefonoContacto: '11-4455-6677', Calle: 'Av. Santa Fe', Numero: '5678', Ciudad: 'Buenos Aires' },
+      { NumeroDeAbonado: '1074', RazonSocial: 'Starbucks Palermo', TelefonoContacto: '11-2383-7645', Calle: 'Av. Rivadavia', Numero: '9012', Ciudad: 'Buenos Aires' },
+      { NumeroDeAbonado: '1029', RazonSocial: 'Café Tortoni', TelefonoContacto: '11-9876-5432', Calle: 'Av. Cabildo', Numero: '3456', Ciudad: 'Buenos Aires' },
+      { NumeroDeAbonado: '1067', RazonSocial: 'Techint S.A', TelefonoContacto: '11-1234-5678', Calle: 'Florida', Numero: '789', Ciudad: 'Buenos Aires' }
     ];
 
-    // Mapeamos 6 registros mezclados de forma aleatoria con fechas de las últimas 24hs
-    this.pdsPendientes = Array.from({ length: 6 }).map(() => {
+    const cantidadNuevos = Math.floor(Math.random() * 3) + 1;
+
+    const nuevosPds = Array.from({ length: cantidadNuevos }).map(() => {
       const clienteRandom = listaClientes[Math.floor(Math.random() * listaClientes.length)];
       const alarmaRandom = catalogoAlarmas[Math.floor(Math.random() * catalogoAlarmas.length)];
       
@@ -193,17 +196,39 @@ export class DashboardComponent implements OnInit {
       fechaRandom.setHours(fechaRandom.getHours() - horasAleatorias);
       fechaRandom.setMinutes(fechaRandom.getMinutes() - minutosAleatorios);
 
+      // 🛡️ CONTROL ABSOLUTO DE PROPIEDADES (Validamos mayúsculas, minúsculas y campos combinados del JSON):
+      const calle = clienteRandom.Calle || clienteRandom.calle || clienteRandom.CALLE || '';
+      const numero = clienteRandom.Numero || clienteRandom.numero || clienteRandom.NUMERO || '';
+      
+      let direccionFinal = 'Sin Dirección';
+      
+      if (calle) {
+        direccionFinal = `${calle} ${numero}`.trim();
+      } else if (clienteRandom.Direccion || clienteRandom.direccion || clienteRandom.DIRECCION) {
+        direccionFinal = clienteRandom.Direccion || clienteRandom.direccion || clienteRandom.DIRECCION;
+      }
+
+      // Validamos ciudad bajo cualquier formato de respuesta de la Query
+      const ciudadFinal = clienteRandom.Ciudad || clienteRandom.ciudad || clienteRandom.CIUDAD || 'Desconocida';
+
       return {
-        nroCuenta: clienteRandom.NumeroDeAbonado || clienteRandom.nroCuenta,
-        razonSocial: clienteRandom.RazonSocial || clienteRandom.razonSocial,
+        nroCuenta: clienteRandom.NumeroDeAbonado || clienteRandom.nroCuenta || clienteRandom.Numero_Abonado || 'S/N',
+        razonSocial: clienteRandom.RazonSocial || clienteRandom.razonSocial || clienteRandom.Nombre || 'Cliente Temporal',
         telefono: clienteRandom.TelefonoContacto || clienteRandom.telefono || '11-0000-0000',
         evento: alarmaRandom.evento,
         prioridad: alarmaRandom.prioridad,
-        fecha: fechaRandom
+        fecha: fechaRandom,
+        direccion: direccionFinal, 
+        ciudad: ciudadFinal       
       };
     });
-  }
 
+    this.pdsPendientes = [...nuevosPds, ...this.pdsPendientes];
+
+    if (this.kpis) {
+      this.kpis.eventosHoy = this.pdsPendientes.length;
+    }
+  }
   // 🎯 Canal Directo de Chat con plantilla prearmada para coordinación técnica rápida
   iniciarChatCliente(pds: any): void {
     console.log(`Abriendo canal de coordinación con: ${pds.razonSocial}`);
