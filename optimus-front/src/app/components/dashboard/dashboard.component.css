@@ -409,6 +409,11 @@
     color: var(--text-main);
 }
 
+/* ANCHO FIJO DE LA COLUMNA DE SELECCIÓN (antes estilo inline) */
+.col-sel {
+    width: 50px;
+}
+
 /* INDICADORES DE CONEXIÓN */
 .status-indicator {
     display: flex;
@@ -434,6 +439,12 @@
 
 .dot.offline-status {
     background: var(--text-dim);
+}
+
+/* Variante azul del dot (antes estilo inline en "asignaciones") */
+.dot.online-status.dot-blue {
+    background: #3b82f6;
+    box-shadow: 0 0 12px #3b82f6, 0 0 4px rgba(59, 130, 246, 0.6);
 }
 
 /* BOTONES DE ACCIÓN */
@@ -495,6 +506,30 @@
 .back-panel-btn {
     margin: 0; 
     padding: 8px 16px;
+}
+
+/* Botón "Derivar" (antes estilo inline) */
+.btn-derivar {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 11px;
+    background-color: #2563eb;
+    color: #fff;
+    border-color: #3b82f6;
+}
+
+.btn-derivar:hover {
+    background-color: #1d4ed8;
+    border-color: #60a5fa;
+    color: #fff;
+}
+
+/* Contenedor flex para los botones de acción de PDS (antes estilo inline) */
+.pds-actions-wrapper {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
 }
 
 /* MAPEOS DE CLASES DE APOYO PARA TABLAS INTERNAS */
@@ -580,6 +615,16 @@
     height: 15px; 
     fill: #25D366; 
     flex-shrink: 0;
+}
+
+/* Color verde para el nro de cuenta en "Services Coordinados" (antes estilo inline) */
+.service-account-color {
+    color: #10b981;
+}
+
+/* Color rojo para el evento/falla en "Services Coordinados" (antes estilo inline) */
+.service-event-color {
+    color: #e11d48;
 }
 
 /* SECTOR VIEWS & UTILITIES */

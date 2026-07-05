@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms'; // 🎯 CORREGIDO: Importado correctamente desde @angular/forms
 
 import { AuthService } from '../../services/auth.service';
 import { AbonadoService } from '../../services/abonado.service';
@@ -19,6 +20,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   imports: [
     CommonModule,
     RouterModule,
+    FormsModule, // Mantenemos el soporte para [(ngModel)] del checkbox
     MonitoreoDashComponent,
     ItDashComponent,
     DireccionDashComponent,
@@ -43,6 +45,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public presupuestos: any[] = [];  
   public tecnicosActivos: any[] = [];
   public listaUsuarios: any[] = [];
+  public servicesCoordinados: any[] = []; // Lista destino para almacenar las derivaciones de PDS
   public seccionActiva: string = 'dashboard';
 
   kpis: DashboardKpis = {
@@ -118,6 +121,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.kpis = data;
         if (this.kpis) {
           this.kpis.eventosHoy = this.pdsPendientes.length;
+          this.kpis.asignacionesHoy = this.servicesCoordinados.length;
         }
         this.loadingKpis = false;
       },
@@ -241,10 +245,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const alarmaRandom = catalogoAlarmas[Math.floor(Math.random() * catalogoAlarmas.length)];
       
       const horasAleatorias = Math.floor(Math.random() * 24);
-      const minutosAleatorios = Math.floor(Math.random() * 60);
+      const minutesAleatorios = Math.floor(Math.random() * 60);
       const fechaRandom = new Date();
       fechaRandom.setHours(fechaRandom.getHours() - horasAleatorias);
-      fechaRandom.setMinutes(fechaRandom.getMinutes() - minutosAleatorios);
+      fechaRandom.setMinutes(fechaRandom.getMinutes() - minutesAleatorios);
 
       const calle = clienteRandom.Calle || clienteRandom.calle || clienteRandom.CALLE || '';
       const numero = clienteRandom.Numero || clienteRandom.numero || clienteRandom.NUMERO || '';
@@ -266,20 +270,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
         prioridad: alarmaRandom.prioridad,
         fecha: fechaRandom,
         direccion: direccionFinal, 
-        ciudad: ciudadFinal      
+        ciudad: ciudadFinal,
+        seleccionado: false      
       };
     });
 
     if (incremental) {
-      // Unimos los nuevos eventos arriba de la lista existente sin romper lo anterior
       this.pdsPendientes = [...nuevosElementos, ...this.pdsPendientes];
     } else {
       this.pdsPendientes = nuevosElementos;
     }
 
-    // Sincronizamos de inmediato la variable del KPI mapeada a la tarjeta del template
+    this.actualizarKpisPdsYAsignaciones();
+  }
+
+  /**
+   * Deriva el PDS seleccionado al pool de Services Coordinados
+   */
+  derivarPdsMantenimiento(pds: any): void {
+    const serviceDerivado = {
+      ...pds,
+      fechaDerivacion: new Date()
+    };
+
+    // 1. Lo agregamos al arreglo que renderiza la tarjeta de SERVICES COORDINADOS
+    this.servicesCoordinados = [serviceDerivado, ...this.servicesCoordinados];
+
+    // 2. Lo removemos de la lista de PDS Pendientes
+    this.pdsPendientes = this.pdsPendientes.filter(item => item !== pds);
+
+    // 3. Sincronizamos las métricas numéricas de las tarjetas superiores en caliente
+    this.actualizarKpisPdsYAsignaciones();
+  }
+
+  private actualizarKpisPdsYAsignaciones(): void {
     if (this.kpis) {
       this.kpis.eventosHoy = this.pdsPendientes.length;
+      this.kpis.asignacionesHoy = this.servicesCoordinados.length;
     }
   }
 
@@ -359,9 +386,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     this.tecnicosActivos = this.listaUsuarios.filter((u: any) => {
-      const nombreRol = u.NombreRol ? String(u.NombreRol).trim().toLowerCase() : '';
+      const { NombreRol, Activo } = u;
+      const nombreRol = NombreRol ? String(NombreRol).trim().toLowerCase() : '';
       const tieneRolTecnico = (nombreRol === 'técnico' || nombreRol === 'tecnico');
-      const estaActivo = (u.Activo === 1 || u.Activo === true || String(u.Activo) === '1');
+      const estaActivo = (Activo === 1 || Activo === true || String(Activo) === '1');
       return tieneRolTecnico && estaActivo;
     });
 
