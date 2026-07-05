@@ -17,12 +17,19 @@ const accesoIT = [
     '1', 1, '3', 3
 ];
 
+// Lectura del listado de usuarios — además de IT/Dirección, Técnica y Campo
+// (sector 5) lo necesita para el roster de técnicos activos. Separado de
+// accesoIT a propósito: ese array también gatea creación/edición/baja de
+// usuarios y endpoints de auditoría/infraestructura, que Técnica no debe
+// poder tocar.
+const accesoUsuariosLectura = [...accesoIT, '5', 5];
+
 // ====================================================================
 // PESTAÑA 1 — GESTIÓN DE USUARIOS
 // ====================================================================
 
 // GET /api/it/usuarios — listado completo con rol y sector
-router.get('/usuarios', verifyToken, checkRole(accesoIT), async (req, res) => {
+router.get('/usuarios', verifyToken, checkRole(accesoUsuariosLectura), async (req, res) => {
     try {
         const [rows] = await pool.execute(`
             SELECT U.ID_Usuario, U.Nombre, U.Email, U.Telefono, U.Activo,

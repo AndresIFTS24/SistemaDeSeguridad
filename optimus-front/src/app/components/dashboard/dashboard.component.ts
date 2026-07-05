@@ -139,6 +139,21 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Bridge: TecnicaComponent es dueño de sus propios datos (PDS, servicios,
+  // técnicos activos) — acá solo se reflejan sus conteos en las KPI cards
+  // genéricas.
+  onPdsActualizados(pds: any[]): void {
+    if (this.kpis) this.kpis.eventosHoy = pds.length;
+  }
+
+  onServicesActualizados(services: any[]): void {
+    if (this.kpis) (this.kpis as any).asignacionesHoy = services.length;
+  }
+
+  onTecnicosActivosActualizados(cantidad: number): void {
+    if (this.kpis) this.kpis.tecnicosActivos = cantidad;
+  }
+
   private inicializarDatosSector(): void {
     switch (this.user.idSector) {
       case 1:
@@ -150,7 +165,11 @@ export class DashboardComponent implements OnInit {
       case 4:
         this.cargarAbonados();
         break;
-      case 5: // Técnica y Campo
+      case 5: // Técnica y Campo — vista de supervisión de todo el equipo:
+        // necesita usuarios (para el roster de técnicos activos) y
+        // abonados (fuente de datos del simulador de PDS).
+        this.cargarUsuarios();
+        this.cargarAbonados();
         break;
       case 6: // Comercial
         break;

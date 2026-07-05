@@ -138,7 +138,13 @@
         </app-monitoreo-dash>
         <app-tecnica-dash
           *ngSwitchCase="5"
-          [abonados]="abonados">
+          [abonados]="abonados"
+          [usuarios]="listaUsuarios"
+          [seccionActiva]="seccionActiva"
+          (pdsActualizados)="onPdsActualizados($event)"
+          (servicesActualizados)="onServicesActualizados($event)"
+          (tecnicosActivosActualizados)="onTecnicosActivosActualizados($event)"
+          (volverAlPanel)="onSeccionSeleccionada('dashboard')">
         </app-tecnica-dash>
         <app-comercial-dash
           *ngSwitchCase="6"
