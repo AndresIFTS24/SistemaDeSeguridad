@@ -224,7 +224,7 @@
 
       <div class="abonados-section" *ngIf="seccionActiva === 'tickets'">
         <div class="section-header-container">
-          <h2>Presupuestos para Coordinar (Área Comercial)</h2>
+          <h2>Presupuestos para Coordinar</h2>
           <button (click)="onSeccionSeleccionada('dashboard')" class="btn-retry back-panel-btn">
             ← Volver al Panel
           </button>
@@ -271,7 +271,49 @@
                 </tr>
                 <tr *ngIf="!presupuestos || presupuestos.length === 0">
                   <td colspan="7" class="table-empty-row">
-                    No hay presupuestos pendientes para coordinar en este momento.
+                    No hay budgets pendientes para coordinar en este momento.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="abonados-section" *ngIf="seccionActiva === 'tecnicos'">
+        <div class="section-header-container">
+          <h2>Personal Técnico Activo en Campo</h2>
+          <button (click)="onSeccionSeleccionada('dashboard')" class="btn-retry back-panel-btn">
+            ← Volver al Panel
+          </button>
+        </div>
+
+        <div class="console-container">
+          <div class="table-wrapper">
+            <table class="optimus-table">
+              <thead>
+                <tr>
+                  <th>ID Usuario</th>
+                  <th>Nombre y Apellido</th>
+                  <th>Sector Técnico</th>
+                  <th>Estado Operativo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let tecnico of tecnicosActivos">
+                  <td><b class="tech-id">{{ tecnico.ID_Usuario || tecnico.id || 'S/N' }}</b></td>
+                  <td class="user-name">{{ tecnico.Nombre || tecnico.nombre }}</td>
+                  <td><span class="tag-sector">{{ tecnico.NombreSector || 'Técnico Campo' }}</span></td>
+                  <td>
+                    <div class="status-indicator">
+                      <span class="dot online-status"></span>
+                      CONECTADO / DISPONIBLE
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="!tecnicosActivos || tecnicosActivos.length === 0">
+                  <td colspan="4" class="table-empty-row">
+                    No hay técnicos activos registrados o disponibles en este momento.
                   </td>
                 </tr>
               </tbody>

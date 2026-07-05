@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 
@@ -28,7 +28,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
 
   @ViewChild('contentArea') contentArea!: ElementRef;
 
@@ -39,8 +39,9 @@ export class DashboardComponent implements OnInit {
   };
 
   public abonados: any[] = [];
-  public pdsPendientes: any[] = []; // 🎯 Lista para los Pedidos de Servicio técnicos acumulativos
-  public presupuestos: any[] = [];  // 🎯 Nueva lista para los presupuestos del Área Comercial
+  public pdsPendientes: any[] = []; 
+  public presupuestos: any[] = [];  
+  public tecnicosActivos: any[] = [];
   public listaUsuarios: any[] = [];
   public seccionActiva: string = 'dashboard';
 
@@ -54,6 +55,9 @@ export class DashboardComponent implements OnInit {
 
   loadingKpis: boolean = true;
   currentDate: string = '';
+  
+  // Referencia del temporizador para evitar fugas de memoria
+  private pdsIntervalId: any;
 
   constructor(
     private authService: AuthService,
@@ -75,11 +79,25 @@ export class DashboardComponent implements OnInit {
     this.user.idSector = savedSector ? parseInt(savedSector, 10) : 0;
 
     this.setCurrentDate();
-    this.loadKpis();
     
-    // Ejecutamos la carga general de la base de datos de abonados al arrancar
+    // 1. Desencadenamos las cargas de la base de datos
+    this.loadKpis();
+    this.cargarUsuarios(); 
     this.cargarAbonados();
+
     this.inicializarDatosSector();
+
+    // 2. ⏳ INCREMENTO AUTOMÁTICO: Cada 20 segundos genera e integra 1 o 2 PDS nuevos
+    this.pdsIntervalId = setInterval(() => {
+      this.inyectarPdsEnTiempoReal();
+    }, 20000);
+  }
+
+  ngOnDestroy(): void {
+    // Limpiamos el intervalo cuando el usuario sale del componente o cierra sesión
+    if (this.pdsIntervalId) {
+      clearInterval(this.pdsIntervalId);
+    }
   }
 
   setCurrentDate(): void {
@@ -96,7 +114,11 @@ export class DashboardComponent implements OnInit {
     this.loadingKpis = true;
     this.dashboardService.getKpis().subscribe({
       next: (data) => {
+        // Al pisar el objeto completo, respaldamos de inmediato la cantidad de PDS simulados en el array local
         this.kpis = data;
+        if (this.kpis) {
+          this.kpis.eventosHoy = this.pdsPendientes.length;
+        }
         this.loadingKpis = false;
       },
       error: (err) => {
@@ -117,14 +139,12 @@ export class DashboardComponent implements OnInit {
     
     this.seccionActiva = seccion;
 
-    // Si seleccionan la tarjeta de eventos (PDS Pendientes), generamos la lista aleatoria sin pisar lo viejo
-    if (seccion === 'eventos') {
-      this.cargarPdsPendientes();
-    }
-
-    // 🎯 Si seleccionan la tarjeta de tickets (Presupuestos), inicializamos los datos de preventa comercial
     if (seccion === 'tickets') {
       this.cargarPresupuestosComerciales();
+    }
+
+    if (seccion === 'tecnicos') {
+      this.filtrarTecnicosActivos();
     }
 
     setTimeout(() => {
@@ -136,11 +156,9 @@ export class DashboardComponent implements OnInit {
   private inicializarDatosSector(): void {
     switch (this.user.idSector) {
       case 1:
-        this.cargarUsuarios();
         break;
       case 3: 
       case 4:
-        // Removido duplicado de cargarAbonados() porque ahora es global en el ngOnInit
         break;
       default:
         console.warn('Sector sin panel configurado:', this.user.idSector);
@@ -151,9 +169,21 @@ export class DashboardComponent implements OnInit {
   cargarUsuarios(): void {
     this.authService.getUsers().subscribe({
       next: (res: any) => {
-        this.listaUsuarios = res.usuarios || res;
+        if (res && res.usuarios && Array.isArray(res.usuarios)) {
+          this.listaUsuarios = res.usuarios;
+        } else if (Array.isArray(res)) {
+          this.listaUsuarios = res;
+        } else if (res && res.data && Array.isArray(res.data)) {
+          this.listaUsuarios = res.data;
+        } else {
+          this.listaUsuarios = [];
+        }
+
+        if (this.seccionActiva === 'tecnicos') {
+          this.ejecutarFiltroUsuarios();
+        }
       },
-      error: (err: any) => console.error('Error cargando usuarios:', err)
+      error: (err: any) => console.error('Error cargando usuarios generales:', err)
     });
   }
 
@@ -161,13 +191,32 @@ export class DashboardComponent implements OnInit {
     this.abonadoService.getAllAbonados().subscribe({
       next: (response: any) => {
         this.abonados = response.abonados || response || [];
+        
+        // Si no se inicializaron todavía, forzamos la carga inicial inmediata
+        if (this.pdsPendientes.length === 0) {
+          this.cargarPdsPendientes();
+        }
       },
       error: (err: any) => console.error('Error al cargar abonados desde la base de datos:', err)
     });
   }
 
-  // 🎯 Generador Dinámico de PDS optimizado para capturar DIRECCIONES y CIUDADES de la base de datos
   cargarPdsPendientes(): void {
+    // Forzamos una base inicial de entre 2 y 4 PDS al abrir la sesión
+    const cantidadInicial = Math.floor(Math.random() * 3) + 2;
+    this.generarPdsAleatorios(cantidadInicial);
+  }
+
+  /**
+   * Genera de forma incremental e inyecta PDS nuevos sin borrar los existentes
+   */
+  inyectarPdsEnTiempoReal(): void {
+    const cantidadNuevos = Math.floor(Math.random() * 2) + 1; // Genera 1 o 2 nuevos
+    this.generarPdsAleatorios(cantidadNuevos, true);
+    console.log(`[Timer] Se añadieron ${cantidadNuevos} nuevos PDS en tiempo real.`);
+  }
+
+  private generarPdsAleatorios(cantidad: number, incremental: boolean = false): void {
     const catalogoAlarmas = [
       { evento: 'Pérdida de Conexión: Dispositivo offline', prioridad: 'Crítico' },
       { evento: 'Manipulación Detectada: Apertura de chasis', prioridad: 'Alta' },
@@ -187,9 +236,7 @@ export class DashboardComponent implements OnInit {
       { NumeroDeAbonado: '1067', RazonSocial: 'Techint S.A', TelefonoContacto: '11-1234-5678', Calle: 'Florida', Numero: '789', Ciudad: 'Buenos Aires' }
     ];
 
-    const cantidadNuevos = Math.floor(Math.random() * 3) + 1;
-
-    const nuevosPds = Array.from({ length: cantidadNuevos }).map(() => {
+    const nuevosElementos = Array.from({ length: cantidad }).map(() => {
       const clienteRandom = listaClientes[Math.floor(Math.random() * listaClientes.length)];
       const alarmaRandom = catalogoAlarmas[Math.floor(Math.random() * catalogoAlarmas.length)];
       
@@ -203,7 +250,6 @@ export class DashboardComponent implements OnInit {
       const numero = clienteRandom.Numero || clienteRandom.numero || clienteRandom.NUMERO || '';
       
       let direccionFinal = 'Sin Dirección';
-      
       if (calle) {
         direccionFinal = `${calle} ${numero}`.trim();
       } else if (clienteRandom.Direccion || clienteRandom.direccion || clienteRandom.DIRECCION) {
@@ -224,37 +270,36 @@ export class DashboardComponent implements OnInit {
       };
     });
 
-    this.pdsPendientes = [...nuevosPds, ...this.pdsPendientes];
+    if (incremental) {
+      // Unimos los nuevos eventos arriba de la lista existente sin romper lo anterior
+      this.pdsPendientes = [...nuevosElementos, ...this.pdsPendientes];
+    } else {
+      this.pdsPendientes = nuevosElementos;
+    }
 
+    // Sincronizamos de inmediato la variable del KPI mapeada a la tarjeta del template
     if (this.kpis) {
       this.kpis.eventosHoy = this.pdsPendientes.length;
     }
   }
 
-  // 🎯 Cargador dinámico real desde la Base de Datos
-// 🎯 Cargador dinámico real desde la Base de Datos
-cargarPresupuestosComerciales(): void {
-  // Llamamos al servicio en lugar de usar el array estático
-  this.dashboardService.getPresupuestosComerciales().subscribe({
-    next: (data: any[]) => {
-      // Mapeamos o asignamos directamente los presupuestos de la BD
-      this.presupuestos = data || [];
-
-      // Sincronizamos el KPI del Dashboard con la cantidad real de la BD
-      if (this.kpis) {
-        this.kpis.ticketsAbiertos = this.presupuestos.length;
+  cargarPresupuestosComerciales(): void {
+    this.dashboardService.getPresupuestosComerciales().subscribe({
+      next: (data: any[]) => {
+        this.presupuestos = data || [];
+        if (this.kpis) {
+          this.kpis.ticketsAbiertos = this.presupuestos.length;
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar presupuestos reales desde la BD:', err);
+        this.presupuestos = [];
+        if (this.kpis) this.kpis.ticketsAbiertos = 0;
       }
-    },
-    error: (err) => {
-      console.error('Error al cargar presupuestos reales desde la BD:', err);
-      this.presupuestos = [];
-      if (this.kpis) this.kpis.ticketsAbiertos = 0;
-    }
-  });
-}
-  // 🎯 Canal Directo de Chat con plantilla prearmada para coordinación técnica rápida
+    });
+  }
+
   iniciarChatCliente(pds: any): void {
-    console.log(`Abriendo canal de coordinación con: ${pds.razonSocial}`);
     const mensaje = encodeURIComponent(
       `Hola ${pds.razonSocial}, nos comunicamos de Optimus Systems. Detectamos una señal de "${pds.evento}" en tu cuenta Nro ${pds.nroCuenta}. ¿Te queda bien que coordinemos una visita técnica para revisarlo?`
     );
@@ -263,10 +308,7 @@ cargarPresupuestosComerciales(): void {
     window.open(urlWhatsApp, '_blank');
   }
 
-  // 🎯 Coordinación por WhatsApp automatizada de Presupuestos Comerciales pasados a Técnica
   coordinarPresupuesto(presupuesto: any): void {
-    console.log(`Coordinando instalación del Presupuesto: ${presupuesto.NroPresupuesto}`);
-    
     const identificadorCliente = presupuesto.ID_Abonado 
       ? `Abonado Nro ${presupuesto.ID_Abonado} (${presupuesto.RazonSocial})` 
       : `la nueva instalación solicitada por ${presupuesto.RazonSocial} en ${presupuesto.Direccion}`;
@@ -275,7 +317,7 @@ cargarPresupuestosComerciales(): void {
       `Hola, nos comunicamos del área técnica de Optimus Systems para coordinar el armado del equipamiento aprobado bajo el Presupuesto ${presupuesto.NroPresupuesto} correspondiente a ${identificadorCliente}. ¿Qué día de la semana te quedaría cómodo para que asistan los técnicos?`
     );
 
-    const telefonoLimpio = presupuesto.TelefonoContacto.replace(/[^0-9]/g, '');
+    const telefonoLimpio = presupuesto.TelefonoContacto ? presupuesto.TelefonoContacto.replace(/[^0-9]/g, '') : '';
     const urlWhatsApp = `https://web.whatsapp.com/send?phone=${telefonoLimpio}&text=${mensaje}`;
     window.open(urlWhatsApp, '_blank');
   }
@@ -283,5 +325,48 @@ cargarPresupuestosComerciales(): void {
   logout(): void {
     localStorage.clear();
     this.router.navigate(['/login']);
+  }
+
+  filtrarTecnicosActivos(): void {
+    if (!this.listaUsuarios || this.listaUsuarios.length === 0) {
+      this.authService.getUsers().subscribe({
+        next: (res: any) => {
+          if (res && res.usuarios && Array.isArray(res.usuarios)) {
+            this.listaUsuarios = res.usuarios;
+          } else if (Array.isArray(res)) {
+            this.listaUsuarios = res;
+          } else {
+            this.listaUsuarios = [];
+          }
+          this.ejecutarFiltroUsuarios();
+        },
+        error: (err) => {
+          console.error('Error al re-cargar usuarios para técnicos:', err);
+          this.tecnicosActivos = [];
+          if (this.kpis) this.kpis.tecnicosActivos = 0;
+        }
+      });
+    } else {
+      this.ejecutarFiltroUsuarios();
+    }
+  }
+
+  private ejecutarFiltroUsuarios(): void {
+    if (!this.listaUsuarios || this.listaUsuarios.length === 0) {
+      this.tecnicosActivos = [];
+      if (this.kpis) this.kpis.tecnicosActivos = 0;
+      return;
+    }
+
+    this.tecnicosActivos = this.listaUsuarios.filter((u: any) => {
+      const nombreRol = u.NombreRol ? String(u.NombreRol).trim().toLowerCase() : '';
+      const tieneRolTecnico = (nombreRol === 'técnico' || nombreRol === 'tecnico');
+      const estaActivo = (u.Activo === 1 || u.Activo === true || String(u.Activo) === '1');
+      return tieneRolTecnico && estaActivo;
+    });
+
+    if (this.kpis) {
+      this.kpis.tecnicosActivos = this.tecnicosActivos.length;
+    }
   }
 }
