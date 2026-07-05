@@ -297,37 +297,80 @@
           </button>
         </div>
 
-        <div class="console-container">
-          <div class="table-wrapper">
-            <table class="optimus-table">
-              <thead>
-                <tr>
-                  <th>ID Usuario</th>
-                  <th>Nombre y Apellido</th>
-                  <th>Sector Técnico</th>
-                  <th>Estado Operativo</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let tecnico of tecnicosActivos">
-                  <td><b class="tech-id">{{ tecnico.ID_Usuario || tecnico.id || 'S/N' }}</b></td>
-                  <td class="user-name">{{ tecnico.Nombre || tecnico.nombre }}</td>
-                  <td><span class="tag-sector">{{ tecnico.NombreSector || 'Técnico Campo' }}</span></td>
-                  <td>
-                    <div class="status-indicator">
-                      <span class="dot online-status"></span>
-                      CONECTADO / DISPONIBLE
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="!tecnicosActivos || tecnicosActivos.length === 0">
-                  <td colspan="4" class="table-empty-row">
-                    No hay técnicos activos registrados o disponibles en este momento.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <div class="tecnicos-pane-layout">
+          
+          <div class="console-container">
+            <div class="table-wrapper">
+              <table class="optimus-table">
+                <thead>
+                  <tr>
+                    <th>ID Usuario</th>
+                    <th>Nombre y Apellido</th>
+                    <th>Sector Técnico</th>
+                    <th>Estado Operativo</th>
+                    <th class="text-center">Mapa</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let tecnico of tecnicosActivos" [class.row-selected]="tecnicoSeleccionado?.ID_Usuario === tecnico.ID_Usuario">
+                    <td><b class="tech-id">{{ tecnico.ID_Usuario || tecnico.id || 'S/N' }}</b></td>
+                    <td class="user-name">{{ tecnico.Nombre || tecnico.nombre }}</td>
+                    <td><span class="tag-sector">{{ tecnico.NombreSector || 'Técnico Campo' }}</span></td>
+                    <td>
+                      <div class="status-indicator">
+                        <span class="dot online-status"></span>
+                        CONECTADO
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <button (click)="verTecnicoEnMapa(tecnico)" class="btn-retry btn-coordinate btn-map-locate" title="Localizar Técnico">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon-locate">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr *ngIf="!tecnicosActivos || tecnicosActivos.length === 0">
+                    <td colspan="5" class="table-empty-row">
+                      No hay técnicos activos registrados o disponibles en este momento.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          <div class="console-container map-panel">
+            <div class="map-panel-header">
+              <h4 class="map-panel-title">
+                Geolocalización en Tiempo Real
+              </h4>
+              <span *ngIf="tecnicoSeleccionado" class="tag-sector map-panel-tech-tag">
+                {{ tecnicoSeleccionado.Nombre }}
+              </span>
+            </div>
+            
+            <div id="map" #mapContainer class="map-container">
+              <iframe 
+                *ngIf="tecnicoSeleccionado && mapUrlSafe" 
+                [src]="mapUrlSafe" 
+                width="100%" 
+                height="100%" 
+                class="map-iframe"
+                title="Ubicación de {{ tecnicoSeleccionado?.Nombre }}"
+                allowfullscreen="false" 
+                loading="lazy">
+               Pop-up</iframe>
+              <div *ngIf="!tecnicoSeleccionado" class="map-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="map-placeholder-icon">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                </svg>
+                <p class="map-placeholder-text">Seleccioná un operario de la lista para enfocar su cuadrante operativo.</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -390,33 +433,38 @@
         </div>
       </div>
 
-      <div class="sector-content" [ngSwitch]="user.idSector" *ngIf="seccionActiva === 'dashboard'">
+<div class="sector-content" *ngIf="seccionActiva === 'dashboard'">
+        
         <app-direccion-dash 
-          *ngSwitchCase="1" 
+          *ngIf="user.idSector == 1" 
           [abonados]="abonados" 
           [usuarios]="listaUsuarios"
           [seccionActiva]="seccionActiva">
         </app-direccion-dash>
         
+        <app-comercial-dash
+          *ngIf="user.idSector == 2"
+          [seccionActiva]="seccionActiva">
+        </app-comercial-dash>
+        
         <app-it-dash 
-          *ngSwitchCase="3"
+          *ngIf="user.idSector == 3"
           [seccionActiva]="seccionActiva">
         </app-it-dash>
         
         <app-monitoreo-dash 
-          *ngSwitchCase="4" 
+          *ngIf="user.idSector == 4" 
           [abonados]="abonados"
           [seccionActiva]="seccionActiva">
         </app-monitoreo-dash>
         
-        <div *ngSwitchDefault class="error-view-container">
+        <div *ngIf="user.idSector != 1 && user.idSector != 2 && user.idSector != 3 && user.idSector != 4" class="error-view-container">
           <div class="error-card">
-            <h3>Panel de Monitoreo Activo</h3>
-            <p>Utilizá las tarjetas superiores para interactuar con los datos del sistema de alarmas.</p>
+            <h3>Panel de Control General</h3>
+            <p>Utilizá las tarjetas superiores para interactuar con los datos del sistema.</p>
           </div>
         </div>
       </div>
-
     </main>
   </div>
 </div>

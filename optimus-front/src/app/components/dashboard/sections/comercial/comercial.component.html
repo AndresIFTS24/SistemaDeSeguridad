@@ -1,0 +1,115 @@
+<div class="comercial-dashboard">
+  
+  <div class="comercial-kpis">
+    <div class="c-card">
+      <span class="c-label">Volumen Ventas Mes</span>
+      <span class="c-value">${{ statsComercial.totalVentasMes | number:'1.0-0' }}</span>
+      <div class="c-sub">Meta del mes: {{ statsComercial.porcentajeMeta }}% alcanzado</div>
+    </div>
+    <div class="c-card">
+      <span class="c-label">Contratos Nuevos</span>
+      <span class="c-value text-green">{{ statsComercial.contratosNuevos }}</span>
+      <div class="c-sub">Altas comerciales efectivas</div>
+    </div>
+    <div class="c-card">
+      <span class="c-label">Tasa de Efectividad</span>
+      <span class="c-value text-purple">{{ statsComercial.efectividadCierre }}%</span>
+      <div class="c-sub">Presupuestos aceptados</div>
+    </div>
+  </div>
+
+  <div class="comercial-grid">
+    
+    <div class="comercial-panel-form">
+      <div class="panel-header">
+        <h3>📝 Registrar Nuevo Presupuesto Comercial</h3>
+        <button type="button" class="btn-sugerir" (click)="sugerirNroPresupuesto()">Auto-Generar Código</button>
+      </div>
+
+      <form [formGroup]="budgetForm" (ngSubmit)="onSubmitPresupuesto()" class="optimus-form">
+        <div class="form-group">
+          <label for="nroPresupuesto">Nro Presupuesto (Format: PR-2026-XXXX)</label>
+          <input type="text" id="nroPresupuesto" formControlName="NroPresupuesto" placeholder="Ej: PR-2026-0200" title="Número de presupuesto con prefijo PR-2026-" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tipoTrabajo">Tipo de Trabajo</label>
+            <select id="tipoTrabajo" formControlName="TipoTrabajo" title="Seleccione el tipo de trabajo requerido">
+              <option value="Instalacion Nuevo Cliente">Instalación Nuevo Cliente</option>
+              <option value="Service Técnico Cobrable">Service Técnico Cobrable</option>
+              <option value="Ampliación de Sistema">Ampliación de Sistema de Alarma</option>
+              <option value="Desinstalación / Traslado">Desinstalación / Traslado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="idAbonado">ID Abonado (Dejar vacío si es cliente nuevo)</label>
+            <input type="number" id="idAbonado" formControlName="ID_Abonado" placeholder="Ej: 1042 o NULL" title="ID numérico de la cuenta del abonado" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="direccion">Dirección de la Operación / Cliente</label>
+          <input type="text" id="direccion" formControlName="Direccion" placeholder="Calle, Altura, Piso" title="Dirección física completa" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ciudad">Ciudad</label>
+            <input type="text" id="ciudad" formControlName="Ciudad" title="Ciudad base de la operación" placeholder="Ej: Buenos Aires" />
+          </div>
+          <div class="form-group">
+            <label for="estado">Estado Inicial</label>
+            <select id="estado" formControlName="Estado" title="Seleccione el estado operativo inicial del presupuesto">
+              <option value="Pendiente">Pendiente (Revisión Comercial)</option>
+              <option value="Coordinado">Coordinado (Pasa a Campo)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="fechaRecepcion">Fecha Recepción / Registro</label>
+          <input type="datetime-local" id="fechaRecepcion" formControlName="FechaRecepcion" title="Fecha y hora de asignación en el sistema" />
+        </div>
+
+        <button type="submit" class="btn-submit-comercial" [disabled]="budgetForm.invalid">
+          ⚡ Guardar e Insertar en Base de Datos
+        </button>
+      </form>
+    </div>
+
+    <div class="comercial-panel-charts">
+      <h3>📈 Análisis del Rendimiento Comercial</h3>
+      
+      <div class="chart-container">
+        <p class="chart-title">Evolución de Contratos Solicitados (Tendencia)</p>
+        <div class="bar-chart">
+          <div class="bar-wrapper" *ngFor="let item of statsComercial.ventasPorMes">
+            <div class="bar-fill" [style.height.%]="item.valor">
+              <span class="bar-tooltip">{{ item.valor }} u</span>
+            </div>
+            <span class="bar-label">{{ item.mes }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container chart-spacer">
+        <p class="chart-title">Distribución de Captación de Leads</p>
+        <div class="donut-chart-simulation">
+          <div class="donut-display"></div>
+          <div class="donut-legend">
+            <div class="legend-item" *ngFor="let origen of statsComercial.prospectosPorOrigen">
+              <span class="legend-color" [style.background-color]="origen.color"></span>
+              <span class="legend-text">{{ origen.origen }} (<b>{{ origen.porcentaje }}%</b>)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn-refresh" (click)="generarEstadisticasAleatorias()">
+        🔄 Recalcular Métricas Aleatorias
+      </button>
+    </div>
+
+  </div>
+</div>

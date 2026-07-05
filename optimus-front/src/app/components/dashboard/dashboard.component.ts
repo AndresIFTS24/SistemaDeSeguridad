@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms'; // 🎯 CORREGIDO: Importado correctamente desde @angular/forms
+import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 import { AuthService } from '../../services/auth.service';
 import { AbonadoService } from '../../services/abonado.service';
@@ -10,7 +11,7 @@ import { DashboardService, DashboardKpis } from '../../services/dashboard.servic
 import { ItDashComponent } from './sections/it-admin/it-dash.component';
 import { DireccionDashComponent } from './sections/direccion/direccion.component';
 import { MonitoreoDashComponent } from './sections/monitoreo/monitoreo.component';
-
+import { ComercialComponent } from './sections/comercial/comercial.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 
@@ -20,8 +21,9 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   imports: [
     CommonModule,
     RouterModule,
-    FormsModule, // Mantenemos el soporte para [(ngModel)] del checkbox
+    FormsModule,
     MonitoreoDashComponent,
+    ComercialComponent,
     ItDashComponent,
     DireccionDashComponent,
     NavbarComponent,
@@ -45,28 +47,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
   public presupuestos: any[] = [];  
   public tecnicosActivos: any[] = [];
   public listaUsuarios: any[] = [];
-  public servicesCoordinados: any[] = []; // Lista destino para almacenar las derivaciones de PDS
+  public servicesCoordinados: any[] = []; 
   public seccionActiva: string = 'dashboard';
+
+  public tecnicoSeleccionado: any = null;
+  public mapUrlSafe: SafeResourceUrl | null = null;
 
   kpis: DashboardKpis = {
     totalAbonados: 0,
     eventosHoy: 0,
     ticketsAbiertos: 0,
     tecnicosActivos: 0,
-    asignacionesHoy: 0
+    asignacionesHoy: 0 // 🎯 CORREGIDO: Volvió a español tal como lo tenías definido
   };
 
   loadingKpis: boolean = true;
   currentDate: string = '';
   
-  // Referencia del temporizador para evitar fugas de memoria
   private pdsIntervalId: any;
 
   constructor(
     private authService: AuthService,
     private abonadoService: AbonadoService,
     private dashboardService: DashboardService,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -83,21 +88,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.setCurrentDate();
     
-    // 1. Desencadenamos las cargas de la base de datos
     this.loadKpis();
     this.cargarUsuarios(); 
     this.cargarAbonados();
-
     this.inicializarDatosSector();
 
-    // 2. ⏳ INCREMENTO AUTOMÁTICO: Cada 20 segundos genera e integra 1 o 2 PDS nuevos
     this.pdsIntervalId = setInterval(() => {
       this.inyectarPdsEnTiempoReal();
     }, 20000);
   }
 
   ngOnDestroy(): void {
-    // Limpiamos el intervalo cuando el usuario sale del componente o cierra sesión
     if (this.pdsIntervalId) {
       clearInterval(this.pdsIntervalId);
     }
@@ -117,11 +118,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadingKpis = true;
     this.dashboardService.getKpis().subscribe({
       next: (data) => {
-        // Al pisar el objeto completo, respaldamos de inmediato la cantidad de PDS simulados en el array local
         this.kpis = data;
         if (this.kpis) {
           this.kpis.eventosHoy = this.pdsPendientes.length;
-          this.kpis.asignacionesHoy = this.servicesCoordinados.length;
+          if ('asignacionesHoy' in this.kpis) {
+            (this.kpis as any).asignacionesHoy = this.servicesCoordinados.length;
+          }
         }
         this.loadingKpis = false;
       },
@@ -132,7 +134,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  onSeccionSeleccionada(seccion: string): void {
+onSeccionSeleccionada(seccion: string): void {
+    // Si se hace clic en la sección principal del dashboard
     if (seccion === 'dashboard') {
       this.seccionActiva = 'dashboard';
       if (this.contentArea) {
@@ -141,14 +144,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
     
-    this.seccionActiva = seccion;
-
-    if (seccion === 'tickets') {
+    // Si el usuario del sector comercial hace clic en su sección específica
+    if (seccion === 'comercial' || seccion === 'tickets') {
+      this.seccionActiva = 'dashboard'; // Volvemos a dashboard para que se active el contenedor de sectores
+      this.user.idSector = 2; // Forzamos el ID del sector comercial en la vista
       this.cargarPresupuestosComerciales();
+      return;
     }
+    
+    this.seccionActiva = seccion;
 
     if (seccion === 'tecnicos') {
       this.filtrarTecnicosActivos();
+      this.tecnicoSeleccionado = null;
+      this.mapUrlSafe = null;
     }
 
     setTimeout(() => {
@@ -158,15 +167,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private inicializarDatosSector(): void {
-    switch (this.user.idSector) {
-      case 1:
-        break;
-      case 3: 
-      case 4:
-        break;
-      default:
-        console.warn('Sector sin panel configurado:', this.user.idSector);
-        break;
+    // Forzamos que si el usuario pertenece al sector Comercial (ID 2 de base de datos) 
+    // se configure por defecto su entorno correspondiente.
+    if (this.user.idSector === 2) {
+      this.seccionActiva = 'comercial';
+      this.cargarPresupuestosComerciales();
     }
   }
 
@@ -195,8 +200,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.abonadoService.getAllAbonados().subscribe({
       next: (response: any) => {
         this.abonados = response.abonados || response || [];
-        
-        // Si no se inicializaron todavía, forzamos la carga inicial inmediata
         if (this.pdsPendientes.length === 0) {
           this.cargarPdsPendientes();
         }
@@ -206,16 +209,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   cargarPdsPendientes(): void {
-    // Forzamos una base inicial de entre 2 y 4 PDS al abrir la sesión
     const cantidadInicial = Math.floor(Math.random() * 3) + 2;
     this.generarPdsAleatorios(cantidadInicial);
   }
 
-  /**
-   * Genera de forma incremental e inyecta PDS nuevos sin borrar los existentes
-   */
   inyectarPdsEnTiempoReal(): void {
-    const cantidadNuevos = Math.floor(Math.random() * 2) + 1; // Genera 1 o 2 nuevos
+    const cantidadNuevos = Math.floor(Math.random() * 2) + 1;
     this.generarPdsAleatorios(cantidadNuevos, true);
     console.log(`[Timer] Se añadieron ${cantidadNuevos} nuevos PDS en tiempo real.`);
   }
@@ -284,29 +283,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.actualizarKpisPdsYAsignaciones();
   }
 
-  /**
-   * Deriva el PDS seleccionado al pool de Services Coordinados
-   */
   derivarPdsMantenimiento(pds: any): void {
     const serviceDerivado = {
       ...pds,
       fechaDerivacion: new Date()
     };
 
-    // 1. Lo agregamos al arreglo que renderiza la tarjeta de SERVICES COORDINADOS
     this.servicesCoordinados = [serviceDerivado, ...this.servicesCoordinados];
-
-    // 2. Lo removemos de la lista de PDS Pendientes
     this.pdsPendientes = this.pdsPendientes.filter(item => item !== pds);
-
-    // 3. Sincronizamos las métricas numéricas de las tarjetas superiores en caliente
     this.actualizarKpisPdsYAsignaciones();
   }
 
   private actualizarKpisPdsYAsignaciones(): void {
     if (this.kpis) {
       this.kpis.eventosHoy = this.pdsPendientes.length;
-      this.kpis.asignacionesHoy = this.servicesCoordinados.length;
+      if ('asignacionesHoy' in this.kpis) {
+        (this.kpis as any).asignacionesHoy = this.servicesCoordinados.length;
+      }
     }
   }
 
@@ -396,5 +389,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.kpis) {
       this.kpis.tecnicosActivos = this.tecnicosActivos.length;
     }
+  }
+
+  verTecnicoEnMapa(tecnico: any): void {
+    this.tecnicoSeleccionado = tecnico;
+
+    const cabaLat = -34.6037;
+    const cabaLng = -58.3816;
+    
+    if (!tecnico.latitudSimulada || !tecnico.longitudSimulada) {
+      tecnico.latitudSimulada = cabaLat + (Math.random() - 0.5) * 0.05;
+      tecnico.longitudSimulada = cabaLng + (Math.random() - 0.5) * 0.05;
+    }
+
+    // 🎯 CORREGIDO: Sintaxis limpia y uso de la URL de incrustación de Google Maps segura
+    const urlMapa = `https://maps.google.com/maps?q=${tecnico.latitudSimulada},${tecnico.longitudSimulada}&z=15&output=embed`;
+    
+    this.mapUrlSafe = this.sanitizer.bypassSecurityTrustResourceUrl(urlMapa);
   }
 }
