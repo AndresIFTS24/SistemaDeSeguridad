@@ -115,8 +115,11 @@
       </ng-template>
       </ng-container>
 
-      <!-- CONTENIDO POR SECTOR -->
-      <div class="sector-content" [ngSwitch]="user.idSector">
+      <!-- CONTENIDO POR SECTOR — IDs reales verificados contra la tabla
+           SECTORES: 1 Dirección General, 3 Infraestructura e IT,
+           4 Monitoreo, 5 Técnica y Campo, 6 Comercial. Operaciones (2) y
+           Recursos Humanos (7) no tienen panel propio, caen en el fallback. -->
+      <div class="sector-content" [ngSwitch]="sectorVisual">
         <app-direccion-dash
           *ngSwitchCase="1"
           [abonados]="abonados"
@@ -124,15 +127,23 @@
           [seccionActiva]="seccionActiva"
           (abonadoGuardado)="cargarAbonados()">
         </app-direccion-dash>
-        <app-it-dash 
+        <app-it-dash
           *ngSwitchCase="3"
           [seccionActiva]="seccionActiva">
         </app-it-dash>
-        <app-monitoreo-dash 
-          *ngSwitchCase="4" 
+        <app-monitoreo-dash
+          *ngSwitchCase="4"
           [abonados]="abonados"
           [seccionActiva]="seccionActiva">
         </app-monitoreo-dash>
+        <app-tecnica-dash
+          *ngSwitchCase="5"
+          [abonados]="abonados">
+        </app-tecnica-dash>
+        <app-comercial-dash
+          *ngSwitchCase="6"
+          [seccionActiva]="seccionActiva">
+        </app-comercial-dash>
         <div *ngSwitchDefault class="error-view">
           <div class="error-card">
             <h3>Acceso Restringido</h3>

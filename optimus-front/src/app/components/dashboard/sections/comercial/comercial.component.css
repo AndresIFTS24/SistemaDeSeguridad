@@ -1,0 +1,227 @@
+.comercial-dashboard {
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* KPIs Superiores */
+.comercial-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+.c-card {
+  background: #121926;
+  border: 1px solid #222f47;
+  border-radius: 6px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+.c-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.c-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 5px 0;
+}
+.c-sub {
+  font-size: 11px;
+  color: #475569;
+}
+.text-green { color: #10b981; }
+.text-purple { color: #a855f7; }
+
+/* Grid de trabajo */
+.comercial-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.comercial-panel-form, .comercial-panel-charts {
+  background: #121926;
+  border: 1px solid #222f47;
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+h3 {
+  margin: 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Estilos de Formularios de Alta */
+.optimus-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.form-group label {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: left;
+}
+.optimus-form input, .optimus-form select {
+  background: #0b0f19;
+  border: 1px solid #1e293b;
+  padding: 10px;
+  border-radius: 4px;
+  color: #f1f5f9;
+  font-size: 13px;
+  outline: none;
+}
+.optimus-form input:focus, .optimus-form select:focus {
+  border-color: #38bdf8;
+}
+
+/* Botoneras */
+.btn-sugerir {
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #38bdf8;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-submit-comercial {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: none;
+  color: #fff;
+  padding: 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: opacity 0.2s;
+}
+.btn-submit-comercial:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.btn-refresh {
+  width: 100%;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #94a3b8;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+  font-size: 12px;
+}
+
+/* Contenedores de Gráficos */
+.chart-container {
+  background: #0b0f19;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+/* 🎯 Clase nueva para reemplazar el estilo inline del segundo gráfico */
+.chart-spacer {
+  margin-top: 25px;
+}
+
+.chart-title {
+  margin: 0 0 15px 0;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: left;
+}
+.bar-chart {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 120px;
+  padding-top: 15px;
+  border-bottom: 1px solid #1e293b;
+}
+.bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 14%;
+  height: 100%;
+  justify-content: flex-end;
+}
+.bar-fill {
+  background: linear-gradient(0deg, #3b82f6 0%, #60a5fa 100%);
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  position: relative;
+  transition: height 0.5s ease-in-out;
+}
+.bar-label {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 5px;
+}
+
+/* Simulación de gráfico Donut */
+.donut-chart-simulation {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+.donut-display {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: conic-gradient(#38bdf8 0% 40%, #a855f7 40% 75%, #10b981 75% 100%);
+  position: relative;
+}
+.donut-display::before {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  background: #0b0f19;
+  border-radius: 50%;
+}
+.donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #cbd5e1;
+}
+.legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}

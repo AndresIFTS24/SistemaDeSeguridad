@@ -35,5 +35,17 @@ export const MENUS_POR_SECTOR: Record<number, MenuItem[]> = {
     { id: 'central',   label: 'Central de Abonados', icon: 'fa-broadcast-tower', seccion: 'central'   },
     { id: 'alarmas',   label: 'Consola de Alarmas',  icon: 'fa-bell',            seccion: 'alarmas'   },
     { id: 'eventos',   label: 'Registro de Eventos', icon: 'fa-list-alt',        seccion: 'eventos'   },
+  ],
+  // Técnica y Campo — ID_Sector real = 5 (verificado contra SECTORES).
+  // TecnicaComponent hoy es una sola vista (sin submódulos internos todavía),
+  // así que el menú arranca con un único ítem de Dashboard.
+  5: [
+    { id: 'dashboard', label: 'Dashboard', icon: 'fa-th-large', seccion: 'dashboard' },
+  ],
+  // Comercial — ID_Sector real = 6 (verificado contra SECTORES — el 2 real
+  // es Operaciones, no Comercial). Mismo criterio que sector 5: un único
+  // ítem hasta que ComercialComponent tenga submódulos propios.
+  6: [
+    { id: 'dashboard', label: 'Dashboard', icon: 'fa-th-large', seccion: 'dashboard' },
   ]
 };

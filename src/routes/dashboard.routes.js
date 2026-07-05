@@ -382,4 +382,44 @@ router.get('/direccion/auditoria/eventos', verifyToken, checkRole(accesoDireccio
     }
 });
 
+// Dirección (supervisión) + Comercial. ID_Sector real de Comercial = 6
+// (verificado contra la tabla SECTORES — el 2 real es Operaciones).
+const accesoDireccionYComercial = [
+    ...accesoDireccion,
+    'Comercial',
+    '6', 6
+];
+
+/**
+ * GET /api/dashboard/presupuestos
+ * Listado real de presupuestos comerciales, para el panel Comercial (y su
+ * supervisión desde Dirección). Adaptado de rama-andresito: LEFT JOIN con
+ * ABONADOS para traer la RazonSocial real cuando el presupuesto ya tiene
+ * abonado asociado.
+ */
+router.get('/presupuestos', verifyToken, checkRole(accesoDireccionYComercial), async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `SELECT
+                p.ID_Presupuesto,
+                p.NroPresupuesto,
+                p.TipoTrabajo,
+                p.ID_Abonado,
+                p.Direccion,
+                p.Ciudad,
+                p.FechaRecepcion,
+                p.Estado,
+                COALESCE(a.RazonSocial, 'Cliente Nuevo / Potencial') AS RazonSocial,
+                COALESCE(a.TelefonoContacto, 'Sin Teléfono') AS TelefonoContacto
+             FROM PRESUPUESTOS p
+             LEFT JOIN ABONADOS a ON p.ID_Abonado = a.NumeroDeAbonado`
+        );
+
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Error al obtener listado de presupuestos de la BD:', error);
+        res.status(500).json({ message: 'Error al obtener presupuestos comerciales.' });
+    }
+});
+
 module.exports = router;
