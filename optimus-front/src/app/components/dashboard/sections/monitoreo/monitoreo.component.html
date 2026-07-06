@@ -153,8 +153,8 @@
       </div>
 
       <div class="events-stack">
-         <div *ngFor="let ev of eventos" 
-             class="alarm-row" 
+         <div *ngFor="let ev of eventosPagina"
+             class="alarm-row"
              [ngClass]="getPrioridadClass(ev.NivelCriticidad)">
           <div class="priority-indicator"></div>
           <div class="time-col">{{ ev.FechaHoraRecepcion | argentinaDate:'time' }}</div>
@@ -186,6 +186,23 @@
           <i class="fas fa-spinner fa-spin"></i>
           <p>Cargando eventos...</p>
         </div>
+      </div>
+
+      <div class="paginacion" *ngIf="totalPaginasEventos > 1">
+        <button class="pag-btn" [disabled]="paginaEventos === 1" (click)="irAPaginaEventos(paginaEventos - 1)">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button
+          *ngFor="let p of paginasVisiblesEventos"
+          class="pag-btn"
+          [class.active]="p === paginaEventos"
+          (click)="irAPaginaEventos(p)">
+          {{ p }}
+        </button>
+        <button class="pag-btn" [disabled]="paginaEventos === totalPaginasEventos" (click)="irAPaginaEventos(paginaEventos + 1)">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        <span class="pag-info">Página {{ paginaEventos }} de {{ totalPaginasEventos }}</span>
       </div>
     </div>
 

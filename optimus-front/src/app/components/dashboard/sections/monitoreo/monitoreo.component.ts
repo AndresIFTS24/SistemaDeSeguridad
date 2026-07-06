@@ -54,10 +54,35 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
 
   public resumenMonitoreo: ResumenMonitoreo | null = null;
 
+  public paginaEventos = 1;
+  public readonly limiteEventos = 15;
+
   private socketSubs: Subscription[] = [];
 
   public get alertas(): Evento[] {
     return this.eventos.filter(e => e.Estado === 'Pendiente');
+  }
+
+  get totalPaginasEventos(): number {
+    return Math.max(1, Math.ceil(this.eventos.length / this.limiteEventos));
+  }
+
+  get eventosPagina(): Evento[] {
+    const inicio = (this.paginaEventos - 1) * this.limiteEventos;
+    return this.eventos.slice(inicio, inicio + this.limiteEventos);
+  }
+
+  irAPaginaEventos(n: number): void {
+    if (n < 1 || n > this.totalPaginasEventos || n === this.paginaEventos) return;
+    this.paginaEventos = n;
+  }
+
+  get paginasVisiblesEventos(): number[] {
+    const inicio = Math.max(1, this.paginaEventos - 2);
+    const fin = Math.min(this.totalPaginasEventos, inicio + 4);
+    const paginas: number[] = [];
+    for (let i = inicio; i <= fin; i++) paginas.push(i);
+    return paginas;
   }
 
   constructor(
@@ -149,6 +174,9 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
         this.eventos = response.eventos || [];
         this.cargandoEventos = false;
         this.alertasPendientesActualizadas.emit(this.alertas.length);
+        if (this.paginaEventos > this.totalPaginasEventos) {
+          this.paginaEventos = Math.max(1, this.totalPaginasEventos);
+        }
       },
       error: (err: any) => {
         console.error('Error al cargar eventos:', err);
