@@ -1,5 +1,5 @@
 import {
-  Component, Input, OnInit, OnChanges,
+  Component, Input, Output, EventEmitter, OnInit, OnChanges,
   OnDestroy, SimpleChanges
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -22,6 +22,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
 
   @Input() abonados: any[] = [];
   @Input() seccionActiva: string = '';
+  @Output() alertasPendientesActualizadas = new EventEmitter<number>();
 
   public filtroBusqueda: string = '';
   public abonadosFiltrados: any[] = [];
@@ -61,9 +62,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
     private eventoService: EventoService,
     private socketService: SocketService,
     private dashboardService: DashboardService
-  ) {
-    console.log('[DEBUG] constructor de MonitoreoDashComponent ejecutado');
-  }
+  ) {}
 
   ngOnInit(): void {
     this.actualizarVista();
@@ -82,7 +81,6 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('[DEBUG] ngOnChanges disparado. changes:', changes, '| seccionActiva actual:', this.seccionActiva, '| vistaActual actual:', this.vistaActual);
     if (changes['abonados'] && this.abonados) {
       this.actualizarVista();
       this.calcularStats();
@@ -110,6 +108,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
       next: (evento) => {
         console.log('📡 nuevo_evento recibido:', evento);
         this.eventos = [evento, ...this.eventos];
+        this.alertasPendientesActualizadas.emit(this.alertas.length);
         this.activarIndicadorNuevo();
         if (evento.NivelCriticidad === 'Crítico') {
           this.socketService.reproducirAlarmaCritica();
@@ -125,6 +124,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
         this.eventos = this.eventos.map(e =>
           e.ID_Evento === eventoActualizado.ID_Evento ? eventoActualizado : e
         );
+        this.alertasPendientesActualizadas.emit(this.alertas.length);
       }
     });
 
@@ -146,6 +146,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
       next: (response: any) => {
         this.eventos = response.eventos || [];
         this.cargandoEventos = false;
+        this.alertasPendientesActualizadas.emit(this.alertas.length);
       },
       error: (err: any) => {
         console.error('Error al cargar eventos:', err);

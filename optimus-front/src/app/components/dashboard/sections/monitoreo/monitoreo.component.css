@@ -74,63 +74,6 @@
 
 .alerts-list { flex: 1; overflow-y: auto; padding: 15px; }
 
-/* =========================================
-   ESTILOS MODERNOS PARA LAS PESTAÑAS (TABS)
-   ========================================= */
-.monitoring-tabs {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 25px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Línea sutil en vez de blanca */
-    padding-bottom: 0; /* Alínea la barra activa perfectamente a la base */
-}
-
-.monitoring-tabs button {
-    padding: 12px 20px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #94a3b8; /* Gris azulado suave para pestañas inactivas */
-    transition: all 0.3s ease;
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.monitoring-tabs button:hover {
-    color: #f8fafc; /* Blanco brillante al pasar el mouse por encima */
-}
-
-.monitoring-tabs button.active {
-    color: #3b82f6; /* El azul característico de Optimus */
-}
-
-/* Indicador luminoso debajo de la pestaña activa */
-.monitoring-tabs button.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: #3b82f6;
-    box-shadow: 0 0 10px #3b82f6;
-}
-
-/* Estilo para el globo indicador de alarmas activas */
-.pulse-badge {
-    background: #ef4444;
-    color: white;
-    font-size: 0.75rem;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-weight: 700;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-}
-
 @keyframes blink {
   0% { opacity: 1; }
   50% { opacity: 0.4; }

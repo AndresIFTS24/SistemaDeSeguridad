@@ -134,7 +134,8 @@
         <app-monitoreo-dash
           *ngSwitchCase="4"
           [abonados]="abonados"
-          [seccionActiva]="seccionActiva">
+          [seccionActiva]="seccionActiva"
+          (alertasPendientesActualizadas)="onAlertasPendientesActualizadas($event)">
         </app-monitoreo-dash>
         <app-tecnica-dash
           *ngSwitchCase="5"

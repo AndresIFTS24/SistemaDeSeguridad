@@ -53,11 +53,24 @@ export class DashboardComponent implements OnInit {
   // el switch de sectores no dependa de user.idSector directo.
   public sectorVisual: number = 0;
 
-  // Contadores para los badges del sidebar (hoy solo se usan en Dirección).
+  // Cantidad de alertas pendientes de Monitoreo, para el badge del sidebar
+  // (sector 4) — llega vía @Output() desde MonitoreoDashComponent, que es
+  // quien tiene los eventos cargados (el padre no los duplica).
+  public alarmasPendientesMonitoreo: number = 0;
+
+  onAlertasPendientesActualizadas(cantidad: number): void {
+    this.alarmasPendientesMonitoreo = cantidad;
+  }
+
+  // Contadores para los badges del sidebar.
   get badgesSidebar(): Record<string, number> {
-    return this.user.idSector === 1
-      ? { usuarios: this.listaUsuarios.length, abonados: this.abonados.length }
-      : {};
+    if (this.user.idSector === 1) {
+      return { usuarios: this.listaUsuarios.length, abonados: this.abonados.length };
+    }
+    if (this.user.idSector === 4) {
+      return { alarmas: this.alarmasPendientesMonitoreo };
+    }
+    return {};
   }
 
   // Nombre del módulo activo para mostrar en el encabezado (fuente única con SidebarComponent).
