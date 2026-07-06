@@ -61,7 +61,9 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
     private eventoService: EventoService,
     private socketService: SocketService,
     private dashboardService: DashboardService
-  ) {}
+  ) {
+    console.log('[DEBUG] constructor de MonitoreoDashComponent ejecutado');
+  }
 
   ngOnInit(): void {
     this.actualizarVista();
@@ -80,6 +82,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log('[DEBUG] ngOnChanges disparado. changes:', changes, '| seccionActiva actual:', this.seccionActiva, '| vistaActual actual:', this.vistaActual);
     if (changes['abonados'] && this.abonados) {
       this.actualizarVista();
       this.calcularStats();
