@@ -10,6 +10,8 @@ import { ItService } from '../../services/it.service';
 import { ItDashComponent } from './sections/it-admin/it-dash.component';
 import { DireccionDashComponent } from './sections/direccion/direccion.component';
 import { MonitoreoDashComponent } from './sections/monitoreo/monitoreo.component';
+import { ComercialComponent } from './sections/comercial/comercial.component';
+import { TecnicaComponent } from './sections/tecnica/tecnica.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { MENUS_POR_SECTOR } from '../../config/menus-sector';
@@ -23,6 +25,8 @@ import { MENUS_POR_SECTOR } from '../../config/menus-sector';
     MonitoreoDashComponent,
     ItDashComponent,
     DireccionDashComponent,
+    ComercialComponent,
+    TecnicaComponent,
     NavbarComponent,
     SidebarComponent
   ],
@@ -42,6 +46,12 @@ export class DashboardComponent implements OnInit {
   public abonados: any[] = [];
   public listaUsuarios: any[] = [];
   public seccionActiva: string = 'dashboard';
+
+  // Sector que se está MOSTRANDO en el content-area. Hoy arranca siempre
+  // igual a user.idSector (no hay navegación de supervisión todavía, eso
+  // quedó fuera de este alcance) — existe como variable separada para que
+  // el switch de sectores no dependa de user.idSector directo.
+  public sectorVisual: number = 0;
 
   // Contadores para los badges del sidebar (hoy solo se usan en Dirección).
   get badgesSidebar(): Record<string, number> {
@@ -87,6 +97,7 @@ export class DashboardComponent implements OnInit {
     this.user.sectorNombre = localStorage.getItem('userSectorNombre') || 'General';
     const savedSector = localStorage.getItem('userSector');
     this.user.idSector = savedSector ? parseInt(savedSector, 10) : 0;
+    this.sectorVisual = this.user.idSector;
 
     this.setCurrentDate();
     if (this.user.idSector !== 1) {
@@ -128,6 +139,21 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Bridge: TecnicaComponent es dueño de sus propios datos (PDS, servicios,
+  // técnicos activos) — acá solo se reflejan sus conteos en las KPI cards
+  // genéricas.
+  onPdsActualizados(pds: any[]): void {
+    if (this.kpis) this.kpis.eventosHoy = pds.length;
+  }
+
+  onServicesActualizados(services: any[]): void {
+    if (this.kpis) (this.kpis as any).asignacionesHoy = services.length;
+  }
+
+  onTecnicosActivosActualizados(cantidad: number): void {
+    if (this.kpis) this.kpis.tecnicosActivos = cantidad;
+  }
+
   private inicializarDatosSector(): void {
     switch (this.user.idSector) {
       case 1:
@@ -138,6 +164,14 @@ export class DashboardComponent implements OnInit {
         break;
       case 4:
         this.cargarAbonados();
+        break;
+      case 5: // Técnica y Campo — vista de supervisión de todo el equipo:
+        // necesita usuarios (para el roster de técnicos activos) y
+        // abonados (fuente de datos del simulador de PDS).
+        this.cargarUsuarios();
+        this.cargarAbonados();
+        break;
+      case 6: // Comercial
         break;
       default:
         console.warn('Sector sin panel configurado:', this.user.idSector);

@@ -382,4 +382,137 @@ router.get('/direccion/auditoria/eventos', verifyToken, checkRole(accesoDireccio
     }
 });
 
+// Dirección (supervisión) + Comercial. ID_Sector real de Comercial = 6
+// (verificado contra la tabla SECTORES — el 2 real es Operaciones).
+const accesoDireccionYComercial = [
+    ...accesoDireccion,
+    'Comercial',
+    '6', 6
+];
+
+/**
+ * GET /api/dashboard/presupuestos
+ * Listado real de presupuestos comerciales, para el panel Comercial (y su
+ * supervisión desde Dirección). Adaptado de rama-andresito: LEFT JOIN con
+ * ABONADOS para traer la RazonSocial real cuando el presupuesto ya tiene
+ * abonado asociado.
+ */
+router.get('/presupuestos', verifyToken, checkRole(accesoDireccionYComercial), async (req, res) => {
+    try {
+        const [rows] = await pool.execute(
+            `SELECT
+                p.ID_Presupuesto,
+                p.NroPresupuesto,
+                p.TipoTrabajo,
+                p.ID_Abonado,
+                p.Direccion,
+                p.Ciudad,
+                p.FechaRecepcion,
+                p.Estado,
+                COALESCE(a.RazonSocial, 'Cliente Nuevo / Potencial') AS RazonSocial,
+                COALESCE(a.TelefonoContacto, 'Sin Teléfono') AS TelefonoContacto
+             FROM PRESUPUESTOS p
+             LEFT JOIN ABONADOS a ON p.ID_Abonado = a.NumeroDeAbonado`
+        );
+
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Error al obtener listado de presupuestos de la BD:', error);
+        res.status(500).json({ message: 'Error al obtener presupuestos comerciales.' });
+    }
+});
+
+// Dirección (supervisión) + Técnica y Campo. ID_Sector real de Técnica = 5
+// (verificado contra la tabla SECTORES). No se reusa accesoDireccion solo
+// ni se le da acceso a /direccion/resumen completo (trae facturación y
+// alarmas que no son de Técnica) — este endpoint es angosto a propósito.
+const accesoDireccionYTecnica = [...accesoDireccion, '5', 5];
+
+/**
+ * GET /api/dashboard/tecnicos/resumen
+ * Desglose de técnicos para la vista de supervisión de Técnica y Campo
+ * (Jefe Técnico / Coordinador Técnico). Mismo criterio que ya usa
+ * /direccion/resumen para su bloque "tecnicos" — se comparten las queries,
+ * no se duplica el criterio, solo se expone en un endpoint propio y angosto.
+ */
+router.get('/tecnicos/resumen', verifyToken, checkRole(accesoDireccionYTecnica), async (req, res) => {
+    try {
+        const [
+            [[{ total, activosEmpleo, inactivosEmpleo }]],
+            [[{ enCampoAhora }]],
+        ] = await Promise.all([
+            pool.execute(
+                `SELECT COUNT(*) AS total, SUM(u.Activo = 1) AS activosEmpleo, SUM(u.Activo = 0) AS inactivosEmpleo
+                 FROM USUARIOS u JOIN ROLES r ON u.ID_Rol = r.ID_Rol WHERE r.NombreRol = 'Técnico'`
+            ),
+            pool.execute(`SELECT COUNT(DISTINCT ID_Tecnico) AS enCampoAhora FROM ASIGNACIONES WHERE Estado = 'En Curso'`),
+        ]);
+
+        const activosEmpleoNum = Number(activosEmpleo) || 0;
+
+        res.status(200).json({
+            total,
+            activosEmpleo: activosEmpleoNum,
+            inactivosEmpleo: Number(inactivosEmpleo) || 0,
+            enCampoAhora,
+            disponibles: activosEmpleoNum - enCampoAhora
+        });
+    } catch (error) {
+        console.error('Error al obtener resumen de técnicos:', error);
+        res.status(500).json({ message: 'Error al obtener el resumen de técnicos.' });
+    }
+});
+
+/**
+ * GET /api/dashboard/tecnicos/:idTecnico/ubicacion-actual
+ * Ubicación real de la asignación 'En Curso' de un técnico (para el mapa de
+ * Técnica y Campo) — reemplaza la coordenada simulada. Misma relación
+ * directa ASIGNACIONES.ID_Direccion -> DIRECCIONES que ya usa
+ * AsignacionService. Nunca inventa una coordenada: si no hay asignación en
+ * curso, o la dirección todavía no fue geocodificada, se devuelve así de
+ * forma explícita.
+ */
+router.get('/tecnicos/:idTecnico/ubicacion-actual', verifyToken, checkRole(accesoDireccionYTecnica), async (req, res) => {
+    try {
+        const idTecnico = Number(req.params.idTecnico);
+        if (!Number.isInteger(idTecnico) || idTecnico <= 0) {
+            return res.status(400).json({ message: 'idTecnico inválido.' });
+        }
+
+        const [filas] = await pool.execute(
+            `SELECT D.Calle, D.Numero, D.Ciudad, D.CoordenadasGPS
+             FROM ASIGNACIONES A
+             JOIN DIRECCIONES D ON A.ID_Direccion = D.ID_Direccion
+             WHERE A.ID_Tecnico = ? AND A.Estado = 'En Curso'
+             ORDER BY A.FechaInicioReal DESC
+             LIMIT 1`,
+            [idTecnico]
+        );
+
+        if (filas.length === 0) {
+            return res.status(200).json({ enCurso: false });
+        }
+
+        const { Calle, Numero, Ciudad, CoordenadasGPS } = filas[0];
+
+        if (!CoordenadasGPS) {
+            return res.status(200).json({
+                enCurso: true,
+                geocodificado: false,
+                direccion: { Calle, Numero, Ciudad }
+            });
+        }
+
+        res.status(200).json({
+            enCurso: true,
+            geocodificado: true,
+            coordenadasGPS: CoordenadasGPS,
+            direccion: { Calle, Numero, Ciudad }
+        });
+    } catch (error) {
+        console.error('Error al obtener ubicación actual del técnico:', error);
+        res.status(500).json({ message: 'Error al obtener la ubicación actual del técnico.' });
+    }
+});
+
 module.exports = router;

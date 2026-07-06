@@ -35,5 +35,20 @@ export const MENUS_POR_SECTOR: Record<number, MenuItem[]> = {
     { id: 'central',   label: 'Central de Abonados', icon: 'fa-broadcast-tower', seccion: 'central'   },
     { id: 'alarmas',   label: 'Consola de Alarmas',  icon: 'fa-bell',            seccion: 'alarmas'   },
     { id: 'eventos',   label: 'Registro de Eventos', icon: 'fa-list-alt',        seccion: 'eventos'   },
+  ],
+  // Técnica y Campo — ID_Sector real = 5 (verificado contra SECTORES).
+  // Vista de supervisión (Jefe Técnico / Coordinador Técnico) de todo el
+  // equipo, no la vista individual de un técnico de campo. Los 3 ítems
+  // mapean directo a los *ngSwitchCase de tecnica.component.html.
+  5: [
+    { id: 'eventos',      label: 'PDS Pendientes',       icon: 'fa-list-alt',           seccion: 'eventos'      },
+    { id: 'tecnicos',     label: 'Técnicos Activos',     icon: 'fa-users',              seccion: 'tecnicos'     },
+    { id: 'asignaciones', label: 'Servicios Coordinados', icon: 'fa-clipboard-check',   seccion: 'asignaciones' },
+  ],
+  // Comercial — ID_Sector real = 6 (verificado contra SECTORES — el 2 real
+  // es Operaciones, no Comercial). Mismo criterio que sector 5: un único
+  // ítem hasta que ComercialComponent tenga submódulos propios.
+  6: [
+    { id: 'dashboard', label: 'Dashboard', icon: 'fa-th-large', seccion: 'dashboard' },
   ]
 };

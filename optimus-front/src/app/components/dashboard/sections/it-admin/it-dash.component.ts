@@ -184,13 +184,20 @@ export class ItDashComponent implements OnInit, OnChanges {
   }
 
   private aplicarFiltros(): void {
+    // Si todavía no cargaron los usuarios, salimos para evitar romper el array
+    // (guard defensivo portado de rama-andresito).
+    if (!this.usuarios || this.usuarios.length === 0) {
+      this.usuariosFiltrados = [];
+      return;
+    }
+
     let resultado = [...this.usuarios];
 
-    if (this.sectorFiltroActivo) {
+    if (this.sectorFiltroActivo && this.sectorFiltroActivo.trim() !== '') {
       resultado = resultado.filter(u => u.NombreSector === this.sectorFiltroActivo);
     }
 
-    const term = this.filtroTexto.toLowerCase().trim();
+    const term = this.filtroTexto ? this.filtroTexto.toLowerCase().trim() : '';
     if (term) {
       resultado = resultado.filter(u =>
         u.Nombre?.toLowerCase().includes(term) ||

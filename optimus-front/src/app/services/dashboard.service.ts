@@ -25,6 +25,27 @@ export interface ResumenDireccion {
   otCompletadas: { cantidad: number; total: number; porcentaje: number };
 }
 
+export interface ResumenTecnicos {
+  total: number;
+  activosEmpleo: number;
+  inactivosEmpleo: number;
+  enCampoAhora: number;
+  disponibles: number;
+}
+
+// Ubicación real de la asignación 'En Curso' de un técnico. Tres formas
+// posibles, sin ninguna que invente una coordenada:
+//  - { enCurso: false } — no tiene asignación en curso ahora mismo.
+//  - { enCurso: true, geocodificado: false, direccion } — dirección real
+//    pero todavía sin CoordenadasGPS.
+//  - { enCurso: true, geocodificado: true, coordenadasGPS, direccion }
+export interface UbicacionActualTecnico {
+  enCurso: boolean;
+  geocodificado?: boolean;
+  coordenadasGPS?: string;
+  direccion?: { Calle: string; Numero: string; Ciudad: string };
+}
+
 export interface EvolucionAbonadosPunto {
   periodo: string;
   nuevos: number;
@@ -111,6 +132,17 @@ export class DashboardService {
 
   getResumenDireccion(): Observable<ResumenDireccion> {
     return this.http.get<ResumenDireccion>(`${this.apiUrl}/direccion/resumen`, { headers: this.authHeaders() });
+  }
+
+  getResumenTecnicos(): Observable<ResumenTecnicos> {
+    return this.http.get<ResumenTecnicos>(`${this.apiUrl}/tecnicos/resumen`, { headers: this.authHeaders() });
+  }
+
+  getUbicacionActualTecnico(idTecnico: number): Observable<UbicacionActualTecnico> {
+    return this.http.get<UbicacionActualTecnico>(
+      `${this.apiUrl}/tecnicos/${idTecnico}/ubicacion-actual`,
+      { headers: this.authHeaders() }
+    );
   }
 
   getEvolucionAbonados(meses: 3 | 6 | 12 = 6): Observable<EvolucionAbonadosResponse> {

@@ -1,0 +1,483 @@
+/* =========================================
+   OPTIMUS SYSTEMS - CORPORATE DESIGN CORE
+   ========================================= */
+
+:host {
+    --bg-dark: #0a0f18;
+    --bg-card: #121926;
+    --accent: #00d4ff;
+    --accent-dim: rgba(0, 212, 255, 0.1);
+    --text-main: #e2e8f0;
+    --text-dim: #94a3b8;
+    --border: rgba(255, 255, 255, 0.08);
+    --success: #10b981;
+    --alert: #ef4444;
+}
+
+/* CONSOLE / TABLE CONTAINER */
+.console-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+
+/* TABLA ESTILO CORPORATIVO */
+.table-wrapper {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.optimus-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.optimus-table th {
+    background: var(--bg-card);
+    padding: 14px 16px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+
+.optimus-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.optimus-table tr:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+/* ELEMENTOS INTERNOS DE TABLAS */
+.tech-id { font-family: 'Courier New', monospace; color: var(--accent); font-weight: bold; }
+.user-name { font-weight: 600; color: #fff; }
+.tech-tel { color: var(--text-dim); font-size: 0.85rem; }
+.text-center { text-align: center; }
+.table-empty-row { text-align: center; padding: 35px; color: var(--text-dim); }
+
+.tag-sector {
+    background: rgba(255,255,255, 0.05);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: var(--text-main);
+}
+
+/* ANCHO FIJO DE LA COLUMNA DE SELECCIÓN (antes estilo inline) */
+.col-sel {
+    width: 50px;
+}
+
+/* INDICADORES DE CONEXIÓN */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;              
+    font-size: 0.8rem;       
+    font-weight: 700;
+    color: #ffffff !important; 
+    letter-spacing: 0.5px;
+}
+
+.dot {
+    width: 9px;              
+    height: 9px;             
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot.online-status {
+    background: #00ffa3;     
+    box-shadow: 0 0 12px #00ffa3, 0 0 4px rgba(0, 255, 163, 0.6); 
+}
+
+.dot.offline-status {
+    background: var(--text-dim);
+}
+
+/* Variante azul del dot (antes estilo inline en "asignaciones") */
+.dot.online-status.dot-blue {
+    background: #3b82f6;
+    box-shadow: 0 0 12px #3b82f6, 0 0 4px rgba(59, 130, 246, 0.6);
+}
+
+/* ELEMENTOS ESPECÍFICOS DE SECCIONES INTERNAS */
+.abonados-section {
+    margin-top: 10px;
+    margin-bottom: 30px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.section-header-container {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px;
+}
+
+.abonados-section h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.btn-retry {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.btn-retry:hover {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+}
+
+.back-panel-btn {
+    margin: 0; 
+    padding: 8px 16px;
+}
+
+/* Botón "Derivar" (antes estilo inline) */
+.btn-derivar {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 11px;
+    background-color: #2563eb;
+    color: #fff;
+    border-color: #3b82f6;
+}
+
+.btn-derivar:hover {
+    background-color: #1d4ed8;
+    border-color: #60a5fa;
+    color: #fff;
+}
+
+/* Contenedor flex para los botones de acción de PDS (antes estilo inline) */
+.pds-actions-wrapper {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* MAPEOS DE CLASES DE APOYO PARA TABLAS INTERNAS */
+.pds-account-color {
+    color: #ef4444;
+}
+
+.pds-event-cell {
+    color: #f8fafc; 
+    font-weight: 500;
+}
+
+.pds-date-cell {
+    color: var(--text-dim);
+}
+
+.pds-address-cell {
+    color: #e2e8f0; 
+    font-size: 0.85rem;
+}
+
+/* COLUMNA CIUDAD (LETRA MAYÚSCULA ULTRA VISIBLE) */
+.pds-city-badge {
+    background: rgba(0, 212, 255, 0.08); 
+    color: #00d4ff; 
+    border: 1px solid rgba(0, 212, 255, 0.25); 
+    font-weight: 800; 
+    font-size: 0.8rem; 
+    letter-spacing: 0.07em; 
+    text-transform: uppercase; 
+    padding: 5px 12px; 
+    border-radius: 6px; 
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.05);
+    display: inline-block;
+}
+
+/* Clases de Prioridad Modernas en CSS */
+.tag-priority {
+    font-weight: 700; 
+    padding: 4px 10px; 
+    border-radius: 6px; 
+    font-size: 0.75rem;
+}
+
+.priority-critico {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.priority-alta {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.priority-normal {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+/* Botón Coordinar Automatizado */
+.btn-coordinate {
+    margin: 0;
+    padding: 6px 10px;
+    background: rgba(0, 212, 255, 0.1);
+    color: #00d4ff;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.wsp-icon {
+    width: 15px; 
+    height: 15px; 
+    fill: #25D366; 
+    flex-shrink: 0;
+}
+
+/* Color verde para el nro de cuenta en "Services Coordinados" (antes estilo inline) */
+.service-account-color {
+    color: #10b981;
+}
+
+/* Color rojo para el evento/falla en "Services Coordinados" (antes estilo inline) */
+.service-event-color {
+    color: #e11d48;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* SCROLLBAR PERSONALIZADO */
+.table-wrapper::-webkit-scrollbar { width: 6px; }
+.table-wrapper::-webkit-scrollbar-track { background: var(--bg-dark); }
+.table-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+.table-wrapper::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+/* SECCIÓN TÉCNICOS - PANEL DE MAPA */
+.tecnicos-pane-layout {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 20px;
+    align-items: start;
+}
+
+.btn-map-locate {
+    padding: 6px 10px;
+    min-width: auto;
+}
+
+.btn-map-locate .icon-locate {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.map-panel {
+    padding: 15px;
+    background: var(--bg-card);
+    border: 1px solid #222f47;
+}
+
+.map-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.map-panel-title {
+    margin: 0;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.map-panel-tech-tag {
+    background: #1e293b;
+    color: #38bdf8;
+    border: 1px solid #334155;
+}
+
+.map-container {
+    width: 100%;
+    height: 450px;
+    border-radius: 6px;
+    background-color: var(--bg-dark);
+    border: 1px solid #1e293b;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-iframe {
+    border: 0;
+    background: #ffffff;
+}
+
+.map-real-wrap {
+    position: absolute;
+    inset: 0;
+}
+
+.badge-simulado {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #f59e0b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.map-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 20px;
+}
+
+.map-placeholder-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 10px;
+    color: #334155;
+}
+
+.map-placeholder-text {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* DESGLOSE DE TÉCNICOS (En Campo Ahora / Disponibles) */
+.tecnicos-resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.tecnicos-resumen-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tecnicos-resumen-valor {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1;
+}
+
+.tecnicos-resumen-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-dim);
+}
+
+/* PAGINACIÓN (mismo patrón visual que Usuarios/Abonados/Bitácora) */
+.paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0 8px;
+    padding: 0 20px 20px;
+}
+
+.pag-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pag-btn:hover:not(:disabled) {
+    border-color: rgba(0, 212, 255, 0.4);
+    color: var(--accent);
+}
+
+.pag-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pag-btn.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: white;
+}
+
+.pag-info {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-left: 8px;
+}
