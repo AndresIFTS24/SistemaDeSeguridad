@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +9,7 @@ import { Observable } from 'rxjs';
 export class SocketService {
 
   private socket: Socket;
-  private readonly SERVER_URL = 'http://localhost:3000';
+  private readonly SERVER_URL = environment.apiUrl;
   private audioCtx: AudioContext | null = null;
 
   constructor() {
