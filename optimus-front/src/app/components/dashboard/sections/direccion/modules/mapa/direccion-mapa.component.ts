@@ -44,13 +44,19 @@ export class DireccionMapaComponent implements AfterViewInit, OnDestroy {
 
   private async cargarYRenderizar(): Promise<void> {
     this.cargando = true;
-    this.L = await import('leaflet');
+    // Leaflet es CommonJS puro (sin 'module'/'exports' en su package.json).
+    // Cuando queda en su propio chunk lazy, el interop CJS→ESM del build de
+    // producción solo expone { default: L }, sin copiar las propiedades
+    // nombradas (L.map, L.tileLayer, etc.) al namespace — confirmado
+    // reproduciendo el mismo code-splitting con esbuild. En un bundle sin
+    // separar en chunks (algunos escenarios de dev) sí las copia, por eso
+    // funcionaba en ng serve y fallaba en el build de producción.
+    const leafletModule = await import('leaflet');
+    this.L = (leafletModule as any).default ?? leafletModule;
 
     this.abonadoService.getAllAbonados().subscribe({
       next: (res: any) => {
-        console.log('[DEBUG mapa] res crudo:', res);
         const abonados = res.abonados || res || [];
-        console.log('[DEBUG mapa] typeof abonados:', typeof abonados, '| Array.isArray:', Array.isArray(abonados), '| valor:', abonados);
         this.totalAbonados = abonados.length;
         this.cargando = false;
         // No hace falta adivinar un tiempo de espera para que el navegador
