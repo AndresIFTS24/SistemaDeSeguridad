@@ -35,7 +35,7 @@
   </button>
 </div>
 
-  <div [ngSwitch]="vistaActual" class="fade-in">
+  <div [ngSwitch]="vistaActual" class="fade-in" #contenidoVista>
 
     <!-- VISTA ABONADOS -->
     <div *ngSwitchCase="'abonados'" class="main-monitoring-grid">

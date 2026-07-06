@@ -1,6 +1,6 @@
 import {
   Component, Input, Output, EventEmitter, OnInit, OnChanges,
-  OnDestroy, SimpleChanges
+  OnDestroy, SimpleChanges, ViewChild, ElementRef
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +23,8 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
   @Input() abonados: any[] = [];
   @Input() seccionActiva: string = '';
   @Output() alertasPendientesActualizadas = new EventEmitter<number>();
+
+  @ViewChild('contenidoVista') contenidoVista!: ElementRef<HTMLDivElement>;
 
   public filtroBusqueda: string = '';
   public abonadosFiltrados: any[] = [];
@@ -253,12 +255,10 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
 
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
-    // Mismo patrón de scroll-to-top que ya usa DashboardComponent
-    // (onSeccionSeleccionada) sobre .content-area — se repite acá porque
-    // ese scroll del padre no alcanza a corregir la posición cuando el
-    // contenido nuevo de esta vista es más corto que el anterior.
-    const contentArea = document.querySelector('.content-area');
-    contentArea?.scrollTo({ top: 0, behavior: 'smooth' });
+    // Los KPIs generales quedan siempre visibles arriba — el scroll baja
+    // hasta donde arranca el contenido específico de la pestaña elegida
+    // (el propio [ngSwitch]), no hasta el tope de la página.
+    this.contenidoVista?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   filtrarAbonados(): void {
