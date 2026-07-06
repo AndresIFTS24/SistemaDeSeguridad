@@ -215,13 +215,8 @@ export class SidebarComponent implements OnChanges {
       ];
       this.menuActivo = 'dashboard';
 
-      // Sector Monitoreo arranca colapsado por defecto
       const savedState = localStorage.getItem(`sidebar_collapsed_${this.idSector}`);
-      if (savedState !== null) {
-        this.isCollapsed = savedState === 'true';
-      } else {
-        this.isCollapsed = this.idSector === 4;
-      }
+      this.isCollapsed = savedState === 'true';
     }
 
     if (changes['seccionActiva'] && this.seccionActiva) {

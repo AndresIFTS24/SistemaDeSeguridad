@@ -34,6 +34,11 @@ export interface ResumenTecnicos {
   disponibles: number;
 }
 
+// "Alarmas Críticas" de Monitoreo — mismo criterio que ResumenDireccion.alarmasCriticas.
+export interface ResumenMonitoreo {
+  alarmasCriticas: { cantidad: number; pendientes: number; enProgreso: number };
+}
+
 // Ubicación real de la asignación 'En Curso' de un técnico. Tres formas
 // posibles, sin ninguna que invente una coordenada:
 //  - { enCurso: false } — no tiene asignación en curso ahora mismo.
@@ -137,6 +142,10 @@ export class DashboardService {
 
   getResumenTecnicos(): Observable<ResumenTecnicos> {
     return this.http.get<ResumenTecnicos>(`${this.apiUrl}/tecnicos/resumen`, { headers: this.authHeaders() });
+  }
+
+  getResumenMonitoreo(): Observable<ResumenMonitoreo> {
+    return this.http.get<ResumenMonitoreo>(`${this.apiUrl}/monitoreo/resumen`, { headers: this.authHeaders() });
   }
 
   getUbicacionActualTecnico(idTecnico: number): Observable<UbicacionActualTecnico> {

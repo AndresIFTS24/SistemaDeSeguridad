@@ -9,7 +9,7 @@
       <div class="stat-icon"><i class="fas fa-radiation-alt"></i></div>
       <div class="stat-info">
         <span class="stat-label">Alarmas Críticas</span>
-        <h2 class="stat-value">{{ eventosCriticos }}</h2>
+        <h2 class="stat-value">{{ resumenMonitoreo?.alarmasCriticas?.cantidad ?? 0 }}</h2>
       </div>
     </div>
     <div class="stat-card">
@@ -44,7 +44,7 @@
       <span class="pulse-badge" *ngIf="alertas.length > 0">{{ alertas.length }}</span>
     </button>
     <button (click)="cambiarVista('config')" [class.active]="vistaActual === 'config'">
-      <i class="fas fa-tools"></i> Configuración Técnica
+      <i class="fas fa-list-alt"></i> Registro de Eventos
     </button>
   </nav>
 
@@ -202,27 +202,14 @@
       </div>
     </div>
 
-    <!-- VISTA CONFIG -->
+    <!-- VISTA CONFIG (Registro de Eventos) -->
     <div *ngSwitchCase="'config'" class="config-view">
-      <div class="config-grid">
-        <div class="config-card">
-          <h4><i class="fas fa-desktop"></i> Interfaz de Operador</h4>
-          <div class="control-group">
-            <label for="darkMode">Modo Oscuro</label>
-            <input type="checkbox" id="darkMode" title="Activar modo oscuro">
-          </div>
-          <div class="control-group">
-            <label for="alertVolume">Volumen de Alerta</label>
-            <input type="range" id="alertVolume" min="0" max="100" title="Ajustar volumen de alertas">
-          </div>
-        </div>
-        <div class="config-card">
-          <h4><i class="fas fa-database"></i> Sincronización</h4>
-          <p>Eventos cargados: {{ eventos.length }}</p>
-          <button class="btn-refresh" (click)="cargarEventos()">
-            <i class="fas fa-sync"></i> Forzar Recarga de Datos
-          </button>
-        </div>
+      <div class="config-card">
+        <h4><i class="fas fa-database"></i> Sincronización</h4>
+        <p>Eventos cargados: {{ eventos.length }}</p>
+        <button class="btn-refresh" (click)="cargarEventos()">
+          <i class="fas fa-sync"></i> Forzar Recarga de Datos
+        </button>
       </div>
     </div>
 

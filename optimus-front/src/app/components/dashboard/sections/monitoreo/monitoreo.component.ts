@@ -8,6 +8,7 @@ import { Subscription } from 'rxjs';
 
 import { EventoService, Evento, CodigoEvento } from '../../../../services/evento.service';
 import { SocketService } from '../../../../services/socket.service';
+import { DashboardService, ResumenMonitoreo } from '../../../../services/dashboard.service';
 import { ArgentinaDatePipe } from '../../../../pipes/argentina-date.pipe';
 
 @Component({
@@ -27,7 +28,7 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
   public cargando: boolean = true;
   public abonadoSeleccionado: any = null;
   public eventoSeleccionado: any = null;
-  public vistaActual: string = 'central';
+  public vistaActual: string = 'abonados';
 
   public stats = { activos: 0, suspendidos: 0 };
 
@@ -48,21 +49,18 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
     ID_CodigoEvento: 0
   };
 
+  public resumenMonitoreo: ResumenMonitoreo | null = null;
+
   private socketSubs: Subscription[] = [];
 
   public get alertas(): Evento[] {
     return this.eventos.filter(e => e.Estado === 'Pendiente');
   }
 
-  public get eventosCriticos(): number {
-    return this.eventos.filter(e =>
-      e.NivelCriticidad === 'Crítico' && e.Estado === 'Pendiente'
-    ).length;
-  }
-
   constructor(
     private eventoService: EventoService,
-    private socketService: SocketService
+    private socketService: SocketService,
+    private dashboardService: DashboardService
   ) {}
 
   ngOnInit(): void {
@@ -70,7 +68,15 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
     this.cargarEventos();
     this.cargarDispositivos();
     this.cargarCodigosEvento();
+    this.cargarResumenMonitoreo();
     this.iniciarWebSocket();
+  }
+
+  private cargarResumenMonitoreo(): void {
+    this.dashboardService.getResumenMonitoreo().subscribe({
+      next: (data) => { this.resumenMonitoreo = data; },
+      error: (err: any) => console.error('Error al obtener resumen de Monitoreo:', err)
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {

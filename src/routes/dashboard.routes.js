@@ -515,4 +515,41 @@ router.get('/tecnicos/:idTecnico/ubicacion-actual', verifyToken, checkRole(acces
     }
 });
 
+// Dirección (supervisión) + Monitoreo. ID_Sector real de Monitoreo = 4
+// (verificado contra la tabla SECTORES). Mismo criterio que /tecnicos/resumen:
+// no se reusa accesoDireccion solo ni se da acceso a /direccion/resumen
+// completo (trae facturación que no es de Monitoreo).
+const accesoDireccionYMonitoreo = [...accesoDireccion, '4', 4];
+
+/**
+ * GET /api/dashboard/monitoreo/resumen
+ * "Alarmas Críticas" para el panel de Monitoreo, con el mismo criterio que
+ * ya usa /direccion/resumen (Crítico + Pendiente/En Progreso, vía
+ * CODIGOS_EVENTOS) — se comparte la query, no se duplica el criterio.
+ */
+router.get('/monitoreo/resumen', verifyToken, checkRole(accesoDireccionYMonitoreo), async (req, res) => {
+    try {
+        const [[{ cantidad, pendientes, enProgreso }]] = await pool.execute(
+            `SELECT
+                COUNT(*) AS cantidad,
+                SUM(e.Estado = 'Pendiente') AS pendientes,
+                SUM(e.Estado = 'En Progreso') AS enProgreso
+             FROM EVENTOS e
+             JOIN CODIGOS_EVENTOS c ON e.ID_CodigoEvento = c.ID_CodigoEvento
+             WHERE c.Prioridad = 'Crítico' AND e.Estado IN ('Pendiente', 'En Progreso')`
+        );
+
+        res.status(200).json({
+            alarmasCriticas: {
+                cantidad,
+                pendientes: Number(pendientes) || 0,
+                enProgreso: Number(enProgreso) || 0
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener resumen de Monitoreo:', error);
+        res.status(500).json({ message: 'Error al obtener el resumen del panel de Monitoreo.' });
+    }
+});
+
 module.exports = router;

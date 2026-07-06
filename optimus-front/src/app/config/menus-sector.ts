@@ -32,9 +32,9 @@ export const MENUS_POR_SECTOR: Record<number, MenuItem[]> = {
   ],
   4: [
     { id: 'dashboard', label: 'Dashboard',           icon: 'fa-th-large',        seccion: 'dashboard' },
-    { id: 'central',   label: 'Central de Abonados', icon: 'fa-broadcast-tower', seccion: 'central'   },
+    { id: 'abonados',  label: 'Central de Abonados', icon: 'fa-broadcast-tower', seccion: 'abonados'  },
     { id: 'alarmas',   label: 'Consola de Alarmas',  icon: 'fa-bell',            seccion: 'alarmas'   },
-    { id: 'eventos',   label: 'Registro de Eventos', icon: 'fa-list-alt',        seccion: 'eventos'   },
+    { id: 'config',    label: 'Registro de Eventos', icon: 'fa-list-alt',        seccion: 'config'    },
   ],
   // Técnica y Campo — ID_Sector real = 5 (verificado contra SECTORES).
   // Vista de supervisión (Jefe Técnico / Coordinador Técnico) de todo el

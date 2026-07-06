@@ -908,3 +908,56 @@
     80%  { opacity: 1; }
     100% { opacity: 0; }
 }
+
+/* =========================================
+   VISTA "REGISTRO DE EVENTOS" (config)
+   ========================================= */
+.config-view {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.config-card {
+    background: rgba(30, 41, 59, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 20px 24px;
+}
+
+.config-card h4 {
+    margin: 0 0 12px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.config-card p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin: 0 0 16px 0;
+}
+
+.btn-refresh {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
