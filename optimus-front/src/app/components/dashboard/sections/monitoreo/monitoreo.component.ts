@@ -253,6 +253,12 @@ export class MonitoreoDashComponent implements OnInit, OnChanges, OnDestroy {
 
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
+    // Mismo patrón de scroll-to-top que ya usa DashboardComponent
+    // (onSeccionSeleccionada) sobre .content-area — se repite acá porque
+    // ese scroll del padre no alcanza a corregir la posición cuando el
+    // contenido nuevo de esta vista es más corto que el anterior.
+    const contentArea = document.querySelector('.content-area');
+    contentArea?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   filtrarAbonados(): void {
