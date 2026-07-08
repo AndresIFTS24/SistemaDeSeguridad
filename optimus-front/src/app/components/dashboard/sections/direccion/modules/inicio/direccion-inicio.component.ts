@@ -6,7 +6,8 @@ import {
   DashboardService,
   ResumenDireccion,
   EvolucionAbonadosPunto,
-  EventoReciente
+  EventoReciente,
+  ResumenEjecutivo
 } from '../../../../../../services/dashboard.service';
 import { ArgentinaDatePipe } from '../../../../../../pipes/argentina-date.pipe';
 
@@ -31,8 +32,8 @@ export class DireccionInicioComponent implements OnInit, OnDestroy {
   private serieEvolucion: EvolucionAbonadosPunto[] = [];
   private volumenSerie: { hora: string; cantidad: number }[] = [];
 
-  public eventosRecientes: EventoReciente[] = [];
-  public cargandoEventosRecientes: boolean = true;
+  public resumenEjecutivo: ResumenEjecutivo | null = null;
+  public cargandoResumenEjecutivo: boolean = true;
 
   private chartEvolucion: Chart | null = null;
   private chartVolumen: Chart | null = null;
@@ -64,16 +65,16 @@ export class DireccionInicioComponent implements OnInit, OnDestroy {
     this.cargarEvolucionAbonados();
     this.cargarVolumenEventos();
 
-    this.cargandoEventosRecientes = true;
-    this.dashboardService.getEventosRecientes(6).subscribe({
+    this.cargandoResumenEjecutivo = true;
+    this.dashboardService.getResumenEjecutivo().subscribe({
       next: (data) => {
-        this.eventosRecientes = data.eventos;
-        this.cargandoEventosRecientes = false;
+        this.resumenEjecutivo = data;
+        this.cargandoResumenEjecutivo = false;
         setTimeout(() => this.renderizarCharts(), 0);
       },
       error: (err) => {
-        console.error('Error al cargar eventos recientes:', err);
-        this.cargandoEventosRecientes = false;
+        console.error('Error al cargar el resumen ejecutivo:', err);
+        this.cargandoResumenEjecutivo = false;
       }
     });
   }
@@ -102,6 +103,14 @@ export class DireccionInicioComponent implements OnInit, OnDestroy {
       },
       error: (err) => console.error('Error al cargar volumen de eventos:', err)
     });
+  }
+
+  formatearDuracion(segundos: number | null): string {
+    if (segundos === null) return '—';
+    const s = Math.round(segundos);
+    const m = Math.floor(s / 60);
+    const rem = s % 60;
+    return m > 0 ? `${m}m ${rem}s` : `${rem}s`;
   }
 
   private renderizarCharts(): void {

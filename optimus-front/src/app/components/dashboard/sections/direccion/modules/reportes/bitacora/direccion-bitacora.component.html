@@ -80,7 +80,8 @@
         <tr>
           <th>Fecha/Hora</th>
           <th>Abonado</th>
-          <th>Zona / Ciudad</th>
+          <th>Zona</th>
+          <th>Ciudad</th>
           <th>Alarma</th>
           <th>Prioridad</th>
           <th>Estado</th>
@@ -91,7 +92,8 @@
         <tr *ngFor="let ev of eventos">
           <td class="celda-fecha">{{ ev.fechaHoraRecepcion | argentinaDate:'datetime' }}</td>
           <td><span class="nombre-text">{{ ev.abonado.razonSocial }}</span></td>
-          <td class="celda-tenue">{{ ev.dispositivo.zona || ev.direccion.ciudad }}</td>
+          <td class="celda-tenue">{{ ev.dispositivo.zona || '—' }}</td>
+          <td class="celda-tenue">{{ ev.direccion.ciudad || '—' }}</td>
           <td>
             <span class="nombre-text">{{ ev.descripcionAlarma }}</span>
             <span class="celda-tenue codigo-alarma">{{ ev.codigo }}</span>
@@ -106,7 +108,7 @@
           </td>
         </tr>
         <tr *ngIf="eventos.length === 0">
-          <td colspan="7" class="empty-row">No se encontraron eventos con estos filtros.</td>
+          <td colspan="8" class="empty-row">No se encontraron eventos con estos filtros.</td>
         </tr>
       </tbody>
     </table>

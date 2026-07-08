@@ -111,31 +111,51 @@
     <div class="panel-resumen-ejecutivo">
       <div class="panel-resumen-header">
         <h3>Resumen Ejecutivo</h3>
-        <i class="fas fa-triangle-exclamation"></i>
+        <i class="fas fa-chart-line"></i>
       </div>
 
-      <div class="direccion-loading" *ngIf="cargandoEventosRecientes">
+      <div class="direccion-loading" *ngIf="cargandoResumenEjecutivo">
         <div class="spinner"></div>
       </div>
 
-      <div class="resumen-lista" *ngIf="!cargandoEventosRecientes">
-        <div class="resumen-item" *ngFor="let ev of eventosRecientes" [ngClass]="'estado-' + ev.estadoUI">
-          <i class="fas" [ngClass]="{
-            'fa-circle-exclamation': ev.estadoUI === 'critico',
-            'fa-triangle-exclamation': ev.estadoUI === 'atencion',
-            'fa-circle-check': ev.estadoUI === 'resuelto'
-          }"></i>
-          <div class="resumen-item-info">
-            <h4 [class.resuelto]="ev.estadoUI === 'resuelto'">{{ ev.descripcionAlarma }}</h4>
-            <p>{{ ev.abonado }}</p>
-            <div class="resumen-item-meta">
-              <span class="dot"></span>
-              {{ ev.estadoUI === 'critico' ? 'CRÍTICO' : (ev.estadoUI === 'atencion' ? 'ATENCIÓN' : 'RESUELTO') }}
-              — {{ ev.fechaHoraRecepcion | argentinaDate:'relative' }}
+      <div class="resumen-ejecutivo-body" *ngIf="!cargandoResumenEjecutivo && resumenEjecutivo">
+
+        <div class="mtta-card">
+          <span class="mtta-label">Tiempo Promedio de Atención</span>
+          <div class="mtta-valor-row">
+            <span class="mtta-valor">{{ formatearDuracion(resumenEjecutivo.mtta.segundosPromedioActual) }}</span>
+            <span class="mtta-tendencia"
+                  *ngIf="resumenEjecutivo.mtta.variacionPorcentual !== null"
+                  [ngClass]="resumenEjecutivo.mtta.variacionPorcentual <= 0 ? 'tendencia-buena' : 'tendencia-mala'">
+              <i class="fas" [ngClass]="resumenEjecutivo.mtta.variacionPorcentual <= 0 ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
+              {{ resumenEjecutivo.mtta.variacionPorcentual < 0 ? -resumenEjecutivo.mtta.variacionPorcentual : resumenEjecutivo.mtta.variacionPorcentual }}%
+            </span>
+          </div>
+          <span class="mtta-sub" *ngIf="resumenEjecutivo.mtta.variacionPorcentual === null">
+            Sin datos suficientes del período anterior para comparar
+          </span>
+          <span class="mtta-sub" *ngIf="resumenEjecutivo.mtta.variacionPorcentual !== null">
+            vs. los 30 días anteriores
+          </span>
+        </div>
+
+        <div class="top-criticos">
+          <span class="top-criticos-label">Abonados con más alarmas críticas (30 días)</span>
+          <div class="top-criticos-lista" *ngIf="resumenEjecutivo.topAbonadosCriticos.length > 0">
+            <div class="top-criticos-item" *ngFor="let a of resumenEjecutivo.topAbonadosCriticos; let i = index">
+              <span class="top-rank">#{{ i + 1 }}</span>
+              <div class="top-criticos-info">
+                <strong>{{ a.razonSocial }}</strong>
+                <span class="top-criticos-sub">#{{ a.numeroDeAbonado }}</span>
+              </div>
+              <span class="top-criticos-count">{{ a.totalCriticos }}</span>
             </div>
           </div>
+          <div class="empty-row" *ngIf="resumenEjecutivo.topAbonadosCriticos.length === 0">
+            Sin alarmas críticas registradas en los últimos 30 días.
+          </div>
         </div>
-        <div class="empty-row" *ngIf="eventosRecientes.length === 0">Sin eventos registrados.</div>
+
       </div>
     </div>
   </div>

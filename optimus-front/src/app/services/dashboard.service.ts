@@ -83,6 +83,22 @@ export interface EventoReciente {
   abonado: string;
 }
 
+export interface ResumenEjecutivo {
+  mtta: {
+    segundosPromedioActual: number | null;
+    segundosPromedioAnterior: number | null;
+    variacionPorcentual: number | null;
+    muestrasActual: number;
+    muestrasAnterior: number;
+  };
+  topAbonadosCriticos: {
+    idAbonado: number;
+    razonSocial: string;
+    numeroDeAbonado: string;
+    totalCriticos: number;
+  }[];
+}
+
 export interface EventosRecientesResponse {
   eventos: EventoReciente[];
 }
@@ -171,6 +187,10 @@ export class DashboardService {
       `${this.apiUrl}/direccion/eventos-recientes?limit=${limit}`,
       { headers: this.authHeaders() }
     );
+  }
+
+  getResumenEjecutivo(): Observable<ResumenEjecutivo> {
+    return this.http.get<ResumenEjecutivo>(`${this.apiUrl}/direccion/resumen-ejecutivo`, { headers: this.authHeaders() });
   }
 
   getAuditoriaEventos(filtros: AuditoriaEventosFiltros): Observable<AuditoriaEventosResponse> {

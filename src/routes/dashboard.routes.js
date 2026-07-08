@@ -552,4 +552,76 @@ router.get('/monitoreo/resumen', verifyToken, checkRole(accesoDireccionYMonitore
     }
 });
 
+router.get('/direccion/resumen-ejecutivo', verifyToken, checkRole(accesoDireccion), async (req, res) => {
+    try {
+        const [
+            [[mttaActual]],
+            [[mttaAnterior]],
+            [topAbonadosCriticos],
+        ] = await Promise.all([
+            pool.query(`
+                SELECT AVG(TIMESTAMPDIFF(SECOND, e.FechaHoraRecepcion, primera.FechaHoraAccion)) AS segundosPromedio,
+                       COUNT(*) AS muestras
+                FROM EVENTOS e
+                JOIN (
+                    SELECT ID_Evento, MIN(FechaHoraAccion) AS FechaHoraAccion
+                    FROM SEGUIMIENTOS_EVENTOS
+                    GROUP BY ID_Evento
+                ) primera ON primera.ID_Evento = e.ID_Evento
+                WHERE e.FechaHoraRecepcion >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            `),
+            pool.query(`
+                SELECT AVG(TIMESTAMPDIFF(SECOND, e.FechaHoraRecepcion, primera.FechaHoraAccion)) AS segundosPromedio,
+                       COUNT(*) AS muestras
+                FROM EVENTOS e
+                JOIN (
+                    SELECT ID_Evento, MIN(FechaHoraAccion) AS FechaHoraAccion
+                    FROM SEGUIMIENTOS_EVENTOS
+                    GROUP BY ID_Evento
+                ) primera ON primera.ID_Evento = e.ID_Evento
+                WHERE e.FechaHoraRecepcion >= DATE_SUB(NOW(), INTERVAL 60 DAY)
+                  AND e.FechaHoraRecepcion < DATE_SUB(NOW(), INTERVAL 30 DAY)
+            `),
+            pool.query(`
+                SELECT a.ID_Abonado, a.RazonSocial, a.NumeroDeAbonado, COUNT(*) AS totalCriticos
+                FROM EVENTOS e
+                JOIN CODIGOS_EVENTOS c ON e.ID_CodigoEvento = c.ID_CodigoEvento
+                JOIN DISPOSITIVOS d ON e.ID_Dispositivo = d.ID_Dispositivo
+                JOIN DIRECCIONES dir ON d.ID_Direccion = dir.ID_Direccion
+                JOIN ABONADOS a ON dir.ID_Abonado = a.ID_Abonado
+                WHERE c.Prioridad = 'Crítico'
+                  AND e.FechaHoraRecepcion >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                GROUP BY a.ID_Abonado, a.RazonSocial, a.NumeroDeAbonado
+                ORDER BY totalCriticos DESC
+                LIMIT 5
+            `),
+        ]);
+
+        const segActual = mttaActual.segundosPromedio !== null ? Number(mttaActual.segundosPromedio) : null;
+        const segAnterior = mttaAnterior.segundosPromedio !== null ? Number(mttaAnterior.segundosPromedio) : null;
+        const hayComparacion = segActual !== null && segAnterior !== null && segAnterior > 0;
+
+        res.status(200).json({
+            mtta: {
+                segundosPromedioActual: segActual,
+                segundosPromedioAnterior: segAnterior,
+                variacionPorcentual: hayComparacion
+                    ? Math.round(((segActual - segAnterior) / segAnterior) * 100)
+                    : null,
+                muestrasActual: mttaActual.muestras,
+                muestrasAnterior: mttaAnterior.muestras
+            },
+            topAbonadosCriticos: topAbonadosCriticos.map(a => ({
+                idAbonado: a.ID_Abonado,
+                razonSocial: a.RazonSocial,
+                numeroDeAbonado: a.NumeroDeAbonado,
+                totalCriticos: a.totalCriticos
+            }))
+        });
+    } catch (error) {
+        console.error('Error al obtener el resumen ejecutivo de Dirección:', error);
+        res.status(500).json({ message: 'Error al obtener el resumen ejecutivo.' });
+    }
+});
+
 module.exports = router;
