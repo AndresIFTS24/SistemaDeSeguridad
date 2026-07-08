@@ -57,7 +57,7 @@ export class ItDashComponent implements OnInit, OnChanges {
 
   // ===== PESTAÑA 3: AUDITORÍA =====
   public seguimientos: any[] = [];
-  public topDispositivos: any[] = [];
+  public cuentasDesactivadas: any[] = [];
   public cargandoAuditoria: boolean = true;
 
   // ===== PESTAÑA 4: INFRAESTRUCTURA =====
@@ -368,7 +368,7 @@ export class ItDashComponent implements OnInit, OnChanges {
     this.itService.getAuditoria().subscribe({
       next: (res: any) => {
         this.seguimientos = res.seguimientos || [];
-        this.topDispositivos = res.topDispositivos || [];
+        this.cuentasDesactivadas = res.cuentasDesactivadas || [];
         this.cargandoAuditoria = false;
       },
       error: (err: any) => { console.error('Error al cargar auditoría:', err); this.cargandoAuditoria = false; }

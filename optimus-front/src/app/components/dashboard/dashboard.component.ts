@@ -113,9 +113,10 @@ export class DashboardComponent implements OnInit {
     this.sectorVisual = this.user.idSector;
 
     this.setCurrentDate();
-    if (this.user.idSector !== 1) {
-      // Dirección tiene su propio bloque de KPIs (/direccion/resumen);
-      // no hace falta pedir también las KPIs genéricas.
+    if (this.user.idSector !== 1 && this.user.idSector !== 3) {
+      // Dirección e IT tienen sus propios bloques de KPIs
+      // (/direccion/resumen y /it/infraestructura); no hace falta
+      // pedir también las KPIs genéricas.
       this.loadKpis();
     }
     this.inicializarDatosSector();

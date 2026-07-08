@@ -27,7 +27,7 @@
       </div>
 
       <!-- KPI CARDS (genéricas — no se muestran en Dirección, que tiene su propio bloque de KPIs) -->
-      <ng-container *ngIf="user.idSector !== 1">
+      <ng-container *ngIf="user.idSector !== 1 && user.idSector !== 3">
       <div class="kpi-grid" *ngIf="!loadingKpis; else loadingTpl">
         <div class="kpi-card abonados">
           <div class="kpi-icon">

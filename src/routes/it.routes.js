@@ -187,21 +187,20 @@ router.get('/auditoria', verifyToken, checkRole(accesoIT), async (req, res) => {
     LIMIT 25
 `);
 
-        const [topDispositivos] = await pool.execute(`
-    SELECT D.NombreDispositivo, AB.RazonSocial AS NombreAbonado, COUNT(E.ID_Evento) AS TotalEventos
-    FROM EVENTOS E
-    INNER JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
-    INNER JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
-    INNER JOIN ABONADOS AB ON DIR.ID_Abonado = AB.ID_Abonado
-    GROUP BY D.ID_Dispositivo, D.NombreDispositivo, AB.RazonSocial
-    ORDER BY TotalEventos DESC
-    LIMIT 5
+        const [cuentasDesactivadas] = await pool.execute(`
+    SELECT u.ID_Usuario, u.Nombre, u.Email, s.NombreSector, r.NombreRol
+    FROM USUARIOS u
+    JOIN SECTORES s ON u.ID_Sector = s.ID_Sector
+    JOIN ROLES r ON u.ID_Rol = r.ID_Rol
+    WHERE u.Activo = 0
+    ORDER BY u.Nombre
+    LIMIT 10
 `);
 
         res.status(200).json({
             message: '✅ Auditoría obtenida correctamente.',
             seguimientos,
-            topDispositivos
+            cuentasDesactivadas
         });
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener la auditoría.', error: error.message });
@@ -215,33 +214,12 @@ router.get('/auditoria', verifyToken, checkRole(accesoIT), async (req, res) => {
 
 router.get('/infraestructura', verifyToken, checkRole(accesoIT), async (req, res) => {
     try {
-        const [[abonados]] = await pool.execute(`
-            SELECT 
-                SUM(CASE WHEN Activo = 1 THEN 1 ELSE 0 END) AS activos,
-                SUM(CASE WHEN Activo = 0 THEN 1 ELSE 0 END) AS inactivos
-            FROM ABONADOS
-        `);
-
         const [[dispositivos]] = await pool.execute(`
-            SELECT 
+            SELECT
                 SUM(CASE WHEN Estado = 'Operativo' THEN 1 ELSE 0 END) AS operativos,
-                SUM(CASE WHEN Estado != 'Operativo' THEN 1 ELSE 0 END) AS inactivos,
+                SUM(CASE WHEN Estado != 'Operativo' THEN 1 ELSE 0 END) AS fueraDeServicio,
                 COUNT(*) AS total
             FROM DISPOSITIVOS
-        `);
-
-        const [eventosPorEstado] = await pool.execute(`
-            SELECT Estado, COUNT(*) AS total
-            FROM EVENTOS
-            GROUP BY Estado
-        `);
-
-        const [[tickets]] = await pool.execute(`
-            SELECT 
-                SUM(CASE WHEN Estado = 'Abierto' THEN 1 ELSE 0 END) AS abiertos,
-                SUM(CASE WHEN Estado != 'Abierto' THEN 1 ELSE 0 END) AS cerrados,
-                COUNT(*) AS total
-            FROM TICKETS_SOPORTE
         `);
 
         const [stockCritico] = await pool.execute(`
@@ -261,10 +239,7 @@ router.get('/infraestructura', verifyToken, checkRole(accesoIT), async (req, res
 
         res.status(200).json({
             message: '✅ Datos de infraestructura obtenidos.',
-            abonados,
             dispositivos,
-            eventosPorEstado,
-            tickets,
             stockCritico,
             stockTotal
         });

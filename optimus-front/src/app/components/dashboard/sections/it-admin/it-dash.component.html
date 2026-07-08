@@ -289,18 +289,16 @@
         </div>
 
         <div class="audit-panel">
-          <h3><i class="fas fa-fire"></i> Dispositivos con Más Eventos</h3>
+          <h3><i class="fas fa-user-lock"></i> Cuentas Desactivadas</h3>
           <div class="audit-list">
-            <div *ngFor="let d of topDispositivos; let i = index" class="top-item">
-              <span class="top-rank">#{{ i + 1 }}</span>
+            <div *ngFor="let u of cuentasDesactivadas" class="top-item">
               <div class="top-content">
-                <strong>{{ d.NombreDispositivo }}</strong>
-                <div class="audit-sub">{{ d.NombreAbonado }}</div>
+                <strong>{{ u.Nombre }}</strong>
+                <div class="audit-sub">{{ u.NombreRol }} · {{ u.NombreSector }}</div>
               </div>
-              <span class="top-count">{{ d.TotalEventos }}</span>
             </div>
-            <div *ngIf="topDispositivos.length === 0" class="empty-state-small">
-              No hay datos de eventos todavía.
+            <div *ngIf="cuentasDesactivadas.length === 0" class="empty-state-small">
+              No hay cuentas desactivadas actualmente.
             </div>
           </div>
         </div>
@@ -322,19 +320,14 @@
 
         <div class="infra-kpis">
           <div class="infra-kpi">
-            <span class="infra-label">Abonados Activos</span>
-            <span class="infra-value color-green">{{ infraestructura.abonados?.activos || 0 }}</span>
-            <span class="infra-sub">{{ infraestructura.abonados?.inactivos || 0 }} inactivos</span>
-          </div>
-          <div class="infra-kpi">
             <span class="infra-label">Dispositivos Operativos</span>
-            <span class="infra-value color-cyan">{{ infraestructura.dispositivos?.operativos || 0 }}</span>
+            <span class="infra-value color-green">{{ infraestructura.dispositivos?.operativos || 0 }}</span>
             <span class="infra-sub">de {{ infraestructura.dispositivos?.total || 0 }} totales</span>
           </div>
           <div class="infra-kpi">
-            <span class="infra-label">Tickets Abiertos</span>
-            <span class="infra-value color-amber">{{ infraestructura.tickets?.abiertos || 0 }}</span>
-            <span class="infra-sub">de {{ infraestructura.tickets?.total || 0 }} totales</span>
+            <span class="infra-label">Fuera de Servicio</span>
+            <span class="infra-value color-amber">{{ infraestructura.dispositivos?.fueraDeServicio || 0 }}</span>
+            <span class="infra-sub">requieren revisión técnica</span>
           </div>
           <div class="infra-kpi">
             <span class="infra-label">Stock Crítico</span>
@@ -344,20 +337,6 @@
         </div>
 
         <div class="infra-grid">
-
-          <div class="infra-panel">
-            <h3><i class="fas fa-exclamation-triangle"></i> Eventos por Estado</h3>
-            <div class="estado-bars">
-              <div *ngFor="let e of infraestructura.eventosPorEstado" class="estado-bar-row">
-                <span class="estado-bar-label">{{ e.Estado }}</span>
-                <span class="estado-bar-value">{{ e.total }}</span>
-              </div>
-              <div *ngIf="!infraestructura.eventosPorEstado?.length" class="empty-state-small">
-                No hay eventos registrados.
-              </div>
-            </div>
-          </div>
-
           <div class="infra-panel">
             <h3><i class="fas fa-box-open"></i> Stock por Modelo</h3>
             <div class="stock-list">
@@ -373,7 +352,6 @@
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
