@@ -1,12 +1,7 @@
 // src/middleware/auth.middleware.js
 
 const jwt = require('jsonwebtoken');
-// En Clever Cloud, las variables se cargan solas en process.env. 
-// Quitamos la ruta fija '../../.env' para evitar errores de lectura.
-require('dotenv').config(); 
-
-// *** ¡CRÍTICO! Esta clave DEBE ser EXACTAMENTE la misma que en AuthService.js ***
-const JWT_SECRET = process.env.JWT_SECRET || 'seguridad_total_2024'; 
+const { JWT_SECRET } = require('../config/jwt.config');
 
 /**
  * Middleware para verificar la validez del token JWT.

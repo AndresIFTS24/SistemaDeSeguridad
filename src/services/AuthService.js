@@ -5,6 +5,7 @@
 const { pool } = require('../config/db.config');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { JWT_SECRET, JWT_EXPIRES_IN } = require('../config/jwt.config');
 require('dotenv').config();
 
 class AuthService {
@@ -50,18 +51,16 @@ class AuthService {
 
         // 3. Generación de Token JWT
         // Usamos la misma clave que el Middleware
-        const secret = process.env.JWT_SECRET || 'seguridad_total_2024';
-        
          const token = jwt.sign(
-    { 
-        id: user.ID_Usuario, 
-        email: user.Email, 
+    {
+        id: user.ID_Usuario,
+        email: user.Email,
         idSector: user.ID_Sector,
         nombreSector: user.NombreSector,
         rol: user.NombreRol
     },
-    secret,
-    { expiresIn: '8h' }
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
 );
 
         // 4. Retorno de información estructurada para el Frontend
