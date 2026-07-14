@@ -8,8 +8,11 @@
     </div>
   </div>
 
-  <!-- TABS (4 pestañas) -->
+  <!-- TABS (5 pestañas) -->
   <nav class="it-tabs">
+    <button (click)="cambiarVista('inicio')" [class.active]="vistaActual === 'inicio'">
+      <i class="fas fa-house"></i> Inicio
+    </button>
     <button (click)="cambiarVista('usuarios')" [class.active]="vistaActual === 'usuarios'">
       <i class="fas fa-users-cog"></i> Usuarios
     </button>
@@ -25,6 +28,39 @@
   </nav>
 
   <div [ngSwitch]="vistaActual" class="it-content fade-in">
+
+    <!-- ============================================= -->
+    <!-- PESTAÑA 0: INICIO -->
+    <!-- ============================================= -->
+    <div *ngSwitchCase="'inicio'" class="tab-inicio">
+
+      <div class="loading-state" *ngIf="cargandoInicio">
+        <div class="spinner"></div>
+        <span>Revisando el estado del sistema...</span>
+      </div>
+
+      <div *ngIf="!cargandoInicio && inicioSinAlertas" class="inicio-ok">
+        <i class="fas fa-circle-check"></i>
+        <h3>Todo en orden</h3>
+        <p>Sistema operativo, sin stock crítico, sin dispositivos fuera de servicio.</p>
+      </div>
+
+      <div *ngIf="!cargandoInicio && !inicioSinAlertas" class="inicio-alertas">
+        <div class="inicio-alertas-header">
+          <i class="fas fa-triangle-exclamation"></i>
+          {{ alertasInicio.length }} elemento{{ alertasInicio.length > 1 ? 's' : '' }} requiere{{ alertasInicio.length > 1 ? 'n' : '' }} atención
+        </div>
+        <div *ngFor="let a of alertasInicio" class="inicio-alerta-item" [ngClass]="'nivel-' + a.nivel" (click)="irAPestanaDesdeAlerta(a.destino)">
+          <i class="fas" [ngClass]="a.icono"></i>
+          <div class="inicio-alerta-content">
+            <strong>{{ a.titulo }}</strong>
+            <span>{{ a.detalle }}</span>
+          </div>
+          <span class="inicio-alerta-link">Ver {{ a.destino === 'sistema' ? 'Estado del Sistema' : (a.destino === 'infraestructura' ? 'Infraestructura' : 'Auditoría') }} →</span>
+        </div>
+      </div>
+
+    </div>
 
     <!-- ============================================= -->
     <!-- PESTAÑA 1: USUARIOS -->

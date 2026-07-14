@@ -24,7 +24,7 @@ export const MENUS_POR_SECTOR: Record<number, MenuItem[]> = {
     { id: 'mapa',      label: 'Mapa de Cobertura',      icon: 'fa-map-location-dot', seccion: 'mapa'      },
   ],
   3: [
-    { id: 'dashboard',       label: 'Dashboard',          icon: 'fa-th-large',  seccion: 'dashboard'       },
+    { id: 'dashboard',       label: 'Inicio',             icon: 'fa-house',     seccion: 'dashboard'       },
     { id: 'usuarios',        label: 'Usuarios',           icon: 'fa-users-cog', seccion: 'usuarios'        },
     { id: 'sistema',         label: 'Estado del Sistema', icon: 'fa-server',    seccion: 'sistema'         },
     { id: 'auditoria',       label: 'Auditoría',          icon: 'fa-history',   seccion: 'auditoria'       },

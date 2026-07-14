@@ -67,6 +67,11 @@ export class ItDashComponent implements OnInit, OnChanges {
   public infraestructura: any = null;
   public cargandoInfraestructura: boolean = true;
 
+  // ===== PESTAÑA 0: INICIO (feed de alertas) =====
+  public alertasInicio: any[] = [];
+  public cargandoInicio: boolean = true;
+  public inicioSinAlertas: boolean = false;
+
   private coloresSector: Record<string, string> = {
     'Técnica y Campo':      '#10b981',
     'Monitoreo':            '#3b82f6',
@@ -80,18 +85,22 @@ export class ItDashComponent implements OnInit, OnChanges {
   constructor(private itService: ItService) {}
 
   ngOnInit(): void {
-    setTimeout(() => this.cambiarVista('usuarios'), 800);
+    setTimeout(() => this.cambiarVista('inicio'), 800);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['seccionActiva'] && this.seccionActiva && this.seccionActiva !== 'dashboard') {
-      this.cambiarVista(this.seccionActiva);
+    if (changes['seccionActiva'] && this.seccionActiva) {
+      const vista = this.seccionActiva === 'dashboard' ? 'inicio' : this.seccionActiva;
+      this.cambiarVista(vista);
     }
   }
 
   cambiarVista(vista: string): void {
     this.vistaActual = vista;
     switch (vista) {
+      case 'inicio':
+        this.cargarInicio();
+        break;
       case 'usuarios':
         if (this.usuarios.length === 0) this.cargarUsuarios();
         break;
@@ -410,5 +419,75 @@ export class ItDashComponent implements OnInit, OnChanges {
       next: (res: any) => { this.infraestructura = res; this.cargandoInfraestructura = false; },
       error: (err: any) => { console.error('Error al cargar infraestructura:', err); this.cargandoInfraestructura = false; }
     });
+  }
+
+  // =====================================================
+  // PESTAÑA 0 — INICIO
+  // =====================================================
+
+  cargarInicio(): void {
+    this.cargandoInicio = true;
+    this.alertasInicio = [];
+
+    Promise.all([
+      this.itService.getStatus().toPromise(),
+      this.itService.getInfraestructura().toPromise(),
+      this.itService.getAuditoria().toPromise()
+    ]).then(([status, infra, auditoria]: any[]) => {
+      const alertas: any[] = [];
+
+      if (!status?.baseDeDatos?.conectado) {
+        alertas.push({
+          nivel: 'critico',
+          icono: 'fa-database',
+          titulo: 'Base de datos desconectada',
+          detalle: 'El sistema no puede confirmar la conexión con MySQL.',
+          destino: 'sistema'
+        });
+      }
+
+      for (const item of (infra?.stockCritico || [])) {
+        alertas.push({
+          nivel: 'alerta',
+          icono: 'fa-box-open',
+          titulo: `Stock bajo: ${item.NombreModelo}`,
+          detalle: `${item.Cantidad} unidades en ${item.UbicacionFisica || 'ubicación sin especificar'}`,
+          destino: 'infraestructura'
+        });
+      }
+
+      const fueraDeServicio = infra?.dispositivos?.fueraDeServicio || 0;
+      if (fueraDeServicio > 0) {
+        alertas.push({
+          nivel: 'alerta',
+          icono: 'fa-triangle-exclamation',
+          titulo: `${fueraDeServicio} dispositivo${fueraDeServicio > 1 ? 's' : ''} fuera de servicio`,
+          detalle: 'Requieren revisión técnica.',
+          destino: 'infraestructura'
+        });
+      }
+
+      const cuentasDesactivadas = auditoria?.cuentasDesactivadas?.length || 0;
+      if (cuentasDesactivadas > 0) {
+        alertas.push({
+          nivel: 'info',
+          icono: 'fa-user-lock',
+          titulo: `${cuentasDesactivadas} cuenta${cuentasDesactivadas > 1 ? 's' : ''} desactivada${cuentasDesactivadas > 1 ? 's' : ''}`,
+          detalle: 'Gobierno de accesos — verificá que sea intencional.',
+          destino: 'auditoria'
+        });
+      }
+
+      this.alertasInicio = alertas;
+      this.inicioSinAlertas = alertas.length === 0;
+      this.cargandoInicio = false;
+    }).catch((err) => {
+      console.error('Error al cargar el feed de Inicio:', err);
+      this.cargandoInicio = false;
+    });
+  }
+
+  irAPestanaDesdeAlerta(destino: string): void {
+    this.cambiarVista(destino);
   }
 }
