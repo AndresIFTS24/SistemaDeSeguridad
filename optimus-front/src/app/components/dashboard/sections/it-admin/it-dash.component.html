@@ -275,7 +275,7 @@
         <div class="audit-panel">
           <h3><i class="fas fa-history"></i> Últimas Acciones de Operadores</h3>
           <div class="audit-list">
-            <div *ngFor="let s of seguimientos" class="audit-item">
+            <div *ngFor="let s of seguimientos" class="audit-item" (click)="verDetalleEvento(s.ID_Evento)" style="cursor: pointer;">
               <div class="audit-time">{{ s.FechaHoraAccion | date:'dd/MM HH:mm' }}</div>
               <div class="audit-content">
                 <strong>{{ s.NombreOperador }}</strong> — {{ s.AccionRealizada }}
@@ -487,6 +487,76 @@
 
     <div *ngIf="!cargandoActividad && !actividadData" class="empty-state-small">
       No se pudo cargar la actividad.
+    </div>
+
+  </div>
+</div>
+
+<!-- PANEL LATERAL DETALLE DE EVENTO -->
+<div class="actividad-overlay" *ngIf="mostrarDetalleEvento" (click)="cerrarDetalleEvento()">
+  <div class="actividad-panel" (click)="$event.stopPropagation()">
+
+    <div class="actividad-header">
+      <div class="actividad-user-info">
+        <div>
+          <h3>{{ eventoDetalleData?.evento?.Codigo }} — {{ eventoDetalleData?.evento?.DescripcionAlarma }}</h3>
+          <span class="actividad-rol">
+            {{ eventoDetalleData?.evento?.NombreAbonado }} · {{ eventoDetalleData?.evento?.Calle }}, {{ eventoDetalleData?.evento?.Ciudad }}
+          </span>
+        </div>
+      </div>
+      <button class="btn-close" (click)="cerrarDetalleEvento()">×</button>
+    </div>
+
+    <div class="loading-state" *ngIf="cargandoDetalleEvento">
+      <div class="spinner"></div>
+      <span>Cargando detalle del evento...</span>
+    </div>
+
+    <div *ngIf="!cargandoDetalleEvento && eventoDetalleData">
+
+      <div class="actividad-resumen">
+        <div class="resumen-item">
+          <span class="resumen-num" [ngClass]="{
+            'evento-critico': eventoDetalleData.evento.Prioridad === 'Crítico',
+            'evento-alta': eventoDetalleData.evento.Prioridad === 'Alta',
+            'evento-baja': eventoDetalleData.evento.Prioridad === 'Baja'
+          }">{{ eventoDetalleData.evento.Prioridad }}</span>
+          <span class="resumen-label">prioridad</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-num">{{ eventoDetalleData.evento.Estado }}</span>
+          <span class="resumen-label">estado</span>
+        </div>
+        <div class="resumen-item">
+          <span class="resumen-num ultima">{{ eventoDetalleData.evento.FechaHoraRecepcion | date:'dd/MM HH:mm' }}</span>
+          <span class="resumen-label">recepción</span>
+        </div>
+      </div>
+
+      <div class="actividad-timeline">
+        <p class="timeline-title">Dispositivo: {{ eventoDetalleData.evento.NombreDispositivo }} ({{ eventoDetalleData.evento.Zona_Ubicacion }})</p>
+        <p class="timeline-title">Seguimientos del evento</p>
+
+        <div *ngIf="eventoDetalleData.seguimientos?.length === 0" class="empty-state-small">
+          Este evento todavía no tiene seguimientos registrados.
+        </div>
+
+        <div *ngFor="let s of eventoDetalleData.seguimientos" class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <div class="timeline-action">{{ s.AccionRealizada }}</div>
+            <div class="timeline-meta">
+              <span class="timeline-evento">{{ s.NombreOperador }}</span>
+            </div>
+            <div class="timeline-time">{{ s.FechaHoraAccion | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!cargandoDetalleEvento && !eventoDetalleData" class="empty-state-small">
+      No se pudo cargar el detalle del evento.
     </div>
 
   </div>

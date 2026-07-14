@@ -62,4 +62,8 @@ export class ItService {
   getActividadUsuario(id: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/usuarios/${id}/actividad`, { headers: this.getHeaders() });
   }
+
+  getEventoDetalle(idEvento: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/eventos/${idEvento}/detalle`, { headers: this.getHeaders() });
+  }
 }

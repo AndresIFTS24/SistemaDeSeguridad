@@ -342,4 +342,46 @@ router.get('/usuarios/:id/actividad', verifyToken, checkRole(accesoIT), async (r
     }
 });
 
+// ====================================================================
+// DETALLE DE EVENTO (para el panel lateral de Auditoría)
+// ====================================================================
+router.get('/eventos/:idEvento/detalle', verifyToken, checkRole(accesoIT), async (req, res) => {
+    const { idEvento } = req.params;
+    try {
+        const [evento] = await pool.execute(`
+            SELECT E.ID_Evento, E.FechaHoraRecepcion, E.Estado,
+                   CE.Codigo, CE.DescripcionAlarma, CE.Prioridad,
+                   AB.RazonSocial AS NombreAbonado, AB.NumeroDeAbonado,
+                   DIR.Calle, DIR.Ciudad,
+                   D.NombreDispositivo, D.Zona_Ubicacion
+            FROM EVENTOS E
+            INNER JOIN CODIGOS_EVENTOS CE ON E.ID_CodigoEvento = CE.ID_CodigoEvento
+            INNER JOIN DISPOSITIVOS D ON E.ID_Dispositivo = D.ID_Dispositivo
+            INNER JOIN DIRECCIONES DIR ON D.ID_Direccion = DIR.ID_Direccion
+            INNER JOIN ABONADOS AB ON DIR.ID_Abonado = AB.ID_Abonado
+            WHERE E.ID_Evento = ?
+        `, [idEvento]);
+
+        if (evento.length === 0) {
+            return res.status(404).json({ message: 'Evento no encontrado.' });
+        }
+
+        const [seguimientos] = await pool.execute(`
+            SELECT SE.ID_Seguimiento, SE.FechaHoraAccion, SE.AccionRealizada, U.Nombre AS NombreOperador
+            FROM SEGUIMIENTOS_EVENTOS SE
+            INNER JOIN USUARIOS U ON SE.ID_Operador = U.ID_Usuario
+            WHERE SE.ID_Evento = ?
+            ORDER BY SE.FechaHoraAccion ASC
+        `, [idEvento]);
+
+        res.status(200).json({
+            message: '✅ Detalle del evento obtenido.',
+            evento: evento[0],
+            seguimientos
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener el detalle del evento.', error: error.message });
+    }
+});
+
 module.exports = router;

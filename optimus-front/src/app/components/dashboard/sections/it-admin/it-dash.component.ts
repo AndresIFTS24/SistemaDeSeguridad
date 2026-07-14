@@ -26,6 +26,9 @@ export class ItDashComponent implements OnInit, OnChanges {
 
   // ===== PANEL ACTIVIDAD USUARIO =====
   public mostrarPanelActividad: boolean = false;
+  public mostrarDetalleEvento: boolean = false;
+  public eventoDetalleData: any = null;
+  public cargandoDetalleEvento: boolean = false;
   public usuarioActividad: any = null;
   public actividadData: any = null;
   public cargandoActividad: boolean = false;
@@ -328,6 +331,28 @@ export class ItDashComponent implements OnInit, OnChanges {
     this.mostrarPanelActividad = false;
     this.usuarioActividad = null;
     this.actividadData = null;
+  }
+
+  verDetalleEvento(idEvento: number): void {
+    this.mostrarDetalleEvento = true;
+    this.eventoDetalleData = null;
+    this.cargandoDetalleEvento = true;
+
+    this.itService.getEventoDetalle(idEvento).subscribe({
+      next: (res: any) => {
+        this.eventoDetalleData = res;
+        this.cargandoDetalleEvento = false;
+      },
+      error: (err: any) => {
+        console.error('Error al cargar el detalle del evento:', err);
+        this.cargandoDetalleEvento = false;
+      }
+    });
+  }
+
+  cerrarDetalleEvento(): void {
+    this.mostrarDetalleEvento = false;
+    this.eventoDetalleData = null;
   }
 
   getCriticidadClass(criticidad: string): string {

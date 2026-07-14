@@ -8,7 +8,9 @@
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed:direccion": "node scripts/seed-panel-direccion.js",
-    "seed:eventos": "node scripts/seed-dispositivos-eventos.js"
+    "seed:eventos": "node scripts/seed-dispositivos-eventos.js",
+    "seed:stock": "node scripts/seed-stock-seguimientos.js",
+    "seed:modelos": "node scripts/seed-modelos-dispositivos.js"
   },
   "keywords": [
     "node",
